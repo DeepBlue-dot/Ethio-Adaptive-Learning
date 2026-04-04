@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Ethio Adaptive Learning
 
-## Getting Started
+A Phase 1 foundation for a role-aware adaptive learning platform built with Next.js, Prisma, PostgreSQL, and credentials-based authentication.
 
-First, run the development server:
+## Local Setup
+
+1. Copy `.env.example` to `.env` and set your database credentials.
+2. Make sure these variables are present:
+   - `DATABASE_URL`
+   - `NEXT_PUBLIC_APP_URL`
+   - `AUTH_SECRET`
+   - `AUTH_TRUST_HOST`
+   - `SEED_ADMIN_EMAIL`
+   - `SEED_ADMIN_PASSWORD`
+3. Generate the Prisma client:
+
+```bash
+npm run prisma:generate
+```
+
+4. Create and apply your local migration:
+
+```bash
+npm run prisma:migrate
+```
+
+If your local database already existed before Phase 1 and Prisma reports missing columns like `User.name`, sync it first with:
+
+```bash
+npm run db:push
+```
+
+5. Seed the initial admin and demo student:
+
+```bash
+npm run db:seed
+```
+
+6. Start the app:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+7. Run the Phase 1 verification suite:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm run test
+npm run lint
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Phase 1 Deliverables
 
-## Learn More
+- Student registration with automatic `UserProfile` creation
+- Credentials login with email or username
+- Role-aware routing for students and admins
+- Protected application shell with sign-out
+- Seeded development admin and student accounts
 
-To learn more about Next.js, take a look at the following resources:
+## Default Seed Accounts
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Admin email: `SEED_ADMIN_EMAIL`
+- Student email: `SEED_STUDENT_EMAIL`
+- Passwords come from the matching env vars in `.env`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Troubleshooting
 
-## Deploy on Vercel
+- If registration fails with `The column "name" does not exist in the current database`, your database schema is older than the current Prisma schema. Run:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run db:push
+npm run db:seed
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- If you see a `NEXTAUTH_URL` warning during local development, make sure `NEXT_PUBLIC_APP_URL` is set in `.env`. The app now uses that value as a fallback for local auth URLs.
