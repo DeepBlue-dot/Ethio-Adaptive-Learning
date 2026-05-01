@@ -1,0 +1,38 @@
+{
+  "slug": "limits",
+  "title": "Limits",
+  "description": "Reason about the value a function approaches near a target input.",
+  "overview": "overview.md",
+  "unlockThreshold": 0.9,
+  "pLo": 0.15,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.01,
+  "prerequisites": [
+    "functions-and-graphs/quadratic-functions"
+  ],
+  "chunks": [
+    {
+      "slug": "what-a-limit-describes",
+      "title": "What a limit describes",
+      "order": 1,
+      "file": "chunks/01-what-a-limit-describes.md"
+    },
+    {
+      "slug": "direct-substitution-for-continuous-functions",
+      "title": "Direct substitution for continuous functions",
+      "order": 2,
+      "file": "chunks/02-direct-substitution-for-continuous-functions.md"
+    }
+  ],
+  "workedExamples": [
+    {
+      "slug": "evaluate-a-polynomial-limit",
+      "title": "Evaluate a polynomial limit",
+      "order": 1,
+      "file": "worked-examples/01-evaluate-a-polynomial-limit.md"
+    }
+  ],
+  "questions": "questions.json"
+}

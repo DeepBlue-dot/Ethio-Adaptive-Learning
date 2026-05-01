@@ -1,0 +1,9 @@
+{
+  "slug": "functions-and-graphs",
+  "title": "Functions and Graphs",
+  "order": 1,
+  "concepts": [
+    "concepts/linear-functions/concept.json",
+    "concepts/quadratic-functions/concept.json"
+  ]
+}

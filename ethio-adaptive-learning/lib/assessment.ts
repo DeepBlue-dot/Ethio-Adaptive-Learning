@@ -16,13 +16,13 @@ import {
   pickDeterministicQuestions,
   type Recommendation,
 } from "@/lib/adaptive/difficulty"
-import { deriveConceptStatus, type GraphMastery } from "@/lib/adaptive/graph"
 import {
   computeEffectiveMastery,
   computeNextReviewAt,
   deriveMasteryStatus,
   isReviewDue,
 } from "@/lib/adaptive/retention"
+import { loadCourseUserState } from "@/lib/curriculum-graph"
 import { prisma } from "@/lib/prisma"
 
 type DbClient = Prisma.TransactionClient | typeof prisma
@@ -51,10 +51,6 @@ const questionSelect = {
   difficulty: true,
   usage: true,
 } satisfies Prisma.QuestionSelect
-
-type MasteryRecord = Prisma.UserMasteryGetPayload<{
-  select: typeof userMasterySelect
-}>
 
 type AttemptQuestionRecord = Prisma.QuestionGetPayload<{
   select: typeof questionSelect
@@ -95,6 +91,7 @@ type ExamAttemptSummary = {
 export type LearningWorkspace = {
   concept: {
     id: string
+    slug: string
     title: string
     description: string | null
     contentBody: string | null
@@ -102,6 +99,21 @@ export type LearningWorkspace = {
     courseTitle: string
     unitTitle: string
     questionCounts: Record<QuestionUsage, number>
+    chunks: Array<{
+      id: string
+      slug: string
+      title: string
+      bodyMd: string
+      order: number
+    }>
+    workedExamples: Array<{
+      id: string
+      slug: string
+      title: string
+      problemMd: string
+      solutionMd: string
+      order: number
+    }>
   }
   mastery: {
     baselineMastery: number | null
@@ -165,22 +177,14 @@ export async function getConceptLearningWorkspace(userId: string, conceptId: str
         select: userMasterySelect,
         take: 1,
       },
-      prerequisiteEdges: {
-        include: {
-          prerequisiteConcept: {
-            select: {
-              id: true,
-              title: true,
-              decayLambda: true,
-              userMasteries: {
-                where: {
-                  userId,
-                },
-                select: userMasterySelect,
-                take: 1,
-              },
-            },
-          },
+      chunks: {
+        orderBy: {
+          order: "asc",
+        },
+      },
+      workedExamples: {
+        orderBy: {
+          order: "asc",
         },
       },
       questions: {
@@ -233,38 +237,13 @@ export async function getConceptLearningWorkspace(userId: string, conceptId: str
     throw new Error("Concept not found.")
   }
 
+  const courseState = await loadCourseUserState(concept.unit.course.id, userId)
   const conceptMastery = concept.userMasteries[0] ?? null
-  const masteryMap = new Map<string, GraphMastery>()
+  const derivedStatus = courseState.statuses.get(concept.id)
 
-  if (conceptMastery) {
-    masteryMap.set(concept.id, toGraphMastery(conceptMastery, concept.decayLambda))
+  if (!derivedStatus) {
+    throw new Error("Concept state could not be derived.")
   }
-
-  for (const edge of concept.prerequisiteEdges) {
-    const prerequisiteMastery = edge.prerequisiteConcept.userMasteries[0]
-
-    if (prerequisiteMastery) {
-      masteryMap.set(
-        edge.prerequisiteConcept.id,
-        toGraphMastery(prerequisiteMastery, edge.prerequisiteConcept.decayLambda)
-      )
-    }
-  }
-
-  const derivedStatus = deriveConceptStatus(
-    {
-      id: concept.id,
-      title: concept.title,
-      unlockThreshold: concept.unlockThreshold,
-      prerequisiteEdges: concept.prerequisiteEdges.map((edge) => ({
-        prerequisiteConcept: {
-          id: edge.prerequisiteConcept.id,
-          title: edge.prerequisiteConcept.title,
-        },
-      })),
-    },
-    masteryMap
-  )
 
   const baselineMastery = conceptMastery?.pMastery ?? (derivedStatus.unlocked ? concept.pLo : null)
 
@@ -291,12 +270,28 @@ export async function getConceptLearningWorkspace(userId: string, conceptId: str
   return {
     concept: {
       id: concept.id,
+      slug: concept.slug,
       title: concept.title,
       description: concept.description,
       contentBody: concept.contentBody,
       unlockThreshold: concept.unlockThreshold,
       courseTitle: concept.unit.course.title,
       unitTitle: concept.unit.title,
+      chunks: concept.chunks.map((chunk) => ({
+        id: chunk.id,
+        slug: chunk.slug,
+        title: chunk.title,
+        bodyMd: chunk.bodyMd,
+        order: chunk.order,
+      })),
+      workedExamples: concept.workedExamples.map((example) => ({
+        id: example.id,
+        slug: example.slug,
+        title: example.title,
+        problemMd: example.problemMd,
+        solutionMd: example.solutionMd,
+        order: example.order,
+      })),
       questionCounts: concept.questions.reduce(
         (counts, question) => ({
           ...counts,
@@ -399,85 +394,35 @@ export async function getStudentDashboardSummary(userId: string): Promise<Studen
     where: {
       archivedAt: null,
     },
-    include: {
-      units: {
-        include: {
-          concepts: {
-            include: {
-              prerequisiteEdges: {
-                include: {
-                  prerequisiteConcept: {
-                    select: {
-                      id: true,
-                      title: true,
-                    },
-                  },
-                },
-              },
-            },
-            orderBy: {
-              title: "asc",
-            },
-          },
-        },
-        orderBy: {
-          order: "asc",
-        },
-      },
+    select: {
+      id: true,
     },
   })
-
-  const conceptIds = courses.flatMap((course) =>
-    course.units.flatMap((unit) => unit.concepts.map((concept) => concept.id))
-  )
-  const masteries = conceptIds.length
-    ? await prisma.userMastery.findMany({
-        where: {
-          userId,
-          conceptId: {
-            in: conceptIds,
-          },
-        },
-        select: userMasterySelect,
-      })
-    : []
-  const masteryByConceptId = new Map(
-    masteries.map((mastery) => [
-      mastery.conceptId,
-      toGraphMastery(
-        mastery,
-        courses
-          .flatMap((course) => course.units.flatMap((unit) => unit.concepts))
-          .find((concept) => concept.id === mastery.conceptId)?.decayLambda ?? 0.01
-      ),
-    ])
-  )
+  const courseStates = await Promise.all(courses.map((course) => loadCourseUserState(course.id, userId)))
 
   let unlockedConceptCount = 0
   let masteredConceptCount = 0
   let inProgressConceptCount = 0
 
-  for (const course of courses) {
-    for (const unit of course.units) {
-      for (const concept of unit.concepts) {
-        const derivedStatus = deriveConceptStatus(concept, masteryByConceptId)
+  for (const courseState of courseStates) {
+    for (const derivedStatus of courseState.statuses.values()) {
+      if (derivedStatus.unlocked) {
+        unlockedConceptCount += 1
+      }
 
-        if (derivedStatus.unlocked) {
-          unlockedConceptCount += 1
-        }
+      if (derivedStatus.status === "MASTERED" || derivedStatus.status === "REVIEW_NEEDED") {
+        masteredConceptCount += 1
+      }
 
-        if (derivedStatus.status === "MASTERED" || derivedStatus.status === "REVIEW_NEEDED") {
-          masteredConceptCount += 1
-        }
-
-        if (derivedStatus.status === "IN_PROGRESS") {
-          inProgressConceptCount += 1
-        }
+      if (derivedStatus.status === "IN_PROGRESS") {
+        inProgressConceptCount += 1
       }
     }
   }
 
-  const dueReviewCount = masteries.filter((mastery) => isReviewDue(mastery.nextReviewAt)).length
+  const dueReviewCount = courseStates
+    .flatMap((courseState) => courseState.masteries)
+    .filter((mastery) => isReviewDue(mastery.nextReviewAt)).length
 
   return {
     dueReviewCount,
@@ -943,21 +888,6 @@ export async function submitExamAttempt(
   })
 }
 
-function toGraphMastery(mastery: MasteryRecord, decayLambda: number): GraphMastery {
-  return {
-    conceptId: mastery.conceptId,
-    pMastery: mastery.pMastery,
-    effectiveMastery: computeEffectiveMastery({
-      baselineMastery: mastery.pMastery,
-      lastAssessedAt: mastery.lastAssessedAt,
-      decayLambda,
-    }),
-    status: mastery.status,
-    nextReviewAt: mastery.nextReviewAt,
-    unlockedAt: mastery.unlockedAt,
-  }
-}
-
 function serializeAttempt(
   attempt:
     | (PracticeAttempt & {
@@ -1054,30 +984,17 @@ async function getConceptAccessState(db: DbClient, userId: string, conceptId: st
       id: requireId(conceptId, "Concept"),
     },
     include: {
+      unit: {
+        select: {
+          courseId: true,
+        },
+      },
       userMasteries: {
         where: {
           userId,
         },
         select: userMasterySelect,
         take: 1,
-      },
-      prerequisiteEdges: {
-        include: {
-          prerequisiteConcept: {
-            select: {
-              id: true,
-              title: true,
-              decayLambda: true,
-              userMasteries: {
-                where: {
-                  userId,
-                },
-                select: userMasterySelect,
-                take: 1,
-              },
-            },
-          },
-        },
       },
     },
   })
@@ -1086,29 +1003,16 @@ async function getConceptAccessState(db: DbClient, userId: string, conceptId: st
     throw new Error("Concept not found.")
   }
 
-  const masteryMap = new Map<string, GraphMastery>()
-  const conceptMastery = concept.userMasteries[0]
+  const courseState = await loadCourseUserState(concept.unit.courseId, userId, db)
+  const derivedStatus = courseState.statuses.get(concept.id)
 
-  if (conceptMastery) {
-    masteryMap.set(concept.id, toGraphMastery(conceptMastery, concept.decayLambda))
+  if (!derivedStatus) {
+    throw new Error("Concept state could not be derived.")
   }
-
-  for (const edge of concept.prerequisiteEdges) {
-    const prerequisiteMastery = edge.prerequisiteConcept.userMasteries[0]
-
-    if (prerequisiteMastery) {
-      masteryMap.set(
-        edge.prerequisiteConcept.id,
-        toGraphMastery(prerequisiteMastery, edge.prerequisiteConcept.decayLambda)
-      )
-    }
-  }
-
-  const derivedStatus = deriveConceptStatus(concept, masteryMap)
 
   return {
     concept,
-    conceptMastery,
+    conceptMastery: concept.userMasteries[0] ?? null,
     derivedStatus,
   }
 }
@@ -1266,86 +1170,47 @@ async function syncUnlockedConceptsForCourse(db: DbClient, userId: string, unitI
     return
   }
 
-  const concepts = await db.concept.findMany({
-    where: {
-      unit: {
-        courseId: unit.courseId,
-      },
-    },
-    include: {
-      prerequisiteEdges: {
-        select: {
-          prerequisiteConceptId: true,
-        },
-      },
-      userMasteries: {
-        where: {
-          userId,
-        },
-        select: userMasterySelect,
-        take: 1,
-      },
-    },
-  })
-
+  const courseState = await loadCourseUserState(unit.courseId, userId, db)
   const masteryByConceptId = new Map(
-    concepts.flatMap((concept) => {
-      const mastery = concept.userMasteries[0]
-      return mastery ? [[concept.id, mastery] as const] : []
-    })
+    courseState.masteries.map((mastery) => [mastery.conceptId, mastery] as const)
   )
 
-  let hasChanges = true
+  for (const concept of courseState.concepts) {
+    const existingMastery = masteryByConceptId.get(concept.id)
+    const derivedStatus = courseState.statuses.get(concept.id)
 
-  while (hasChanges) {
-    hasChanges = false
+    if (!derivedStatus?.unlocked || existingMastery?.unlockedAt) {
+      continue
+    }
 
-    for (const concept of concepts) {
-      const existingMastery = masteryByConceptId.get(concept.id)
+    const unlockedAt = new Date()
 
-      if (existingMastery?.unlockedAt) {
-        continue
-      }
-
-      const canUnlock = concept.prerequisiteEdges.every((edge) => {
-        const prerequisiteMastery = masteryByConceptId.get(edge.prerequisiteConceptId)
-        return (prerequisiteMastery?.pMastery ?? 0) >= concept.unlockThreshold
+    if (existingMastery) {
+      await db.userMastery.update({
+        where: {
+          userId_conceptId: {
+            userId,
+            conceptId: concept.id,
+          },
+        },
+        data: {
+          unlockedAt,
+          status: existingMastery.status === "LOCKED" ? "FRINGE" : existingMastery.status,
+        },
       })
 
-      if (!canUnlock && concept.prerequisiteEdges.length > 0) {
-        continue
-      }
-
-      const unlockedAt = new Date()
-
-      const nextMastery = existingMastery
-        ? await db.userMastery.update({
-            where: {
-              userId_conceptId: {
-                userId,
-                conceptId: concept.id,
-              },
-            },
-            data: {
-              unlockedAt,
-              status: existingMastery.status === "LOCKED" ? "FRINGE" : existingMastery.status,
-            },
-            select: userMasterySelect,
-          })
-        : await db.userMastery.create({
-            data: {
-              userId,
-              conceptId: concept.id,
-              pMastery: concept.pLo,
-              unlockedAt,
-              status: "FRINGE",
-            },
-            select: userMasterySelect,
-          })
-
-      masteryByConceptId.set(concept.id, nextMastery)
-      hasChanges = true
+      continue
     }
+
+    await db.userMastery.create({
+      data: {
+        userId,
+        conceptId: concept.id,
+        pMastery: concept.pLo,
+        unlockedAt,
+        status: "FRINGE",
+      },
+    })
   }
 }
 

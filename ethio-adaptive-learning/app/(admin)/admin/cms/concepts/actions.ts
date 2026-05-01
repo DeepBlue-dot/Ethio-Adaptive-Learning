@@ -6,17 +6,23 @@ import { redirect } from "next/navigation"
 import { requireRole } from "@/lib/auth"
 import {
   archiveCourse,
+  createConceptChunk,
   createConcept,
   createCourse,
   createUnit,
+  createWorkedExample,
+  deleteConceptChunk,
   deleteConcept,
   deleteCourse,
   deleteUnit,
+  deleteWorkedExample,
   restoreCourse,
   setConceptPrerequisites,
+  updateConceptChunk,
   updateConcept,
   updateCourse,
   updateUnit,
+  updateWorkedExample,
 } from "@/lib/curriculum"
 
 const CONCEPTS_PATH = "/admin/cms/concepts"
@@ -180,6 +186,93 @@ export async function deleteConceptAction(formData: FormData) {
 
   revalidateCms()
   redirectWithMessage(returnTo, "status", "Concept deleted.")
+}
+
+export async function saveConceptChunkAction(formData: FormData) {
+  const session = await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  const returnTo = getReturnTo(formData, CONCEPTS_PATH)
+  const chunkId = textField(formData, "chunkId")
+
+  try {
+    const input = {
+      conceptId: textField(formData, "conceptId") ?? "",
+      title: textField(formData, "title") ?? "",
+      bodyMd: textField(formData, "bodyMd") ?? "",
+      order: numberField(formData, "order"),
+      authorId: session.user.id,
+    }
+
+    if (chunkId) {
+      await updateConceptChunk(chunkId, input)
+    } else {
+      await createConceptChunk(input)
+    }
+  } catch (error) {
+    redirectWithMessage(returnTo, "error", getErrorMessage(error))
+  }
+
+  revalidateCms()
+  redirectWithMessage(returnTo, "status", chunkId ? "Explanation chunk updated." : "Explanation chunk created.")
+}
+
+export async function deleteConceptChunkAction(formData: FormData) {
+  await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  const returnTo = getReturnTo(formData, CONCEPTS_PATH)
+
+  try {
+    await deleteConceptChunk(textField(formData, "chunkId") ?? "")
+  } catch (error) {
+    redirectWithMessage(returnTo, "error", getErrorMessage(error))
+  }
+
+  revalidateCms()
+  redirectWithMessage(returnTo, "status", "Explanation chunk deleted.")
+}
+
+export async function saveWorkedExampleAction(formData: FormData) {
+  const session = await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  const returnTo = getReturnTo(formData, CONCEPTS_PATH)
+  const exampleId = textField(formData, "exampleId")
+
+  try {
+    const input = {
+      conceptId: textField(formData, "conceptId") ?? "",
+      title: textField(formData, "title") ?? "",
+      problemMd: textField(formData, "problemMd") ?? "",
+      solutionMd: textField(formData, "solutionMd") ?? "",
+      order: numberField(formData, "order"),
+      authorId: session.user.id,
+    }
+
+    if (exampleId) {
+      await updateWorkedExample(exampleId, input)
+    } else {
+      await createWorkedExample(input)
+    }
+  } catch (error) {
+    redirectWithMessage(returnTo, "error", getErrorMessage(error))
+  }
+
+  revalidateCms()
+  redirectWithMessage(returnTo, "status", exampleId ? "Worked example updated." : "Worked example created.")
+}
+
+export async function deleteWorkedExampleAction(formData: FormData) {
+  await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  const returnTo = getReturnTo(formData, CONCEPTS_PATH)
+
+  try {
+    await deleteWorkedExample(textField(formData, "exampleId") ?? "")
+  } catch (error) {
+    redirectWithMessage(returnTo, "error", getErrorMessage(error))
+  }
+
+  revalidateCms()
+  redirectWithMessage(returnTo, "status", "Worked example deleted.")
 }
 
 function revalidateCms() {

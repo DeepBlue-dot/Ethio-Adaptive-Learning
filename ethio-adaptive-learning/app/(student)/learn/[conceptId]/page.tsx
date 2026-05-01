@@ -3,7 +3,6 @@ import { ArrowRight, BookOpenCheck, BrainCircuit, Clock3, LockKeyhole, RotateCcw
 
 import {
   getConceptLearningWorkspace,
-  type LearningWorkspace,
 } from "@/lib/assessment"
 import { requireRole } from "@/lib/auth"
 import { getMasteryStatusLabel } from "@/lib/curriculum"
@@ -193,11 +192,80 @@ export default async function LearnConceptPage({ params, searchParams }: PagePro
           <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
             <article className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
               <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">Lesson content</p>
-              <div className="mt-6 rounded-3xl bg-slate-50 p-6">
-                <div className="whitespace-pre-wrap text-sm leading-7 text-foreground">
-                  {workspace.concept.contentBody ??
-                    "This concept does not have authored lesson content yet. The assessment flow is still available."}
-                </div>
+              <div className="mt-6 space-y-6">
+                {workspace.concept.contentBody ? (
+                  <LessonSection
+                    body={workspace.concept.contentBody}
+                    eyebrow="Overview"
+                    title="Concept summary"
+                  />
+                ) : null}
+
+                {workspace.concept.chunks.length ? (
+                  <section className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                        Explanation path
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+                        Ordered concept chunks
+                      </h3>
+                    </div>
+
+                    {workspace.concept.chunks.map((chunk) => (
+                      <LessonSection
+                        key={chunk.id}
+                        body={chunk.bodyMd}
+                        eyebrow={`Chunk ${chunk.order}`}
+                        metadata={chunk.slug}
+                        title={chunk.title}
+                      />
+                    ))}
+                  </section>
+                ) : null}
+
+                {workspace.concept.workedExamples.length ? (
+                  <section className="space-y-4">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                        Worked examples
+                      </p>
+                      <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">
+                        Guided problem solving
+                      </h3>
+                    </div>
+
+                    {workspace.concept.workedExamples.map((example) => (
+                      <article key={example.id} className="rounded-3xl bg-slate-50 p-6">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                              Example {example.order}
+                            </p>
+                            <h4 className="mt-2 text-lg font-semibold text-foreground">{example.title}</h4>
+                          </div>
+                          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+                            {example.slug}
+                          </span>
+                        </div>
+
+                        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                          <LessonPanel body={example.problemMd} title="Problem" />
+                          <LessonPanel body={example.solutionMd} title="Solution" />
+                        </div>
+                      </article>
+                    ))}
+                  </section>
+                ) : null}
+
+                {!workspace.concept.contentBody &&
+                workspace.concept.chunks.length === 0 &&
+                workspace.concept.workedExamples.length === 0 ? (
+                  <div className="rounded-3xl bg-slate-50 p-6 text-sm leading-7 text-muted-foreground">
+                    This concept does not have authored lesson content yet. The assessment flow is
+                    still available.
+                  </div>
+                ) : null}
               </div>
             </article>
 
@@ -264,6 +332,50 @@ function MetricTile({
       </div>
       <p className="mt-3 text-3xl font-semibold text-foreground">{value}</p>
     </div>
+  )
+}
+
+function LessonSection({
+  eyebrow,
+  title,
+  body,
+  metadata,
+}: {
+  eyebrow: string
+  title: string
+  body: string
+  metadata?: string
+}) {
+  return (
+    <article className="rounded-3xl bg-slate-50 p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">{eyebrow}</p>
+          <h3 className="mt-2 text-xl font-semibold tracking-tight text-foreground">{title}</h3>
+        </div>
+        {metadata ? (
+          <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm">
+            {metadata}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-5 whitespace-pre-wrap text-sm leading-7 text-foreground">{body}</div>
+    </article>
+  )
+}
+
+function LessonPanel({
+  title,
+  body,
+}: {
+  title: string
+  body: string
+}) {
+  return (
+    <section className="rounded-3xl border border-border bg-white p-5">
+      <h5 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-700">{title}</h5>
+      <div className="mt-4 whitespace-pre-wrap text-sm leading-7 text-foreground">{body}</div>
+    </section>
   )
 }
 

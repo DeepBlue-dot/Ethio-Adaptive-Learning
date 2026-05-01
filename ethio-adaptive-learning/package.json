@@ -12,7 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "db:push": "prisma db push",
-    "db:seed": "prisma db seed"
+    "db:seed": "prisma db seed",
+    "import:grade12-math": "node ./scripts/import-grade12-math.mjs"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",

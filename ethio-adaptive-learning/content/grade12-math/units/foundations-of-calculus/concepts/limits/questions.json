@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "evaluate-basic-limit-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "For `f(x) = x^2`, what value does the function approach as `x` approaches `2`?",
+    "correctAnswer": "4",
+    "distractors": ["2", "0", "8"],
+    "hintText": "The function is continuous, so direct substitution works.",
+    "explanation": "Because `f(x) = x^2` is continuous, the limit is `2^2 = 4`."
+  },
+  {
+    "slug": "evaluate-basic-limit-exam",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Find `\\lim_{x \\to 2} x^2`.",
+    "correctAnswer": "4",
+    "distractors": ["2", "0", "8"],
+    "hintText": "Substitute `2` into the expression because the function is continuous.",
+    "explanation": "Because `x^2` is continuous, the limit at `x = 2` is `2^2 = 4`."
+  }
+]

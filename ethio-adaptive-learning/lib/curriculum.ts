@@ -6,26 +6,35 @@ import {
   type UserRole,
 } from "@prisma/client"
 
+import { assertAcyclicPrerequisiteSelection } from "@/lib/adaptive/graph"
 import {
-  assertAcyclicPrerequisiteSelection,
-  deriveConceptStatus,
-  type GraphMastery,
-} from "@/lib/adaptive/graph"
-import { computeEffectiveMastery } from "@/lib/adaptive/retention"
+  getFringeConceptIds as getClosureBackedFringeConceptIds,
+  getUnlockedConceptIds as getClosureBackedUnlockedConceptIds,
+  listCourseAncestors as getCourseAncestorLookup,
+  listCourseDescendants as getCourseDescendantLookup,
+  loadCourseUserState,
+  rebuildConceptClosureForCourse,
+} from "@/lib/curriculum-graph"
 import { prisma } from "@/lib/prisma"
+import { buildFallbackSlug, withNumericSuffix } from "@/lib/slugs"
 
 type DbClient = Prisma.TransactionClient | typeof prisma
+type CmsRole = Extract<UserRole, "ADMIN" | "COURSE_WRITER">
+
+const CMS_ROLES: CmsRole[] = ["ADMIN", "COURSE_WRITER"]
 
 export type CreateCourseInput = {
   title: string
   description?: string | null
   authorId?: string | null
+  slug?: string | null
 }
 
 export type CreateUnitInput = {
   courseId: string
   title: string
   order: number
+  slug?: string | null
 }
 
 export type CreateConceptInput = {
@@ -39,6 +48,26 @@ export type CreateConceptInput = {
   pG: number
   pS: number
   decayLambda: number
+  slug?: string | null
+}
+
+export type CreateConceptChunkInput = {
+  conceptId: string
+  title: string
+  bodyMd: string
+  order: number
+  authorId?: string | null
+  slug?: string | null
+}
+
+export type CreateWorkedExampleInput = {
+  conceptId: string
+  title: string
+  problemMd: string
+  solutionMd: string
+  order: number
+  authorId?: string | null
+  slug?: string | null
 }
 
 export type SetConceptPrerequisitesInput = {
@@ -56,6 +85,7 @@ export type CreateQuestionInput = {
   hintText?: string | null
   explanation?: string | null
   authorId?: string | null
+  slug?: string | null
 }
 
 export type CurriculumFilters = {
@@ -63,10 +93,6 @@ export type CurriculumFilters = {
   unitId?: string
   conceptId?: string
 }
-
-type CmsRole = Extract<UserRole, "ADMIN" | "COURSE_WRITER">
-
-const CMS_ROLES: CmsRole[] = ["ADMIN", "COURSE_WRITER"]
 
 export async function getCmsAuthors() {
   return prisma.user.findMany({
@@ -111,6 +137,35 @@ export async function getCurriculumCmsData() {
                 questions: {
                   select: {
                     id: true,
+                    slug: true,
+                  },
+                },
+                chunks: {
+                  orderBy: {
+                    order: "asc",
+                  },
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        username: true,
+                        role: true,
+                      },
+                    },
+                  },
+                },
+                workedExamples: {
+                  orderBy: {
+                    order: "asc",
+                  },
+                  include: {
+                    author: {
+                      select: {
+                        id: true,
+                        username: true,
+                        role: true,
+                      },
+                    },
                   },
                 },
                 prerequisiteEdges: {
@@ -119,6 +174,7 @@ export async function getCurriculumCmsData() {
                       select: {
                         id: true,
                         title: true,
+                        slug: true,
                       },
                     },
                   },
@@ -166,6 +222,7 @@ export async function getQuestionCmsData(filters: CurriculumFilters = {}) {
               },
               select: {
                 id: true,
+                slug: true,
                 title: true,
                 unitId: true,
               },
@@ -255,17 +312,12 @@ export async function getStudentConceptCatalog(userId: string) {
             orderBy: {
               title: "asc",
             },
-            include: {
-              prerequisiteEdges: {
-                include: {
-                  prerequisiteConcept: {
-                    select: {
-                      id: true,
-                      title: true,
-                    },
-                  },
-                },
-              },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              description: true,
+              unlockThreshold: true,
               questions: {
                 select: {
                   id: true,
@@ -281,87 +333,85 @@ export async function getStudentConceptCatalog(userId: string) {
     },
   })
 
-  const conceptIds = courses.flatMap((course) =>
-    course.units.flatMap((unit) => unit.concepts.map((concept) => concept.id))
+  const courseStates = new Map(
+    await Promise.all(
+      courses.map(async (course) => [course.id, await loadCourseUserState(course.id, userId)] as const)
+    )
   )
 
-  const masteries = conceptIds.length
-    ? await prisma.userMastery.findMany({
-        where: {
-          userId,
-          conceptId: {
-            in: conceptIds,
-          },
-        },
-      })
-    : []
+  return courses.map((course) => {
+    const state = courseStates.get(course.id)
 
-  const masteryMap = new Map<string, GraphMastery>(
-    masteries.map((mastery) => [
-      mastery.conceptId,
-      {
-        conceptId: mastery.conceptId,
-        pMastery: mastery.pMastery,
-        effectiveMastery: computeEffectiveMastery({
-          baselineMastery: mastery.pMastery,
-          lastAssessedAt: mastery.lastAssessedAt,
-          decayLambda:
-            courses
-              .flatMap((course) => course.units.flatMap((unit) => unit.concepts))
-              .find((concept) => concept.id === mastery.conceptId)?.decayLambda ?? 0.01,
+    return {
+      id: course.id,
+      slug: course.slug,
+      title: course.title,
+      units: course.units.map((unit) => ({
+        id: unit.id,
+        slug: unit.slug,
+        title: unit.title,
+        order: unit.order,
+        concepts: unit.concepts.map((concept) => {
+          const derivedStatus = state?.statuses.get(concept.id)
+
+          return {
+            id: concept.id,
+            slug: concept.slug,
+            title: concept.title,
+            description: concept.description,
+            questionCount: concept.questions.length,
+            unlockThreshold: concept.unlockThreshold,
+            status: derivedStatus?.status ?? "LOCKED",
+            unlocked: derivedStatus?.unlocked ?? false,
+            unmetPrerequisites: derivedStatus?.unmetPrerequisites ?? [],
+            masteryProbability: derivedStatus?.masteryProbability ?? null,
+            effectiveMastery: derivedStatus?.effectiveMastery ?? null,
+            nextReviewAt: derivedStatus?.nextReviewAt ?? null,
+          }
         }),
-        status: mastery.status,
-        nextReviewAt: mastery.nextReviewAt,
-        unlockedAt: mastery.unlockedAt,
-      },
-    ])
-  )
-
-  return courses.map((course) => ({
-    id: course.id,
-    title: course.title,
-    units: course.units.map((unit) => ({
-      id: unit.id,
-      title: unit.title,
-      order: unit.order,
-      concepts: unit.concepts.map((concept) => {
-        const derivedStatus = deriveConceptStatus(concept, masteryMap)
-
-        return {
-          id: concept.id,
-          title: concept.title,
-          description: concept.description,
-          questionCount: concept.questions.length,
-          unlockThreshold: concept.unlockThreshold,
-          ...derivedStatus,
-        }
-      }),
-    })),
-  }))
+      })),
+    }
+  })
 }
 
 export async function createCourse(input: CreateCourseInput) {
   const authorId = await validateCmsAuthorId(input.authorId)
+  const title = requireText(input.title, "Course title")
+  const description = optionalText(input.description)
+  const slug = await resolveCourseSlug({
+    title,
+    slug: input.slug,
+  })
 
   return prisma.course.create({
     data: {
-      title: requireText(input.title, "Course title"),
-      description: optionalText(input.description),
+      slug,
+      title,
+      description,
       authorId,
     },
   })
 }
 
 export async function updateCourse(courseId: string, input: CreateCourseInput) {
+  const id = requireId(courseId, "Course")
   const authorId = await validateCmsAuthorId(input.authorId)
+  const title = requireText(input.title, "Course title")
+  const description = optionalText(input.description)
+  const slug = await resolveCourseSlug({
+    title,
+    slug: input.slug,
+    excludeId: id,
+  })
 
   return prisma.course.update({
     where: {
-      id: requireId(courseId, "Course"),
+      id,
     },
     data: {
-      title: requireText(input.title, "Course title"),
-      description: optionalText(input.description),
+      slug,
+      title,
+      description,
       authorId,
     },
   })
@@ -433,30 +483,60 @@ export async function deleteCourse(courseId: string) {
 }
 
 export async function createUnit(input: CreateUnitInput) {
+  const courseId = requireId(input.courseId, "Course")
+  const title = requireText(input.title, "Unit title")
+  const order = requirePositiveInteger(input.order, "Unit order")
+  const slug = await resolveUnitSlug({
+    courseId,
+    title,
+    slug: input.slug,
+  })
+
   return prisma.unit.create({
     data: {
-      courseId: requireId(input.courseId, "Course"),
-      title: requireText(input.title, "Unit title"),
-      order: requirePositiveInteger(input.order, "Unit order"),
+      courseId,
+      slug,
+      title,
+      order,
     },
   })
 }
 
 export async function updateUnit(unitId: string, input: CreateUnitInput) {
+  const id = requireId(unitId, "Unit")
+  const courseId = requireId(input.courseId, "Course")
+  const title = requireText(input.title, "Unit title")
+  const order = requirePositiveInteger(input.order, "Unit order")
+  const slug = await resolveUnitSlug({
+    courseId,
+    title,
+    slug: input.slug,
+    excludeId: id,
+  })
+
   return prisma.unit.update({
     where: {
-      id: requireId(unitId, "Unit"),
+      id,
     },
     data: {
-      courseId: requireId(input.courseId, "Course"),
-      title: requireText(input.title, "Unit title"),
-      order: requirePositiveInteger(input.order, "Unit order"),
+      courseId,
+      slug,
+      title,
+      order,
     },
   })
 }
 
 export async function deleteUnit(unitId: string) {
   const id = requireId(unitId, "Unit")
+  const unit = await prisma.unit.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      courseId: true,
+    },
+  })
 
   return prisma.$transaction(async (tx) => {
     const concepts = await tx.concept.findMany({
@@ -470,41 +550,117 @@ export async function deleteUnit(unitId: string) {
     const conceptIds = concepts.map((concept) => concept.id)
 
     await deleteConceptDependencies(conceptIds, tx)
-
-    return tx.unit.delete({
+    const deletedUnit = await tx.unit.delete({
       where: {
         id,
       },
     })
+
+    if (unit) {
+      await rebuildConceptClosureForCourse(unit.courseId, tx)
+    }
+
+    return deletedUnit
   })
 }
 
 export async function createConcept(input: CreateConceptInput) {
+  const unitId = requireId(input.unitId, "Unit")
+  const title = requireText(input.title, "Concept title")
+  const unlockThreshold = requireProbability(input.unlockThreshold, "Unlock threshold")
+  const pLo = requireProbability(input.pLo, "P(L0)")
+  const pT = requireProbability(input.pT, "P(T)")
+  const pG = requireProbability(input.pG, "P(G)")
+  const pS = requireProbability(input.pS, "P(S)")
+  const decayLambda = requireProbability(input.decayLambda, "Decay lambda")
+  const slug = await resolveConceptSlug({
+    unitId,
+    title,
+    slug: input.slug,
+  })
+
   return prisma.concept.create({
-    data: normalizeConceptInput(input),
+    data: {
+      unitId,
+      slug,
+      title,
+      description: optionalText(input.description),
+      contentBody: optionalText(input.contentBody),
+      unlockThreshold,
+      pLo,
+      pT,
+      pG,
+      pS,
+      decayLambda,
+    },
   })
 }
 
 export async function updateConcept(conceptId: string, input: CreateConceptInput) {
+  const id = requireId(conceptId, "Concept")
+  const unitId = requireId(input.unitId, "Unit")
+  const title = requireText(input.title, "Concept title")
+  const unlockThreshold = requireProbability(input.unlockThreshold, "Unlock threshold")
+  const pLo = requireProbability(input.pLo, "P(L0)")
+  const pT = requireProbability(input.pT, "P(T)")
+  const pG = requireProbability(input.pG, "P(G)")
+  const pS = requireProbability(input.pS, "P(S)")
+  const decayLambda = requireProbability(input.decayLambda, "Decay lambda")
+  const slug = await resolveConceptSlug({
+    unitId,
+    title,
+    slug: input.slug,
+    excludeId: id,
+  })
+
   return prisma.concept.update({
     where: {
-      id: requireId(conceptId, "Concept"),
+      id,
     },
-    data: normalizeConceptInput(input),
+    data: {
+      unitId,
+      slug,
+      title,
+      description: optionalText(input.description),
+      contentBody: optionalText(input.contentBody),
+      unlockThreshold,
+      pLo,
+      pT,
+      pG,
+      pS,
+      decayLambda,
+    },
   })
 }
 
 export async function deleteConcept(conceptId: string) {
   const id = requireId(conceptId, "Concept")
+  const concept = await prisma.concept.findUnique({
+    where: {
+      id,
+    },
+    select: {
+      unit: {
+        select: {
+          courseId: true,
+        },
+      },
+    },
+  })
 
   return prisma.$transaction(async (tx) => {
     await deleteConceptDependencies([id], tx)
-
-    return tx.concept.delete({
+    const deletedConcept = await tx.concept.delete({
       where: {
         id,
       },
     })
+
+    if (concept) {
+      await rebuildConceptClosureForCourse(concept.unit.courseId, tx)
+    }
+
+    return deletedConcept
   })
 }
 
@@ -561,6 +717,13 @@ export async function setConceptPrerequisites(input: SetConceptPrerequisitesInpu
   }
 
   const existingEdges = await prisma.conceptPrerequisite.findMany({
+    where: {
+      dependentConcept: {
+        unit: {
+          courseId: concept.unit.courseId,
+        },
+      },
+    },
     select: {
       prerequisiteConceptId: true,
       dependentConceptId: true,
@@ -580,16 +743,16 @@ export async function setConceptPrerequisites(input: SetConceptPrerequisitesInpu
       },
     })
 
-    if (!prerequisiteConceptIds.length) {
-      return []
+    if (prerequisiteConceptIds.length) {
+      await tx.conceptPrerequisite.createMany({
+        data: prerequisiteConceptIds.map((prerequisiteConceptId) => ({
+          prerequisiteConceptId,
+          dependentConceptId: conceptId,
+        })),
+      })
     }
 
-    await tx.conceptPrerequisite.createMany({
-      data: prerequisiteConceptIds.map((prerequisiteConceptId) => ({
-        prerequisiteConceptId,
-        dependentConceptId: conceptId,
-      })),
-    })
+    await rebuildConceptClosureForCourse(concept.unit.courseId, tx)
 
     return tx.conceptPrerequisite.findMany({
       where: {
@@ -599,18 +762,188 @@ export async function setConceptPrerequisites(input: SetConceptPrerequisitesInpu
   })
 }
 
+export async function createConceptChunk(input: CreateConceptChunkInput) {
+  const conceptId = requireId(input.conceptId, "Concept")
+  const title = requireText(input.title, "Chunk title")
+  const authorId = optionalId(input.authorId)
+  const slug = await resolveConceptChunkSlug({
+    conceptId,
+    title,
+    slug: input.slug,
+  })
+
+  return prisma.conceptChunk.create({
+    data: {
+      conceptId,
+      slug,
+      title,
+      bodyMd: requireText(input.bodyMd, "Chunk body"),
+      order: requirePositiveInteger(input.order, "Chunk order"),
+      authorId,
+    },
+  })
+}
+
+export async function updateConceptChunk(chunkId: string, input: CreateConceptChunkInput) {
+  const id = requireId(chunkId, "Explanation chunk")
+  const conceptId = requireId(input.conceptId, "Concept")
+  const title = requireText(input.title, "Chunk title")
+  const authorId = optionalId(input.authorId)
+  const slug = await resolveConceptChunkSlug({
+    conceptId,
+    title,
+    slug: input.slug,
+    excludeId: id,
+  })
+
+  return prisma.conceptChunk.update({
+    where: {
+      id,
+    },
+    data: {
+      conceptId,
+      slug,
+      title,
+      bodyMd: requireText(input.bodyMd, "Chunk body"),
+      order: requirePositiveInteger(input.order, "Chunk order"),
+      authorId,
+    },
+  })
+}
+
+export async function deleteConceptChunk(chunkId: string) {
+  return prisma.conceptChunk.delete({
+    where: {
+      id: requireId(chunkId, "Explanation chunk"),
+    },
+  })
+}
+
+export async function createWorkedExample(input: CreateWorkedExampleInput) {
+  const conceptId = requireId(input.conceptId, "Concept")
+  const title = requireText(input.title, "Worked example title")
+  const authorId = optionalId(input.authorId)
+  const slug = await resolveWorkedExampleSlug({
+    conceptId,
+    title,
+    slug: input.slug,
+  })
+
+  return prisma.workedExample.create({
+    data: {
+      conceptId,
+      slug,
+      title,
+      problemMd: requireText(input.problemMd, "Worked example problem"),
+      solutionMd: requireText(input.solutionMd, "Worked example solution"),
+      order: requirePositiveInteger(input.order, "Worked example order"),
+      authorId,
+    },
+  })
+}
+
+export async function updateWorkedExample(exampleId: string, input: CreateWorkedExampleInput) {
+  const id = requireId(exampleId, "Worked example")
+  const conceptId = requireId(input.conceptId, "Concept")
+  const title = requireText(input.title, "Worked example title")
+  const authorId = optionalId(input.authorId)
+  const slug = await resolveWorkedExampleSlug({
+    conceptId,
+    title,
+    slug: input.slug,
+    excludeId: id,
+  })
+
+  return prisma.workedExample.update({
+    where: {
+      id,
+    },
+    data: {
+      conceptId,
+      slug,
+      title,
+      problemMd: requireText(input.problemMd, "Worked example problem"),
+      solutionMd: requireText(input.solutionMd, "Worked example solution"),
+      order: requirePositiveInteger(input.order, "Worked example order"),
+      authorId,
+    },
+  })
+}
+
+export async function deleteWorkedExample(exampleId: string) {
+  return prisma.workedExample.delete({
+    where: {
+      id: requireId(exampleId, "Worked example"),
+    },
+  })
+}
+
 export async function createQuestion(input: CreateQuestionInput) {
+  const conceptId = requireId(input.conceptId, "Concept")
+  const usage = requireEnumValue(input.usage, QuestionUsage, "Question usage")
+  const difficulty = requireEnumValue(input.difficulty, DifficultyTier, "Difficulty tier")
+  const content = requireText(input.content, "Question prompt")
+  const correctAnswer = requireText(input.correctAnswer, "Correct answer")
+  const distractors = normalizeDistractors(input.distractors) ?? Prisma.JsonNull
+  const hintText = optionalText(input.hintText)
+  const explanation = optionalText(input.explanation)
+  const authorId = optionalId(input.authorId)
+  const slug = await resolveQuestionSlug({
+    conceptId,
+    content,
+    slug: input.slug,
+  })
+
   return prisma.question.create({
-    data: normalizeQuestionInput(input),
+    data: {
+      conceptId,
+      slug,
+      usage,
+      difficulty,
+      content,
+      correctAnswer,
+      distractors,
+      hintText,
+      explanation,
+      authorId,
+    },
   })
 }
 
 export async function updateQuestion(questionId: string, input: CreateQuestionInput) {
+  const id = requireId(questionId, "Question")
+  const conceptId = requireId(input.conceptId, "Concept")
+  const usage = requireEnumValue(input.usage, QuestionUsage, "Question usage")
+  const difficulty = requireEnumValue(input.difficulty, DifficultyTier, "Difficulty tier")
+  const content = requireText(input.content, "Question prompt")
+  const correctAnswer = requireText(input.correctAnswer, "Correct answer")
+  const distractors = normalizeDistractors(input.distractors) ?? Prisma.JsonNull
+  const hintText = optionalText(input.hintText)
+  const explanation = optionalText(input.explanation)
+  const authorId = optionalId(input.authorId)
+  const slug = await resolveQuestionSlug({
+    conceptId,
+    content,
+    slug: input.slug,
+    excludeId: id,
+  })
+
   return prisma.question.update({
     where: {
-      id: requireId(questionId, "Question"),
+      id,
     },
-    data: normalizeQuestionInput(input),
+    data: {
+      conceptId,
+      slug,
+      usage,
+      difficulty,
+      content,
+      correctAnswer,
+      distractors,
+      hintText,
+      explanation,
+      authorId,
+    },
   })
 }
 
@@ -659,6 +992,30 @@ export async function deleteQuestion(questionId: string) {
   })
 }
 
+export async function listCourseAncestors(courseId: string) {
+  return getCourseAncestorLookup(courseId, prisma)
+}
+
+export async function listCourseDescendants(courseId: string) {
+  return getCourseDescendantLookup(courseId, prisma)
+}
+
+export async function getUnlockedConceptIds(courseId: string, userId: string) {
+  return getClosureBackedUnlockedConceptIds({
+    courseId,
+    userId,
+    db: prisma,
+  })
+}
+
+export async function getFringeConceptIds(courseId: string, userId: string) {
+  return getClosureBackedFringeConceptIds({
+    courseId,
+    userId,
+    db: prisma,
+  })
+}
+
 export function getDifficultyOptions() {
   return Object.values(DifficultyTier)
 }
@@ -677,55 +1034,6 @@ export function getMasteryStatusLabel(status: MasteryStatus) {
 
 export function formatDistractorsForTextarea(distractors: Prisma.JsonValue | null) {
   return Array.isArray(distractors) ? distractors.join("\n") : ""
-}
-
-function normalizeConceptInput(input: CreateConceptInput) {
-  return {
-    unitId: requireId(input.unitId, "Unit"),
-    title: requireText(input.title, "Concept title"),
-    description: optionalText(input.description),
-    contentBody: optionalText(input.contentBody),
-    unlockThreshold: requireProbability(input.unlockThreshold, "Unlock threshold"),
-    pLo: requireProbability(input.pLo, "P(L0)"),
-    pT: requireProbability(input.pT, "P(T)"),
-    pG: requireProbability(input.pG, "P(G)"),
-    pS: requireProbability(input.pS, "P(S)"),
-    decayLambda: requireProbability(input.decayLambda, "Decay lambda"),
-  }
-}
-
-function normalizeQuestionInput(input: CreateQuestionInput) {
-  const distractors = normalizeDistractors(input.distractors)
-
-  return {
-    conceptId: requireId(input.conceptId, "Concept"),
-    usage: requireEnumValue(input.usage, QuestionUsage, "Question usage"),
-    difficulty: requireEnumValue(input.difficulty, DifficultyTier, "Difficulty tier"),
-    content: requireText(input.content, "Question prompt"),
-    correctAnswer: requireText(input.correctAnswer, "Correct answer"),
-    distractors: distractors ?? Prisma.JsonNull,
-    hintText: optionalText(input.hintText),
-    explanation: optionalText(input.explanation),
-    authorId: optionalId(input.authorId),
-  }
-}
-
-function normalizeDistractors(distractors?: string[] | null) {
-  if (!distractors) {
-    return null
-  }
-
-  if (!Array.isArray(distractors)) {
-    throw new Error("Distractors must be provided as a list of answer choices.")
-  }
-
-  const values = distractors.map((value) => value.trim())
-
-  if (values.some((value) => value.length === 0)) {
-    throw new Error("Distractors cannot contain blank answer choices.")
-  }
-
-  return values.length ? values : null
 }
 
 async function validateCmsAuthorId(authorId?: string | null) {
@@ -749,6 +1057,214 @@ async function validateCmsAuthorId(authorId?: string | null) {
   }
 
   return normalizedAuthorId
+}
+
+async function resolveCourseSlug(args: {
+  title: string
+  slug?: string | null
+  excludeId?: string
+}) {
+  return resolveScopedSlug({
+    baseValue: args.slug ?? args.title,
+    fallbackPrefix: "course",
+    isTaken: async (slug) => {
+      const existing = await prisma.course.findFirst({
+        where: {
+          slug,
+          ...(args.excludeId
+            ? {
+                NOT: {
+                  id: args.excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(existing)
+    },
+  })
+}
+
+async function resolveUnitSlug(args: {
+  courseId: string
+  title: string
+  slug?: string | null
+  excludeId?: string
+}) {
+  return resolveScopedSlug({
+    baseValue: args.slug ?? args.title,
+    fallbackPrefix: "unit",
+    isTaken: async (slug) => {
+      const existing = await prisma.unit.findFirst({
+        where: {
+          courseId: args.courseId,
+          slug,
+          ...(args.excludeId
+            ? {
+                NOT: {
+                  id: args.excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(existing)
+    },
+  })
+}
+
+async function resolveConceptSlug(args: {
+  unitId: string
+  title: string
+  slug?: string | null
+  excludeId?: string
+}) {
+  return resolveScopedSlug({
+    baseValue: args.slug ?? args.title,
+    fallbackPrefix: "concept",
+    isTaken: async (slug) => {
+      const existing = await prisma.concept.findFirst({
+        where: {
+          unitId: args.unitId,
+          slug,
+          ...(args.excludeId
+            ? {
+                NOT: {
+                  id: args.excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(existing)
+    },
+  })
+}
+
+async function resolveConceptChunkSlug(args: {
+  conceptId: string
+  title: string
+  slug?: string | null
+  excludeId?: string
+}) {
+  return resolveScopedSlug({
+    baseValue: args.slug ?? args.title,
+    fallbackPrefix: "chunk",
+    isTaken: async (slug) => {
+      const existing = await prisma.conceptChunk.findFirst({
+        where: {
+          conceptId: args.conceptId,
+          slug,
+          ...(args.excludeId
+            ? {
+                NOT: {
+                  id: args.excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(existing)
+    },
+  })
+}
+
+async function resolveWorkedExampleSlug(args: {
+  conceptId: string
+  title: string
+  slug?: string | null
+  excludeId?: string
+}) {
+  return resolveScopedSlug({
+    baseValue: args.slug ?? args.title,
+    fallbackPrefix: "worked-example",
+    isTaken: async (slug) => {
+      const existing = await prisma.workedExample.findFirst({
+        where: {
+          conceptId: args.conceptId,
+          slug,
+          ...(args.excludeId
+            ? {
+                NOT: {
+                  id: args.excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(existing)
+    },
+  })
+}
+
+async function resolveQuestionSlug(args: {
+  conceptId: string
+  content: string
+  slug?: string | null
+  excludeId?: string
+}) {
+  return resolveScopedSlug({
+    baseValue: args.slug ?? args.content,
+    fallbackPrefix: "question",
+    isTaken: async (slug) => {
+      const existing = await prisma.question.findFirst({
+        where: {
+          conceptId: args.conceptId,
+          slug,
+          ...(args.excludeId
+            ? {
+                NOT: {
+                  id: args.excludeId,
+                },
+              }
+            : {}),
+        },
+        select: {
+          id: true,
+        },
+      })
+
+      return Boolean(existing)
+    },
+  })
+}
+
+async function resolveScopedSlug(args: {
+  baseValue: string
+  fallbackPrefix: string
+  isTaken: (slug: string) => Promise<boolean>
+}) {
+  const baseSlug = buildFallbackSlug(args.baseValue, args.fallbackPrefix)
+
+  for (let suffix = 1; suffix < Number.MAX_SAFE_INTEGER; suffix += 1) {
+    const candidate = withNumericSuffix(baseSlug, suffix)
+
+    if (!(await args.isTaken(candidate))) {
+      return candidate
+    }
+  }
+
+  throw new Error("Unable to allocate a unique slug.")
 }
 
 async function deleteConceptDependencies(conceptIds: string[], db: DbClient) {
@@ -818,6 +1334,22 @@ async function deleteConceptDependencies(conceptIds: string[], db: DbClient) {
       },
     },
   })
+  await db.conceptClosure.deleteMany({
+    where: {
+      OR: [
+        {
+          ancestorConceptId: {
+            in: conceptIds,
+          },
+        },
+        {
+          descendantConceptId: {
+            in: conceptIds,
+          },
+        },
+      ],
+    },
+  })
   await db.conceptPrerequisite.deleteMany({
     where: {
       OR: [
@@ -834,6 +1366,20 @@ async function deleteConceptDependencies(conceptIds: string[], db: DbClient) {
       ],
     },
   })
+  await db.conceptChunk.deleteMany({
+    where: {
+      conceptId: {
+        in: conceptIds,
+      },
+    },
+  })
+  await db.workedExample.deleteMany({
+    where: {
+      conceptId: {
+        in: conceptIds,
+      },
+    },
+  })
   await db.question.deleteMany({
     where: {
       conceptId: {
@@ -841,6 +1387,24 @@ async function deleteConceptDependencies(conceptIds: string[], db: DbClient) {
       },
     },
   })
+}
+
+function normalizeDistractors(distractors?: string[] | null) {
+  if (!distractors) {
+    return null
+  }
+
+  if (!Array.isArray(distractors)) {
+    throw new Error("Distractors must be provided as a list of answer choices.")
+  }
+
+  const values = distractors.map((value) => value.trim())
+
+  if (values.some((value) => value.length === 0)) {
+    throw new Error("Distractors cannot contain blank answer choices.")
+  }
+
+  return values.length ? values : null
 }
 
 function requireText(value: string | null | undefined, fieldLabel: string) {

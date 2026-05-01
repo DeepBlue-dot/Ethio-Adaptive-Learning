@@ -1,0 +1,44 @@
+{
+  "slug": "quadratic-functions",
+  "title": "Quadratic Functions",
+  "description": "Explore parabolas, vertex form, and factoring-based reasoning about quadratic expressions.",
+  "overview": "overview.md",
+  "unlockThreshold": 0.9,
+  "pLo": 0.15,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.01,
+  "prerequisites": [
+    "functions-and-graphs/linear-functions"
+  ],
+  "chunks": [
+    {
+      "slug": "standard-and-vertex-form",
+      "title": "Standard and vertex form",
+      "order": 1,
+      "file": "chunks/01-standard-and-vertex-form.md"
+    },
+    {
+      "slug": "factoring-and-roots",
+      "title": "Factoring and roots",
+      "order": 2,
+      "file": "chunks/02-factoring-and-roots.md"
+    }
+  ],
+  "workedExamples": [
+    {
+      "slug": "factor-a-basic-quadratic",
+      "title": "Factor a basic quadratic",
+      "order": 1,
+      "file": "worked-examples/01-factor-a-basic-quadratic.md"
+    },
+    {
+      "slug": "read-a-vertex-from-vertex-form",
+      "title": "Read a vertex from vertex form",
+      "order": 2,
+      "file": "worked-examples/02-read-a-vertex-from-vertex-form.md"
+    }
+  ],
+  "questions": "questions.json"
+}

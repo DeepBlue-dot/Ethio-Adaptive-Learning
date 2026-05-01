@@ -1,0 +1,32 @@
+[
+  {
+    "slug": "identify-slope-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "If `f(x) = 2x + 3`, what is the slope of the line?",
+    "correctAnswer": "2",
+    "distractors": ["3", "-2", "5"],
+    "hintText": "The slope is the coefficient of `x`.",
+    "explanation": "In slope-intercept form, the coefficient of `x` is the slope."
+  },
+  {
+    "slug": "identify-intercept-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "If `f(x) = 2x + 3`, what is the `y`-intercept?",
+    "correctAnswer": "3",
+    "distractors": ["2", "-3", "5"],
+    "hintText": "The intercept is the constant term in `f(x) = mx + b`.",
+    "explanation": "The line crosses the `y`-axis at the constant term, so the intercept is `3`."
+  },
+  {
+    "slug": "evaluate-linear-function-exam",
+    "usage": "EXAM",
+    "difficulty": "MEDIUM",
+    "content": "Find the value of `f(2)` when `f(x) = 2x + 3`.",
+    "correctAnswer": "7",
+    "distractors": ["5", "4", "6"],
+    "hintText": "Substitute `2` for `x`.",
+    "explanation": "Substituting gives `f(2) = 2(2) + 3 = 7`."
+  }
+]

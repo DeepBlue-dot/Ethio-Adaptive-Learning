@@ -1,0 +1,42 @@
+[
+  {
+    "slug": "identify-parabola-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the shape of the graph of a quadratic function?",
+    "correctAnswer": "Parabola",
+    "distractors": ["Line", "Circle", "Hyperbola"],
+    "hintText": "Think about the graph of `y = x^2`.",
+    "explanation": "Quadratic functions graph as parabolas."
+  },
+  {
+    "slug": "factor-basic-quadratic-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Factor `x^2 - 5x + 6`.",
+    "correctAnswer": "(x - 2)(x - 3)",
+    "distractors": ["(x + 2)(x + 3)", "x(x - 5) + 6", "(x - 1)(x - 6)"],
+    "hintText": "Look for two numbers whose product is `6` and sum is `-5`.",
+    "explanation": "The numbers are `-2` and `-3`, so the factorization is `(x - 2)(x - 3)`."
+  },
+  {
+    "slug": "factor-basic-quadratic-exam",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Factor `x^2 - 5x + 6` completely.",
+    "correctAnswer": "(x - 2)(x - 3)",
+    "distractors": ["(x + 2)(x + 3)", "(x - 1)(x - 6)", "x(x - 5) + 6"],
+    "hintText": "Use two numbers whose product is `6` and sum is `-5`.",
+    "explanation": "The correct factorization is `(x - 2)(x - 3)`."
+  },
+  {
+    "slug": "read-vertex-exam",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "What is the vertex of `y = (x - 1)^2 + 2`?",
+    "correctAnswer": "(1, 2)",
+    "distractors": ["(-1, 2)", "(1, -2)", "(2, 1)"],
+    "hintText": "Read the translation directly from vertex form.",
+    "explanation": "In `y = (x - h)^2 + k`, the vertex is `(h, k)`."
+  }
+]

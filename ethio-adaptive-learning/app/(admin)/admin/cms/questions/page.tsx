@@ -23,6 +23,11 @@ type AdminQuestionsPageProps = {
 type QuestionData = Awaited<ReturnType<typeof getQuestionCmsData>>
 type QuestionRecord = QuestionData["questions"][number]
 
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+})
+
 export default async function AdminQuestionsPage({
   searchParams,
 }: AdminQuestionsPageProps) {
@@ -174,6 +179,9 @@ export default async function AdminQuestionsPage({
                     {question.difficulty} • {question.usage}
                     {question.author ? ` • authored by ${question.author.username}` : ""}
                   </p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    concept slug: <span className="font-mono">{question.concept.slug}</span>
+                  </p>
                 </div>
               </div>
 
@@ -318,6 +326,15 @@ function QuestionForm({
         </label>
       </div>
 
+      {question ? (
+        <MetadataRow
+          authorLabel={question.author?.username ?? null}
+          createdAt={question.createdAt}
+          slug={question.slug}
+          updatedAt={question.updatedAt}
+        />
+      ) : null}
+
       <div className="flex flex-wrap gap-3">
         <Button type="submit">{submitLabel}</Button>
       </div>
@@ -376,6 +393,29 @@ function EmptyState({
     <div className="rounded-[2rem] border border-dashed border-border bg-white px-6 py-10 text-center shadow-sm">
       <h3 className="text-xl font-semibold text-foreground">{title}</h3>
       <p className="mt-3 text-sm leading-6 text-muted-foreground">{description}</p>
+    </div>
+  )
+}
+
+function MetadataRow({
+  slug,
+  createdAt,
+  updatedAt,
+  authorLabel,
+}: {
+  slug: string
+  createdAt: Date
+  updatedAt: Date
+  authorLabel: string | null
+}) {
+  return (
+    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-muted-foreground">
+      <p>
+        slug: <span className="font-mono">{slug}</span>
+      </p>
+      {authorLabel ? <p className="mt-1">author: {authorLabel}</p> : null}
+      <p className="mt-1">created: {dateTimeFormatter.format(createdAt)}</p>
+      <p className="mt-1">updated: {dateTimeFormatter.format(updatedAt)}</p>
     </div>
   )
 }

@@ -5,17 +5,26 @@ const mocks = vi.hoisted(() => ({
   userFindUnique: vi.fn(),
   courseCreate: vi.fn(),
   courseFindMany: vi.fn(),
+  courseFindFirst: vi.fn(),
   unitCreate: vi.fn(),
+  unitFindFirst: vi.fn(),
   conceptCreate: vi.fn(),
-  questionCreate: vi.fn(),
   conceptFindUnique: vi.fn(),
   conceptFindMany: vi.fn(),
+  conceptFindFirst: vi.fn(),
+  questionCreate: vi.fn(),
+  questionFindFirst: vi.fn(),
   prerequisiteFindMany: vi.fn(),
-  userMasteryFindMany: vi.fn(),
   transactionDeleteMany: vi.fn(),
   transactionCreateMany: vi.fn(),
   transactionFindMany: vi.fn(),
   transaction: vi.fn(),
+  loadCourseUserState: vi.fn(),
+  rebuildConceptClosureForCourse: vi.fn(),
+  listCourseAncestors: vi.fn(),
+  listCourseDescendants: vi.fn(),
+  getUnlockedConceptIds: vi.fn(),
+  getFringeConceptIds: vi.fn(),
 }))
 
 vi.mock("@/lib/prisma", () => ({
@@ -23,29 +32,39 @@ vi.mock("@/lib/prisma", () => ({
     user: {
       findUnique: mocks.userFindUnique,
     },
-    userMastery: {
-      findMany: mocks.userMasteryFindMany,
-    },
     course: {
       create: mocks.courseCreate,
       findMany: mocks.courseFindMany,
+      findFirst: mocks.courseFindFirst,
     },
     unit: {
       create: mocks.unitCreate,
+      findFirst: mocks.unitFindFirst,
     },
     concept: {
       create: mocks.conceptCreate,
       findUnique: mocks.conceptFindUnique,
       findMany: mocks.conceptFindMany,
+      findFirst: mocks.conceptFindFirst,
     },
     question: {
       create: mocks.questionCreate,
+      findFirst: mocks.questionFindFirst,
     },
     conceptPrerequisite: {
       findMany: mocks.prerequisiteFindMany,
     },
     $transaction: mocks.transaction,
   },
+}))
+
+vi.mock("@/lib/curriculum-graph", () => ({
+  loadCourseUserState: mocks.loadCourseUserState,
+  rebuildConceptClosureForCourse: mocks.rebuildConceptClosureForCourse,
+  listCourseAncestors: mocks.listCourseAncestors,
+  listCourseDescendants: mocks.listCourseDescendants,
+  getUnlockedConceptIds: mocks.getUnlockedConceptIds,
+  getFringeConceptIds: mocks.getFringeConceptIds,
 }))
 
 import {
@@ -59,19 +78,17 @@ import {
 
 describe("lib/curriculum", () => {
   beforeEach(() => {
-    mocks.userFindUnique.mockReset()
-    mocks.courseCreate.mockReset()
-    mocks.courseFindMany.mockReset()
-    mocks.unitCreate.mockReset()
-    mocks.conceptCreate.mockReset()
-    mocks.questionCreate.mockReset()
-    mocks.conceptFindUnique.mockReset()
-    mocks.conceptFindMany.mockReset()
-    mocks.prerequisiteFindMany.mockReset()
-    mocks.userMasteryFindMany.mockReset()
-    mocks.transactionDeleteMany.mockReset()
-    mocks.transactionCreateMany.mockReset()
-    mocks.transactionFindMany.mockReset()
+    Object.values(mocks).forEach((mock) => {
+      if ("mockReset" in mock) {
+        mock.mockReset()
+      }
+    })
+
+    mocks.courseFindFirst.mockResolvedValue(null)
+    mocks.unitFindFirst.mockResolvedValue(null)
+    mocks.conceptFindFirst.mockResolvedValue(null)
+    mocks.questionFindFirst.mockResolvedValue(null)
+    mocks.rebuildConceptClosureForCourse.mockResolvedValue([])
     mocks.transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
       callback({
         conceptPrerequisite: {
@@ -95,6 +112,7 @@ describe("lib/curriculum", () => {
 
     expect(mocks.courseCreate).toHaveBeenCalledWith({
       data: {
+        slug: "grade-12-mathematics",
         title: "Grade 12 Mathematics",
         description: "Core exam preparation",
         authorId: "writer_1",
@@ -169,6 +187,7 @@ describe("lib/curriculum", () => {
     expect(mocks.questionCreate).toHaveBeenCalledWith({
       data: {
         conceptId: "concept_1",
+        slug: "factor-x-2-5x-6",
         usage: QuestionUsage.CHECKPOINT,
         difficulty: DifficultyTier.HARD,
         content: "Factor x^2 - 5x + 6",
@@ -196,6 +215,7 @@ describe("lib/curriculum", () => {
     expect(mocks.questionCreate).toHaveBeenCalledWith({
       data: {
         conceptId: "concept_2",
+        slug: "find-the-limit-of-x-2-as-x-approaches-2",
         usage: QuestionUsage.EXAM,
         difficulty: DifficultyTier.MEDIUM,
         content: "Find the limit of x^2 as x approaches 2.",
@@ -208,53 +228,41 @@ describe("lib/curriculum", () => {
     })
   })
 
-  it("builds the student concept catalog with derived unlock states", async () => {
+  it("builds the student concept catalog with closure-backed unlock states", async () => {
     mocks.courseFindMany.mockResolvedValueOnce([
       {
         id: "course_math",
+        slug: "grade-12-mathematics",
         title: "Grade 12 Mathematics",
         units: [
           {
             id: "unit_functions",
+            slug: "functions-and-graphs",
             title: "Functions and Graphs",
             order: 1,
             concepts: [
               {
                 id: "concept_linear",
+                slug: "linear-functions",
                 title: "Linear Functions",
                 description: "Slope and intercept form",
                 unlockThreshold: 0.9,
-                prerequisiteEdges: [],
                 questions: [{ id: "question_linear_1" }],
               },
               {
                 id: "concept_quadratic",
+                slug: "quadratic-functions",
                 title: "Quadratic Functions",
                 description: "Parabolas and factoring",
                 unlockThreshold: 0.9,
-                prerequisiteEdges: [
-                  {
-                    prerequisiteConcept: {
-                      id: "concept_linear",
-                      title: "Linear Functions",
-                    },
-                  },
-                ],
                 questions: [{ id: "question_quadratic_1" }, { id: "question_quadratic_2" }],
               },
               {
                 id: "concept_limits",
+                slug: "limits",
                 title: "Limits",
                 description: "Approaching a value",
                 unlockThreshold: 0.9,
-                prerequisiteEdges: [
-                  {
-                    prerequisiteConcept: {
-                      id: "concept_quadratic",
-                      title: "Quadratic Functions",
-                    },
-                  },
-                ],
                 questions: [],
               },
             ],
@@ -262,40 +270,68 @@ describe("lib/curriculum", () => {
         ],
       },
     ])
-    mocks.userMasteryFindMany.mockResolvedValueOnce([
-      {
-        conceptId: "concept_linear",
-        pMastery: 0.96,
-        lastAssessedAt: null,
-        nextReviewAt: null,
-        unlockedAt: new Date("2026-04-01T00:00:00.000Z"),
-        status: "MASTERED",
-      },
-    ])
+    mocks.loadCourseUserState.mockResolvedValueOnce({
+      statuses: new Map([
+        [
+          "concept_linear",
+          {
+            status: "MASTERED",
+            unlocked: true,
+            unmetPrerequisites: [],
+            masteryProbability: 0.96,
+            effectiveMastery: 0.96,
+            nextReviewAt: null,
+          },
+        ],
+        [
+          "concept_quadratic",
+          {
+            status: "FRINGE",
+            unlocked: true,
+            unmetPrerequisites: [],
+            masteryProbability: null,
+            effectiveMastery: null,
+            nextReviewAt: null,
+          },
+        ],
+        [
+          "concept_limits",
+          {
+            status: "LOCKED",
+            unlocked: false,
+            unmetPrerequisites: [
+              {
+                conceptId: "concept_quadratic",
+                title: "Quadratic Functions",
+                currentMastery: 0,
+              },
+            ],
+            masteryProbability: null,
+            effectiveMastery: null,
+            nextReviewAt: null,
+          },
+        ],
+      ]),
+    })
 
     const catalog = await getStudentConceptCatalog("student_1")
 
-    expect(mocks.userMasteryFindMany).toHaveBeenCalledWith({
-      where: {
-        userId: "student_1",
-        conceptId: {
-          in: ["concept_linear", "concept_quadratic", "concept_limits"],
-        },
-      },
-    })
-
+    expect(mocks.loadCourseUserState).toHaveBeenCalledWith("course_math", "student_1")
     expect(catalog).toEqual([
       {
         id: "course_math",
+        slug: "grade-12-mathematics",
         title: "Grade 12 Mathematics",
         units: [
           {
             id: "unit_functions",
+            slug: "functions-and-graphs",
             title: "Functions and Graphs",
             order: 1,
             concepts: [
               {
                 id: "concept_linear",
+                slug: "linear-functions",
                 title: "Linear Functions",
                 description: "Slope and intercept form",
                 questionCount: 1,
@@ -309,6 +345,7 @@ describe("lib/curriculum", () => {
               },
               {
                 id: "concept_quadratic",
+                slug: "quadratic-functions",
                 title: "Quadratic Functions",
                 description: "Parabolas and factoring",
                 questionCount: 2,
@@ -322,6 +359,7 @@ describe("lib/curriculum", () => {
               },
               {
                 id: "concept_limits",
+                slug: "limits",
                 title: "Limits",
                 description: "Approaching a value",
                 questionCount: 0,
@@ -370,7 +408,7 @@ describe("lib/curriculum", () => {
     ).rejects.toThrow("Prerequisites must belong to the same course as the concept.")
   })
 
-  it("replaces prerequisite edges after validation succeeds", async () => {
+  it("replaces prerequisite edges and refreshes closure rows after validation succeeds", async () => {
     mocks.conceptFindUnique.mockResolvedValueOnce({
       id: "concept_target",
       unit: {
@@ -418,5 +456,9 @@ describe("lib/curriculum", () => {
         },
       ],
     })
+    expect(mocks.rebuildConceptClosureForCourse).toHaveBeenCalledWith(
+      "course_math",
+      expect.any(Object)
+    )
   })
 })

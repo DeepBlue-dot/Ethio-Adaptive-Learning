@@ -1,13 +1,17 @@
 import type { ReactNode } from "react"
-import { BookOpenText, Network, PencilRuler, PlusCircle } from "lucide-react"
+import { BookOpenText, Blocks, Network, PencilRuler, PlusCircle, Sigma } from "lucide-react"
 
 import {
   deleteConceptAction,
+  deleteConceptChunkAction,
   deleteCourseAction,
   deleteUnitAction,
+  deleteWorkedExampleAction,
   saveConceptAction,
+  saveConceptChunkAction,
   saveCourseAction,
   saveUnitAction,
+  saveWorkedExampleAction,
   toggleCourseArchiveAction,
 } from "./actions"
 import { Button } from "@/components/ui/button"
@@ -26,7 +30,13 @@ type ConceptsPageProps = {
 
 type CmsData = Awaited<ReturnType<typeof getCurriculumCmsData>>
 type CourseRecord = CmsData["courses"][number]
+type ConceptRecord = CourseRecord["units"][number]["concepts"][number]
 type AuthorRecord = CmsData["authors"][number]
+
+const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "medium",
+  timeStyle: "short",
+})
 
 export default async function AdminConceptsPage({ searchParams }: ConceptsPageProps) {
   await requireRole(["ADMIN", "COURSE_WRITER"])
@@ -44,11 +54,11 @@ export default async function AdminConceptsPage({ searchParams }: ConceptsPagePr
         </p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight">Math curriculum authoring</h1>
         <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
-          Build the course tree, define concept prerequisites, and tune baseline mastery parameters
-          from one server-rendered workspace.
+          Build the course tree, define concept prerequisites, and author structured explanation
+          content with Markdown and LaTeX.
         </p>
 
-        <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <div className="mt-8 grid gap-4 md:grid-cols-4">
           <StatCard label="Active courses" value={activeCourses.length} icon={<BookOpenText className="size-5" />} />
           <StatCard
             label="Units"
@@ -63,6 +73,20 @@ export default async function AdminConceptsPage({ searchParams }: ConceptsPagePr
               0
             )}
             icon={<Network className="size-5" />}
+          />
+          <StatCard
+            label="Worked examples"
+            value={activeCourses.reduce(
+              (total, course) =>
+                total +
+                course.units.reduce(
+                  (unitTotal, unit) =>
+                    unitTotal + unit.concepts.reduce((conceptTotal, concept) => conceptTotal + concept.workedExamples.length, 0),
+                  0
+                ),
+              0
+            )}
+            icon={<Sigma className="size-5" />}
           />
         </div>
       </section>
@@ -121,19 +145,15 @@ export default async function AdminConceptsPage({ searchParams }: ConceptsPagePr
       </section>
 
       <section className="space-y-6">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">Active curriculum</h2>
-            <p className="text-sm text-muted-foreground">
-              Courses, units, and concept nodes are ordered exactly as learners will experience them.
-            </p>
-          </div>
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Active curriculum</h2>
+          <p className="text-sm text-muted-foreground">
+            Courses, units, concept graph edges, explanation chunks, and worked examples live together here.
+          </p>
         </div>
 
         {activeCourses.length ? (
-          activeCourses.map((course) => (
-            <CourseEditor key={course.id} authors={authors} course={course} />
-          ))
+          activeCourses.map((course) => <CourseEditor key={course.id} authors={authors} course={course} />)
         ) : (
           <EmptyState
             title="No active courses yet"
@@ -188,8 +208,7 @@ function CourseEditor({
             ) : null}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            {course.units.length} units,{" "}
-            {course.units.reduce((total, unit) => total + unit.concepts.length, 0)} concepts
+            slug: <span className="font-mono">{course.slug}</span>
           </p>
         </div>
       </div>
@@ -281,6 +300,9 @@ function CourseEditor({
                     Unit {unit.order}
                   </p>
                   <h4 className="mt-2 text-xl font-semibold text-foreground">{unit.title}</h4>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    slug: <span className="font-mono">{unit.slug}</span>
+                  </p>
                 </div>
               </div>
 
@@ -315,7 +337,7 @@ function CourseEditor({
               <section className="mt-8 rounded-3xl bg-white p-6">
                 <h5 className="text-lg font-semibold text-foreground">Create concept</h5>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Define the lesson body, tuning defaults, and prerequisite concepts that unlock this node.
+                  Define the overview body, explanation chunks, worked examples, and prerequisite graph.
                 </p>
 
                 <ConceptForm
@@ -333,7 +355,7 @@ function CourseEditor({
                         <div>
                           <h5 className="text-lg font-semibold text-foreground">{concept.title}</h5>
                           <p className="mt-2 text-sm text-muted-foreground">
-                            {concept.questions.length} questions linked
+                            slug: <span className="font-mono">{concept.slug}</span> • {concept.questions.length} questions • {concept.chunks.length} chunks • {concept.workedExamples.length} worked examples
                           </p>
                         </div>
                       </div>
@@ -345,7 +367,59 @@ function CourseEditor({
                         unitId={unit.id}
                       />
 
-                      <form action={deleteConceptAction} className="mt-4">
+                      <div className="mt-8 grid gap-6 xl:grid-cols-2">
+                        <ContentCollectionCard
+                          description="Ordered explanation blocks for structured lesson flow."
+                          emptyMessage="No explanation chunks yet."
+                          icon={<Blocks className="size-5" />}
+                          isEmpty={concept.chunks.length === 0}
+                          title="Explanation chunks"
+                        >
+                          <ChunkForm concept={concept} submitLabel="Add explanation chunk" />
+                          <div className="mt-6 space-y-4">
+                            {concept.chunks.map((chunk) => (
+                              <EditableCard
+                                key={chunk.id}
+                                action={deleteConceptChunkAction}
+                                deleteIdField="chunkId"
+                                deleteIdValue={chunk.id}
+                                submitLabel="Delete chunk"
+                              >
+                                <ChunkForm chunk={chunk} concept={concept} submitLabel="Save explanation chunk" />
+                              </EditableCard>
+                            ))}
+                          </div>
+                        </ContentCollectionCard>
+
+                        <ContentCollectionCard
+                          description="Problem-and-solution pairs for guided worked examples."
+                          emptyMessage="No worked examples yet."
+                          icon={<Sigma className="size-5" />}
+                          isEmpty={concept.workedExamples.length === 0}
+                          title="Worked examples"
+                        >
+                          <WorkedExampleForm concept={concept} submitLabel="Add worked example" />
+                          <div className="mt-6 space-y-4">
+                            {concept.workedExamples.map((example) => (
+                              <EditableCard
+                                key={example.id}
+                                action={deleteWorkedExampleAction}
+                                deleteIdField="exampleId"
+                                deleteIdValue={example.id}
+                                submitLabel="Delete worked example"
+                              >
+                                <WorkedExampleForm
+                                  concept={concept}
+                                  example={example}
+                                  submitLabel="Save worked example"
+                                />
+                              </EditableCard>
+                            ))}
+                          </div>
+                        </ContentCollectionCard>
+                      </div>
+
+                      <form action={deleteConceptAction} className="mt-6">
                         <input name="returnTo" type="hidden" value={PAGE_PATH} />
                         <input name="conceptId" type="hidden" value={concept.id} />
                         <Button type="submit" variant="destructive">
@@ -385,7 +459,7 @@ function ConceptForm({
     title: string
     unitTitle: string
   }>
-  concept?: CourseRecord["units"][number]["concepts"][number]
+  concept?: ConceptRecord
 }) {
   const selectedPrerequisiteIds = concept?.prerequisiteEdges.map(
     (prerequisiteEdge) => prerequisiteEdge.prerequisiteConceptId
@@ -428,12 +502,12 @@ function ConceptForm({
       </label>
 
       <label className="block text-sm font-medium text-foreground">
-        Lesson content
+        Overview / summary
         <textarea
           className={textareaClassName}
           defaultValue={concept?.contentBody ?? ""}
           name="contentBody"
-          placeholder="Use Markdown and LaTeX to store the lesson explanation, worked examples, and summary."
+          placeholder="Use Markdown and LaTeX to store the concept overview, summary, or study guide."
           rows={8}
         />
       </label>
@@ -471,6 +545,201 @@ function ConceptForm({
         <Button type="submit">{submitLabel}</Button>
       </div>
     </form>
+  )
+}
+
+function ChunkForm({
+  concept,
+  chunk,
+  submitLabel,
+}: {
+  concept: ConceptRecord
+  chunk?: ConceptRecord["chunks"][number]
+  submitLabel: string
+}) {
+  return (
+    <form action={saveConceptChunkAction} className="grid gap-4">
+      <input name="returnTo" type="hidden" value={PAGE_PATH} />
+      <input name="conceptId" type="hidden" value={concept.id} />
+      <input name="chunkId" type="hidden" value={chunk?.id ?? ""} />
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_140px]">
+        <label className="block text-sm font-medium text-foreground">
+          Chunk title
+          <input className={inputClassName} defaultValue={chunk?.title ?? ""} name="title" />
+        </label>
+
+        <label className="block text-sm font-medium text-foreground">
+          Order
+          <input
+            className={inputClassName}
+            defaultValue={chunk?.order ?? concept.chunks.length + 1}
+            min={1}
+            name="order"
+            type="number"
+          />
+        </label>
+      </div>
+
+      <label className="block text-sm font-medium text-foreground">
+        Markdown / LaTeX body
+        <textarea
+          className={textareaClassName}
+          defaultValue={chunk?.bodyMd ?? ""}
+          name="bodyMd"
+          rows={6}
+        />
+      </label>
+
+      {chunk ? <MetadataRow createdAt={chunk.createdAt} slug={chunk.slug} updatedAt={chunk.updatedAt} /> : null}
+
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit">{submitLabel}</Button>
+      </div>
+    </form>
+  )
+}
+
+function WorkedExampleForm({
+  concept,
+  example,
+  submitLabel,
+}: {
+  concept: ConceptRecord
+  example?: ConceptRecord["workedExamples"][number]
+  submitLabel: string
+}) {
+  return (
+    <form action={saveWorkedExampleAction} className="grid gap-4">
+      <input name="returnTo" type="hidden" value={PAGE_PATH} />
+      <input name="conceptId" type="hidden" value={concept.id} />
+      <input name="exampleId" type="hidden" value={example?.id ?? ""} />
+
+      <div className="grid gap-4 lg:grid-cols-[1fr_140px]">
+        <label className="block text-sm font-medium text-foreground">
+          Worked example title
+          <input className={inputClassName} defaultValue={example?.title ?? ""} name="title" />
+        </label>
+
+        <label className="block text-sm font-medium text-foreground">
+          Order
+          <input
+            className={inputClassName}
+            defaultValue={example?.order ?? concept.workedExamples.length + 1}
+            min={1}
+            name="order"
+            type="number"
+          />
+        </label>
+      </div>
+
+      <label className="block text-sm font-medium text-foreground">
+        Problem (Markdown / LaTeX)
+        <textarea
+          className={textareaClassName}
+          defaultValue={example?.problemMd ?? ""}
+          name="problemMd"
+          rows={5}
+        />
+      </label>
+
+      <label className="block text-sm font-medium text-foreground">
+        Solution (Markdown / LaTeX)
+        <textarea
+          className={textareaClassName}
+          defaultValue={example?.solutionMd ?? ""}
+          name="solutionMd"
+          rows={6}
+        />
+      </label>
+
+      {example ? <MetadataRow createdAt={example.createdAt} slug={example.slug} updatedAt={example.updatedAt} /> : null}
+
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit">{submitLabel}</Button>
+      </div>
+    </form>
+  )
+}
+
+function EditableCard({
+  children,
+  action,
+  deleteIdField,
+  deleteIdValue,
+  submitLabel,
+}: {
+  children: ReactNode
+  action: (formData: FormData) => void | Promise<void>
+  deleteIdField: string
+  deleteIdValue: string
+  submitLabel: string
+}) {
+  return (
+    <div className="rounded-3xl border border-border bg-slate-50 p-5">
+      {children}
+      <form action={action} className="mt-4">
+        <input name="returnTo" type="hidden" value={PAGE_PATH} />
+        <input name={deleteIdField} type="hidden" value={deleteIdValue} />
+        <Button type="submit" variant="destructive">
+          {submitLabel}
+        </Button>
+      </form>
+    </div>
+  )
+}
+
+function ContentCollectionCard({
+  title,
+  description,
+  icon,
+  emptyMessage,
+  isEmpty,
+  children,
+}: {
+  title: string
+  description: string
+  icon: ReactNode
+  emptyMessage: string
+  isEmpty: boolean
+  children: ReactNode
+}) {
+  return (
+    <section className="rounded-[2rem] border border-border bg-white p-6 shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="rounded-2xl bg-secondary p-3 text-secondary-foreground">{icon}</div>
+        <div>
+          <h6 className="text-lg font-semibold text-foreground">{title}</h6>
+          <p className="text-sm text-muted-foreground">{description}</p>
+        </div>
+      </div>
+
+      <div className="mt-6">{children}</div>
+
+      {isEmpty ? (
+        <p className="mt-4 text-sm text-muted-foreground">{emptyMessage}</p>
+      ) : null}
+    </section>
+  )
+}
+
+function MetadataRow({
+  slug,
+  createdAt,
+  updatedAt,
+}: {
+  slug: string
+  createdAt: Date
+  updatedAt: Date
+}) {
+  return (
+    <div className="rounded-2xl bg-white px-4 py-3 text-xs text-muted-foreground shadow-sm">
+      <p>
+        slug: <span className="font-mono">{slug}</span>
+      </p>
+      <p className="mt-1">created: {dateTimeFormatter.format(createdAt)}</p>
+      <p className="mt-1">updated: {dateTimeFormatter.format(updatedAt)}</p>
+    </div>
   )
 }
 

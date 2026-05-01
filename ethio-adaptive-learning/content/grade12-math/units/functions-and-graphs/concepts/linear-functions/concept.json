@@ -1,0 +1,36 @@
+{
+  "slug": "linear-functions",
+  "title": "Linear Functions",
+  "description": "Understand slope, intercept form, and how linear relationships behave on a graph.",
+  "overview": "overview.md",
+  "unlockThreshold": 0.9,
+  "pLo": 0.15,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.01,
+  "prerequisites": [],
+  "chunks": [
+    {
+      "slug": "slope-intercept-form",
+      "title": "Slope-intercept form",
+      "order": 1,
+      "file": "chunks/01-slope-intercept-form.md"
+    },
+    {
+      "slug": "reading-linear-graphs",
+      "title": "Reading linear graphs",
+      "order": 2,
+      "file": "chunks/02-reading-linear-graphs.md"
+    }
+  ],
+  "workedExamples": [
+    {
+      "slug": "identify-slope-and-intercept",
+      "title": "Identify slope and intercept",
+      "order": 1,
+      "file": "worked-examples/01-identify-slope-and-intercept.md"
+    }
+  ],
+  "questions": "questions.json"
+}

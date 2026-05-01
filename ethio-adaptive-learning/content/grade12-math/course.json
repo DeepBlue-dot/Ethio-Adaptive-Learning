@@ -1,0 +1,9 @@
+{
+  "slug": "grade-12-mathematics",
+  "title": "Grade 12 Mathematics",
+  "description": "Curriculum-aligned Grade 12 mathematics concepts, prerequisite sequencing, and a question bank for adaptive learning and exam preparation.",
+  "units": [
+    "units/functions-and-graphs/unit.json",
+    "units/foundations-of-calculus/unit.json"
+  ]
+}

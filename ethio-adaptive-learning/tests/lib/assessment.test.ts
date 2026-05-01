@@ -16,7 +16,7 @@ const mocks = vi.hoisted(() => ({
   userMasteryUpdate: vi.fn(),
   userMasteryUpsert: vi.fn(),
   unitFindUnique: vi.fn(),
-  conceptFindMany: vi.fn(),
+  loadCourseUserState: vi.fn(),
 }))
 
 vi.mock("@/lib/prisma", () => ({
@@ -26,6 +26,10 @@ vi.mock("@/lib/prisma", () => ({
       findMany: mocks.topLevelUserMasteryFindMany,
     },
   },
+}))
+
+vi.mock("@/lib/curriculum-graph", () => ({
+  loadCourseUserState: mocks.loadCourseUserState,
 }))
 
 import { getReviewQueue, submitExamAttempt, submitPracticeAttempt } from "@/lib/assessment"
@@ -66,9 +70,6 @@ describe("lib/assessment", () => {
         },
         unit: {
           findUnique: mocks.unitFindUnique,
-        },
-        concept: {
-          findMany: mocks.conceptFindMany,
         },
       })
     )
@@ -210,41 +211,46 @@ describe("lib/assessment", () => {
       status: "FRINGE",
       consecutiveFails: 0,
     })
-    mocks.conceptFindMany.mockResolvedValueOnce([
-      {
-        id: "concept_quadratic",
-        pLo: 0.15,
-        unlockThreshold: 0.9,
-        prerequisiteEdges: [
+    mocks.loadCourseUserState.mockResolvedValueOnce({
+      concepts: [
+        {
+          id: "concept_quadratic",
+          pLo: 0.15,
+        },
+        {
+          id: "concept_limits",
+          pLo: 0.15,
+        },
+      ],
+      masteries: [
+        {
+          userId: "student_1",
+          conceptId: "concept_quadratic",
+          pMastery: 0.9,
+          lastAssessedAt: new Date("2026-04-04T00:00:00.000Z"),
+          nextReviewAt: new Date("2026-04-20T00:00:00.000Z"),
+          unlockedAt: new Date("2026-04-03T00:00:00.000Z"),
+          status: "MASTERED",
+          consecutiveFails: 0,
+        },
+      ],
+      statuses: new Map([
+        [
+          "concept_quadratic",
           {
-            prerequisiteConceptId: "concept_linear",
-          },
-        ],
-        userMasteries: [
-          {
-            userId: "student_1",
-            conceptId: "concept_quadratic",
-            pMastery: 0.9,
-            lastAssessedAt: new Date("2026-04-04T00:00:00.000Z"),
-            nextReviewAt: new Date("2026-04-20T00:00:00.000Z"),
-            unlockedAt: new Date("2026-04-03T00:00:00.000Z"),
+            unlocked: true,
             status: "MASTERED",
-            consecutiveFails: 0,
           },
         ],
-      },
-      {
-        id: "concept_limits",
-        pLo: 0.15,
-        unlockThreshold: 0.9,
-        prerequisiteEdges: [
+        [
+          "concept_limits",
           {
-            prerequisiteConceptId: "concept_quadratic",
+            unlocked: true,
+            status: "FRINGE",
           },
         ],
-        userMasteries: [],
-      },
-    ])
+      ]),
+    })
 
     const result = await submitExamAttempt("student_1", "exam_attempt_1", {
       question_exam_1: "A",
@@ -281,7 +287,6 @@ describe("lib/assessment", () => {
         status: "FRINGE",
         pMastery: 0.15,
       }),
-      select: expect.any(Object),
     })
   })
 

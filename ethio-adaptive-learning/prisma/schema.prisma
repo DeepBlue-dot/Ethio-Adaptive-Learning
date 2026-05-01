@@ -45,8 +45,10 @@ model User {
   examAttempts  ExamAttempt[]
 
   // Audit Fields: Content created by this user (if they are a Course Writer)
-  authoredCourses   Course[]   @relation("CourseAuthor")
-  authoredQuestions Question[] @relation("QuestionAuthor")
+  authoredCourses        Course[]        @relation("CourseAuthor")
+  authoredQuestions      Question[]      @relation("QuestionAuthor")
+  authoredConceptChunks  ConceptChunk[]  @relation("ConceptChunkAuthor")
+  authoredWorkedExamples WorkedExample[] @relation("WorkedExampleAuthor")
 }
 
 
@@ -66,6 +68,7 @@ model UserProfile {
 
 model Course {
   id          String   @id @default(cuid())
+  slug        String   @unique
   title       String
   description String?
   archivedAt  DateTime?
@@ -81,6 +84,7 @@ model Course {
 
 model Unit {
   id        String    @id @default(cuid())
+  slug      String
   title     String
   order     Int
   courseId  String
@@ -88,10 +92,12 @@ model Unit {
   concepts  Concept[]
 
   @@unique([courseId, order])
+  @@unique([courseId, slug])
 }
 
 model Concept {
   id             String   @id @default(cuid())
+  slug           String
   title          String
   description    String?
   unitId         String
@@ -111,6 +117,10 @@ model Concept {
   // KST: explicit DAG edges for maintainable prerequisite editing
   prerequisiteEdges ConceptPrerequisite[] @relation("DependentConcept")
   dependentEdges    ConceptPrerequisite[] @relation("PrerequisiteConcept")
+  chunks           ConceptChunk[]
+  workedExamples   WorkedExample[]
+  closureAncestors   ConceptClosure[] @relation("ConceptClosureDescendant")
+  closureDescendants ConceptClosure[] @relation("ConceptClosureAncestor")
 
   questions      Question[]
   userMasteries  UserMastery[]
@@ -119,6 +129,7 @@ model Concept {
   examAttempts   ExamAttempt[]
 
   @@unique([unitId, title])
+  @@unique([unitId, slug])
 }
 
 model ConceptPrerequisite {
@@ -129,6 +140,52 @@ model ConceptPrerequisite {
 
   @@id([prerequisiteConceptId, dependentConceptId])
   @@index([dependentConceptId])
+}
+
+model ConceptChunk {
+  id        String   @id @default(cuid())
+  conceptId String
+  slug      String
+  title     String
+  bodyMd    String   @db.Text
+  order     Int
+  authorId  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  concept   Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  author    User?    @relation("ConceptChunkAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([conceptId, slug])
+  @@unique([conceptId, order])
+}
+
+model WorkedExample {
+  id         String   @id @default(cuid())
+  conceptId  String
+  slug       String
+  title      String
+  problemMd  String   @db.Text
+  solutionMd String   @db.Text
+  order      Int
+  authorId   String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  concept    Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  author     User?    @relation("WorkedExampleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@unique([conceptId, slug])
+  @@unique([conceptId, order])
+}
+
+model ConceptClosure {
+  ancestorConceptId   String
+  descendantConceptId String
+  depth               Int
+  ancestorConcept     Concept @relation("ConceptClosureAncestor", fields: [ancestorConceptId], references: [id], onDelete: Cascade)
+  descendantConcept   Concept @relation("ConceptClosureDescendant", fields: [descendantConceptId], references: [id], onDelete: Cascade)
+
+  @@id([ancestorConceptId, descendantConceptId])
+  @@index([descendantConceptId])
 }
 
 // ==========================================
@@ -180,6 +237,7 @@ enum QuestionUsage {
 model Question {
   id            String         @id @default(cuid())
   conceptId     String
+  slug          String
   concept       Concept        @relation(fields: [conceptId], references: [id])
   
   difficulty    DifficultyTier
@@ -194,10 +252,14 @@ model Question {
   // Audit: Track which writer created this question
   authorId      String?
   author        User?          @relation("QuestionAuthor", fields: [authorId], references: [id])
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   logs          InteractionLog[]
   practiceAttempts   PracticeAttempt[]
   checkpointAttempts CheckpointAttempt[]
+
+  @@unique([conceptId, slug])
 }
 
 model PracticeAttempt {
