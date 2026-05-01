@@ -1,2 +1,4 @@
-// Phase 1 placeholder: pure adaptive learning functions will live here in later phases.
-export {}
+export * from "@/lib/adaptive/bkt"
+export * from "@/lib/adaptive/difficulty"
+export * from "@/lib/adaptive/graph"
+export * from "@/lib/adaptive/retention"

@@ -93,7 +93,7 @@ describe("lib/auth", () => {
   it("returns the expected post-login routes for each role", () => {
     expect(getDefaultRedirectPath("ADMIN")).toBe("/admin/dashboard")
     expect(getDefaultRedirectPath("STUDENT")).toBe("/dashboard")
-    expect(getDefaultRedirectPath("COURSE_WRITER")).toBe("/dashboard")
+    expect(getDefaultRedirectPath("COURSE_WRITER")).toBe("/admin/dashboard")
   })
 
   it("authorizes a valid credentials login", async () => {

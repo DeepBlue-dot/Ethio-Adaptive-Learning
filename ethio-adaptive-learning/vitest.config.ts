@@ -8,6 +8,9 @@ export default defineConfig({
     include: ["tests/**/*.test.ts"],
     clearMocks: true,
     restoreMocks: true,
+    pool: "threads",
+    maxWorkers: 1,
+    minWorkers: 1,
   },
   resolve: {
     alias: {

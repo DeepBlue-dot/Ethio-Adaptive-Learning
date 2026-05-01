@@ -40,6 +40,8 @@ model User {
   sessions      Session[]
   masteries     UserMastery[]
   logs          InteractionLog[]
+  practiceAttempts   PracticeAttempt[]
+  checkpointAttempts CheckpointAttempt[]
   examAttempts  ExamAttempt[]
 
   // Audit Fields: Content created by this user (if they are a Course Writer)
@@ -66,11 +68,14 @@ model Course {
   id          String   @id @default(cuid())
   title       String
   description String?
+  archivedAt  DateTime?
   units       Unit[]
 
   // Audit
   authorId    String?
   author      User?    @relation("CourseAuthor", fields: [authorId], references: [id])
+
+  @@index([archivedAt])
 }
 
 
@@ -81,6 +86,8 @@ model Unit {
   courseId  String
   course    Course    @relation(fields: [courseId], references: [id])
   concepts  Concept[]
+
+  @@unique([courseId, order])
 }
 
 model Concept {
@@ -92,6 +99,7 @@ model Concept {
   
   // Instructional Content (Path A)
   contentBody    String?  @db.Text // Markdown/LaTeX content
+  unlockThreshold Float   @default(0.90)
   
   // Default BKT Parameters for this Concept
   pLo            Float    @default(0.15) // Initial knowledge
@@ -100,13 +108,27 @@ model Concept {
   pS             Float    @default(0.10) // Probability of slip
   decayLambda    Float    @default(0.01) // Forgetting rate
   
-  // KST: DAG Relationship (Self-referencing Many-to-Many)
-  prerequisites  Concept[] @relation("ConceptPrerequisites")
-  dependents     Concept[] @relation("ConceptPrerequisites")
+  // KST: explicit DAG edges for maintainable prerequisite editing
+  prerequisiteEdges ConceptPrerequisite[] @relation("DependentConcept")
+  dependentEdges    ConceptPrerequisite[] @relation("PrerequisiteConcept")
 
   questions      Question[]
   userMasteries  UserMastery[]
+  practiceAttempts   PracticeAttempt[]
+  checkpointAttempts CheckpointAttempt[]
   examAttempts   ExamAttempt[]
+
+  @@unique([unitId, title])
+}
+
+model ConceptPrerequisite {
+  prerequisiteConceptId String
+  dependentConceptId    String
+  prerequisiteConcept   Concept @relation("PrerequisiteConcept", fields: [prerequisiteConceptId], references: [id], onDelete: Cascade)
+  dependentConcept      Concept @relation("DependentConcept", fields: [dependentConceptId], references: [id], onDelete: Cascade)
+
+  @@id([prerequisiteConceptId, dependentConceptId])
+  @@index([dependentConceptId])
 }
 
 // ==========================================
@@ -129,15 +151,14 @@ model UserMastery {
 
   // BKT Latent State
   pMastery          Float         @default(0.15) // P(L)
-  
-  // Spaced Repetition State
-  memoryStability   Float         @default(1.0)  // S in the forgetting curve
-  lastInteractionAt DateTime      @default(now())
-  
+  lastAssessedAt    DateTime?
+  nextReviewAt      DateTime?
+  unlockedAt        DateTime?
   status            MasteryStatus @default(LOCKED)
   consecutiveFails  Int           @default(0)    // For Exam Policy logic
 
   @@id([userId, conceptId])
+  @@index([userId, nextReviewAt])
 }
 
 // ==========================================
@@ -175,6 +196,42 @@ model Question {
   author        User?          @relation("QuestionAuthor", fields: [authorId], references: [id])
 
   logs          InteractionLog[]
+  practiceAttempts   PracticeAttempt[]
+  checkpointAttempts CheckpointAttempt[]
+}
+
+model PracticeAttempt {
+  id             String    @id @default(cuid())
+  userId         String
+  conceptId      String
+  questionId     String
+  selectedAnswer String?   @db.Text
+  isCorrect      Boolean?
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept        Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  question       Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, conceptId, createdAt])
+  @@index([questionId])
+}
+
+model CheckpointAttempt {
+  id             String    @id @default(cuid())
+  userId         String
+  conceptId      String
+  questionId     String
+  selectedAnswer String?   @db.Text
+  isCorrect      Boolean?
+  createdAt      DateTime  @default(now())
+  completedAt    DateTime?
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  concept        Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  question       Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, conceptId, createdAt])
+  @@index([questionId])
 }
 
 model ExamAttempt {
@@ -185,10 +242,17 @@ model ExamAttempt {
   concept         Concept      @relation(fields: [conceptId], references: [id])
   
   pathway         PathwayType
-  score           Float
-  timeSpentSec    Int
-  isPassed        Boolean
+  questionIds     Json
+  submittedAnswers Json?
+  questionCount   Int          @default(0)
+  correctCount    Int?
+  score           Float?
+  timeSpentSec    Int?
+  isPassed        Boolean?
   createdAt       DateTime     @default(now())
+  completedAt     DateTime?
+
+  @@index([userId, conceptId, createdAt])
 }
 
 enum PathwayType {
@@ -212,6 +276,9 @@ model InteractionLog {
   isCorrect      Boolean?
   responseTimeMs Int?
   createdAt      DateTime @default(now())
+
+  @@index([userId, conceptId, createdAt])
+  @@index([userId, questionId])
 }
 
 model Account {

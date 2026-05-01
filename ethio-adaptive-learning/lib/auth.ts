@@ -136,5 +136,5 @@ export async function redirectIfAuthenticated() {
 }
 
 export function getDefaultRedirectPath(role: AppRole) {
-  return role === "ADMIN" ? "/admin/dashboard" : "/dashboard"
+  return role === "ADMIN" || role === "COURSE_WRITER" ? "/admin/dashboard" : "/dashboard"
 }
