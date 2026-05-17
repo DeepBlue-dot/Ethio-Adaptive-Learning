@@ -1,8 +1,13 @@
+import { createElement } from "react"
 import { NextResponse } from "next/server"
 
 import { prisma } from "@/lib/prisma"
+import { createPasswordResetToken } from "@/lib/users"
+import { sendEmail } from "@/lib/email/send-email"
+import { PasswordResetTemplate } from "@/lib/email/templates"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000"
 
 export async function POST(request: Request) {
   try {
@@ -18,7 +23,36 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
+      select: { name: true },
     })
+
+    if (user) {
+      const token = await createPasswordResetToken(email)
+
+      if (token) {
+        const resetUrl = `${APP_URL}/reset-password?email=${encodeURIComponent(
+          email
+        )}&token=${encodeURIComponent(token)}`
+        const template = createElement(PasswordResetTemplate, {
+          userEmail: email,
+          resetUrl,
+          userName: user.name ?? undefined,
+        })
+
+        const emailResult = await sendEmail({
+          to: email,
+          subject: "Reset your EthioPrep password",
+          template,
+        })
+
+        if (!emailResult.success) {
+          console.error("Password reset email delivery failed", {
+            email,
+            error: emailResult.error,
+          })
+        }
+      }
+    }
 
     console.info("Password reset requested", {
       email,
@@ -34,7 +68,10 @@ export async function POST(request: Request) {
       { status: 200 }
     )
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to process your request."
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to process your request."
     console.error("Forgot password request failed", error)
     return NextResponse.json({ error: message }, { status: 500 })
   }

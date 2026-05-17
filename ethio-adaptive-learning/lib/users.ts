@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client"
+import { randomBytes } from "crypto"
 
 import { prisma } from "@/lib/prisma"
 import { hashPassword } from "@/lib/password"
@@ -60,4 +61,76 @@ export async function updateUserPassword(email: string, password: string) {
 
     throw error
   }
+}
+
+export async function createPasswordResetToken(email: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: { id: true },
+  })
+
+  if (!user) {
+    return null
+  }
+
+  const token = randomBytes(32).toString("hex")
+  const expires = new Date(Date.now() + 1000 * 60 * 60)
+
+  await prisma.passwordResetToken.create({
+    data: {
+      userId: user.id,
+      token,
+      expires,
+    },
+  })
+
+  return token
+}
+
+export async function verifyPasswordResetToken(email: string, token: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  if (!normalizedEmail || !token) {
+    return false
+  }
+
+  const passwordResetToken = await prisma.passwordResetToken.findUnique({
+    where: {
+      token,
+    },
+    include: {
+      user: true,
+    },
+  })
+
+  if (!passwordResetToken) {
+    return false
+  }
+
+  if (passwordResetToken.user.email !== normalizedEmail) {
+    return false
+  }
+
+  if (passwordResetToken.expires < new Date()) {
+    await prisma.passwordResetToken.delete({
+      where: { token },
+    })
+    return false
+  }
+
+  return true
+}
+
+export async function invalidatePasswordResetToken(email: string, token: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  await prisma.passwordResetToken.deleteMany({
+    where: {
+      token,
+      user: {
+        email: normalizedEmail,
+      },
+    },
+  })
 }

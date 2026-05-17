@@ -1,8 +1,12 @@
+import { createElement } from "react"
 import { NextResponse } from "next/server"
 
 import { createStudentUser } from "@/lib/users"
+import { sendEmail } from "@/lib/email/send-email"
+import { WelcomeTemplate } from "@/lib/email/templates"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000"
 
 export async function POST(request: Request) {
   try {
@@ -42,6 +46,26 @@ export async function POST(request: Request) {
       email,
       password,
     })
+
+    const dashboardUrl = `${APP_URL}/dashboard`
+    const template = createElement(WelcomeTemplate, {
+      userName: user.name ?? user.username,
+      dashboardUrl,
+    })
+
+    const emailResult = await sendEmail({
+      to: user.email,
+      subject: "Welcome to EthioPrep",
+      template,
+    })
+
+    if (!emailResult.success) {
+      console.error("Welcome email failed", {
+        userId: user.id,
+        email: user.email,
+        error: emailResult.error,
+      })
+    }
 
     console.info("Student registration succeeded", { userId: user.id })
 

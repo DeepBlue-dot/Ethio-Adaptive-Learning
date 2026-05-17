@@ -2,10 +2,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
   createStudentUser: vi.fn(),
+  sendEmail: vi.fn(),
 }))
 
 vi.mock("@/lib/users", () => ({
   createStudentUser: mocks.createStudentUser,
+}))
+
+vi.mock("@/lib/email/send-email", () => ({
+  sendEmail: mocks.sendEmail,
 }))
 
 import { POST } from "@/app/api/auth/register/route"
@@ -72,8 +77,14 @@ describe("POST /api/auth/register", () => {
     expect(mocks.createStudentUser).not.toHaveBeenCalled()
   })
 
-  it("creates a student and returns a 201 response", async () => {
-    mocks.createStudentUser.mockResolvedValueOnce({ id: "user_1" })
+  it("creates a student, sends a welcome email, and returns a 201 response", async () => {
+    mocks.createStudentUser.mockResolvedValueOnce({
+      id: "user_1",
+      email: "learner@example.com",
+      username: "learner",
+      name: "Learner",
+    })
+    mocks.sendEmail.mockResolvedValueOnce({ success: true })
 
     const response = await POST(
       new Request("http://localhost/api/auth/register", {
@@ -91,6 +102,12 @@ describe("POST /api/auth/register", () => {
       email: "learner@example.com",
       password: "supersecret",
     })
+    expect(mocks.sendEmail).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "learner@example.com",
+        subject: "Welcome to EthioPrep",
+      })
+    )
     expect(response.status).toBe(201)
     await expect(response.json()).resolves.toEqual({
       ok: true,

@@ -49,6 +49,7 @@ model User {
   authoredQuestions      Question[]      @relation("QuestionAuthor")
   authoredConceptChunks  ConceptChunk[]  @relation("ConceptChunkAuthor")
   authoredWorkedExamples WorkedExample[] @relation("WorkedExampleAuthor")
+  passwordResetTokens    PasswordResetToken[]
 }
 
 
@@ -367,6 +368,17 @@ model Session {
   userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expires   DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model VerificationToken {
