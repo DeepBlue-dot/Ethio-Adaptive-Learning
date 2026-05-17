@@ -1,17 +1,22 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useTransition } from "react"
+import ReCAPTCHA from "react-google-recaptcha"
+import { useRef, useState, useTransition } from "react"
 
 import { Button } from "@/components/ui/button"
 
 type SubmitStatus = "idle" | "pending" | "success"
 
 export function ForgotPasswordForm() {
+  const recaptchaRef = useRef<ReCAPTCHA | null>(null)
   const [email, setEmail] = useState("")
   const [error, setError] = useState<string | null>(null)
+  const [captchaError, setCaptchaError] = useState<string | null>(null)
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null)
   const [status, setStatus] = useState<SubmitStatus>("idle")
   const [isPending, startTransition] = useTransition()
+  const siteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY ?? ""
 
   return (
     <form
@@ -22,10 +27,17 @@ export function ForgotPasswordForm() {
         const formData = new FormData(event.currentTarget)
         const payload = {
           email: String(formData.get("email") ?? "").trim().toLowerCase(),
+          recaptchaToken,
+        }
+
+        if (!recaptchaToken) {
+          setCaptchaError("Please complete the CAPTCHA verification.")
+          return
         }
 
         startTransition(async () => {
           setError(null)
+          setCaptchaError(null)
           setStatus("pending")
 
           const response = await fetch("/api/auth/forgot-password", {
@@ -45,6 +57,8 @@ export function ForgotPasswordForm() {
           }
 
           setStatus("success")
+          recaptchaRef.current?.reset()
+          setRecaptchaToken(null)
         })
       }}
     >
@@ -65,6 +79,34 @@ export function ForgotPasswordForm() {
         />
       </div>
 
+      <div className="space-y-3">
+        {siteKey ? (
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={siteKey}
+            onChange={(token) => {
+              setRecaptchaToken(token)
+              setCaptchaError(null)
+            }}
+            onExpired={() => {
+              setRecaptchaToken(null)
+              setCaptchaError("reCAPTCHA expired. Please try again.")
+            }}
+            theme="light"
+          />
+        ) : (
+          <p className="rounded-xl border border-yellow-300/70 bg-yellow-50 px-4 py-3 text-sm text-yellow-900">
+            CAPTCHA is not configured. Please check your environment settings.
+          </p>
+        )}
+
+        {captchaError ? (
+          <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {captchaError}
+          </p>
+        ) : null}
+      </div>
+
       {status === "success" ? (
         <div className="rounded-xl border border-emerald-300/70 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
           If an account exists for that email, we&apos;ll send a reset link with next steps.
@@ -77,7 +119,11 @@ export function ForgotPasswordForm() {
         </p>
       ) : null}
 
-      <Button className="h-11 w-full rounded-xl text-sm" type="submit" disabled={isPending || status === "success"}>
+<Button
+          className="h-11 w-full rounded-xl text-sm"
+          type="submit"
+          disabled={isPending || status === "success" || !recaptchaToken}
+        >
         {isPending ? "Sending request..." : "Send reset instructions"}
       </Button>
 

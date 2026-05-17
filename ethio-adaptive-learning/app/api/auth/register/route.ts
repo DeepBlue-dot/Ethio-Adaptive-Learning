@@ -4,6 +4,7 @@ import { NextResponse } from "next/server"
 import { createStudentUser } from "@/lib/users"
 import { sendEmail } from "@/lib/email/send-email"
 import { WelcomeTemplate } from "@/lib/email/templates"
+import { verifyRecaptcha } from "@/lib/verify-recaptcha"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000"
@@ -14,11 +15,13 @@ export async function POST(request: Request) {
       username?: string
       email?: string
       password?: string
+      recaptchaToken?: string
     }
 
     const username = body.username?.trim() ?? ""
     const email = body.email?.trim().toLowerCase() ?? ""
     const password = body.password ?? ""
+    const recaptchaToken = body.recaptchaToken ?? ""
 
     if (username.length < 3) {
       return NextResponse.json(
@@ -37,6 +40,22 @@ export async function POST(request: Request) {
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters long." },
+        { status: 400 }
+      )
+    }
+
+    // Verify CAPTCHA token
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { error: "Please complete the CAPTCHA verification." },
+        { status: 400 }
+      )
+    }
+
+    const isRecaptchaValid = await verifyRecaptcha(recaptchaToken)
+    if (!isRecaptchaValid) {
+      return NextResponse.json(
+        { error: "CAPTCHA verification failed. Please try again." },
         { status: 400 }
       )
     }

@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useRef, useEffect } from "react"
+import ReCAPTCHA from "react-google-recaptcha"
+import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 
@@ -13,12 +15,19 @@ type ResetPasswordFormProps = {
 type SubmitStatus = "idle" | "pending" | "success"
 
 export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordFormProps) {
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [email, setEmail] = useState(initialEmail ?? "")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [status, setStatus] = useState<SubmitStatus>("idle")
   const [isPending, startTransition] = useTransition()
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <form
@@ -36,6 +45,7 @@ export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordF
           email: String(formData.get("email") ?? "").trim().toLowerCase(),
           password: String(formData.get("password") ?? ""),
           token: initialToken,
+          recaptchaToken: recaptchaRef.current?.getValue() ?? "",
         }
 
         startTransition(async () => {
@@ -61,6 +71,7 @@ export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordF
           if (!response.ok) {
             setStatus("idle")
             setError(data.error ?? "Unable to reset your password.")
+            recaptchaRef.current?.reset()
             return
           }
 
@@ -117,6 +128,16 @@ export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordF
           onChange={(event) => setConfirmPassword(event.target.value)}
           required
         />
+      </div>
+
+      <div className="flex justify-center py-2">
+        {mounted && (
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+            theme={theme === "dark" ? "dark" : "light"}
+          />
+        )}
       </div>
 
       {initialToken ? (

@@ -5,6 +5,7 @@ import {
   updateUserPassword,
   verifyPasswordResetToken,
 } from "@/lib/users"
+import { verifyRecaptcha } from "@/lib/verify-recaptcha"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -14,10 +15,12 @@ export async function POST(request: Request) {
       email?: string
       password?: string
       token?: string
+      recaptchaToken?: string
     }
     const email = body.email?.trim().toLowerCase() ?? ""
     const password = body.password ?? ""
     const token = body.token ?? ""
+    const recaptchaToken = body.recaptchaToken ?? ""
 
     if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(
@@ -39,6 +42,22 @@ export async function POST(request: Request) {
           error:
             "The password reset token is missing. Please use the link from your email.",
         },
+        { status: 400 }
+      )
+    }
+
+    // Verify CAPTCHA token
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { error: "Please complete the CAPTCHA verification." },
+        { status: 400 }
+      )
+    }
+
+    const isRecaptchaValid = await verifyRecaptcha(recaptchaToken)
+    if (!isRecaptchaValid) {
+      return NextResponse.json(
+        { error: "CAPTCHA verification failed. Please try again." },
         { status: 400 }
       )
     }

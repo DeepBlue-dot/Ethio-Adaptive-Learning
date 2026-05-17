@@ -5,14 +5,35 @@ import { prisma } from "@/lib/prisma"
 import { createPasswordResetToken } from "@/lib/users"
 import { sendEmail } from "@/lib/email/send-email"
 import { PasswordResetTemplate } from "@/lib/email/templates"
+import { verifyRecaptcha } from "@/lib/verify-recaptcha"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000"
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json()) as { email?: string }
+    const body = (await request.json()) as {
+      email?: string
+      recaptchaToken?: string
+    }
     const email = body.email?.trim().toLowerCase() ?? ""
+    const recaptchaToken = String(body.recaptchaToken ?? "")
+
+    if (!recaptchaToken) {
+      return NextResponse.json(
+        { error: "Please complete the CAPTCHA verification." },
+        { status: 400 }
+      )
+    }
+
+    const isValidCaptcha = await verifyRecaptcha(recaptchaToken)
+
+    if (!isValidCaptcha) {
+      return NextResponse.json(
+        { error: "CAPTCHA verification failed. Please try again." },
+        { status: 400 }
+      )
+    }
 
     if (!EMAIL_REGEX.test(email)) {
       return NextResponse.json(

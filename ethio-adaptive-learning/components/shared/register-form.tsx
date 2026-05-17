@@ -2,14 +2,23 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useTransition } from "react"
+import { useState, useTransition, useRef, useEffect } from "react"
+import ReCAPTCHA from "react-google-recaptcha"
+import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
 
 export function RegisterForm() {
   const router = useRouter()
+  const { theme } = useTheme()
+  const [mounted, setMounted] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const recaptchaRef = useRef<ReCAPTCHA>(null)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   return (
     <form
@@ -22,6 +31,7 @@ export function RegisterForm() {
           username: String(formData.get("username") ?? "").trim(),
           email: String(formData.get("email") ?? "").trim(),
           password: String(formData.get("password") ?? ""),
+          recaptchaToken: recaptchaRef.current?.getValue() ?? "",
         }
 
         startTransition(async () => {
@@ -39,6 +49,7 @@ export function RegisterForm() {
 
           if (!response.ok) {
             setError(data.error ?? "Unable to create your account right now.")
+            recaptchaRef.current?.reset()
             return
           }
 
@@ -92,6 +103,16 @@ export function RegisterForm() {
           minLength={8}
           required
         />
+      </div>
+
+      <div className="flex justify-center py-2">
+        {mounted && (
+          <ReCAPTCHA
+            ref={recaptchaRef}
+            sitekey={process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY!}
+            theme={theme === "dark" ? "dark" : "light"}
+          />
+        )}
       </div>
 
       {error ? (
