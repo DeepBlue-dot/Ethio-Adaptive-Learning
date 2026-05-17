@@ -42,7 +42,7 @@ export default function WhyEthioPrepSection() {
                   Traditional Methods
                 </th>
                 <th className="py-4 px-6 font-label-md font-bold text-sm uppercase tracking-wider w-2/3 border-b border-outline-variant/20 bg-primary/5 text-primary">
-                  EthioPrep AI
+                  EthioPrep
                 </th>
               </tr>
             </thead>

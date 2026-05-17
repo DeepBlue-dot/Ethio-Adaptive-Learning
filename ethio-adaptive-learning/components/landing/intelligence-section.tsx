@@ -7,7 +7,7 @@ export default function IntelligenceSection() {
       <div className="max-w-[1200px] mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
           <h2 className="font-display-lg text-headline-lg-mobile md:text-display-lg text-on-surface dark:text-surface font-extrabold mb-4">
-            The <span className="text-primary">Intelligence</span> Behind EthioPrep AI
+            The <span className="text-primary">Intelligence</span> Behind EthioPrep
           </h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant max-w-2xl mx-auto">
             A unified system designed to understand your unique learning profile and guide you to mastery.
@@ -30,11 +30,11 @@ export default function IntelligenceSection() {
 
           {/* Connecting Lines */}
           <svg className="absolute inset-0 w-full h-full -z-10 pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="50%" y1="50%" y2="15%"></line>
-            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="85%" y1="50%" y2="35%"></line>
-            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="80%" y1="50%" y2="75%"></line>
-            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="20%" y1="50%" y2="75%"></line>
-            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="15%" y1="50%" y2="35%"></line>
+            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="50%" y1="50%" y2="15%" />
+            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="85%" y1="50%" y2="35%" />
+            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="80%" y1="50%" y2="75%" />
+            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="20%" y1="50%" y2="75%" />
+            <line className="text-outline-variant/30 dark:text-outline/30" stroke="currentColor" strokeDasharray="5,5" strokeWidth="2" x1="50%" x2="15%" y1="50%" y2="35%" />
           </svg>
 
           {/* Nodes */}

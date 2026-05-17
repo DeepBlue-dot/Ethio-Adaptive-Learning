@@ -1,13 +1,15 @@
+import Link from 'next/link';
+
 export default function HeroSection() {
   return (
-    <header id="home" className="pt-32 pb-20 px-6 md:px-12 max-w-[1200px] mx-auto overflow-hidden relative">
+    <header id="home" className="pt-32 pb-20 px-6 md:px-12 max-w-[1200px] mx-auto overflow-hidden relative bg-gradient-to-br from-blue-50/50 to-emerald-50/30 dark:from-slate-900/30 dark:to-slate-900/10">
       {/* Decorative Background Elements */}
-      <div className="absolute top-20 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10"></div>
-      <div className="absolute bottom-0 left-0 w-72 h-72 bg-success-emerald/10 rounded-full blur-3xl -z-10"></div>
+      <div className="absolute top-20 right-0 w-96 h-96 bg-blue-400/20 rounded-full blur-3xl -z-10"></div>
+      <div className="absolute bottom-0 left-0 w-72 h-72 bg-emerald-400/20 rounded-full blur-3xl -z-10"></div>
       <div className="absolute top-40 left-10 text-outline-variant/30 font-display-lg text-4xl -rotate-12 -z-10">∫x²dx</div>
       <div className="absolute bottom-40 right-20 text-outline-variant/30 font-display-lg text-4xl rotate-12 -z-10">E=mc²</div>
-      <div className="absolute top-1/3 left-1/4 w-32 h-32 border-4 border-primary/5 rounded-full -z-10"></div>
-      <div className="absolute top-2/3 right-1/4 w-24 h-24 border-4 border-warning-gold/10 rounded-full -z-10"></div>
+      <div className="absolute top-1/3 left-1/4 w-32 h-32 border-4 border-blue-400/20 rounded-full -z-10"></div>
+      <div className="absolute top-2/3 right-1/4 w-24 h-24 border-4 border-amber-400/15 rounded-full -z-10"></div>
 
       <div className="grid md:grid-cols-2 gap-12 items-center">
         <div className="space-y-8 z-10">
@@ -35,16 +37,22 @@ export default function HeroSection() {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
-            <button className="bg-primary text-on-primary px-8 py-4 rounded-xl font-label-md text-label-md font-bold shadow-[0_4px_0_0_#0d2b80] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#0d2b80] transition-all text-center flex items-center justify-center gap-2 group">
-              Start Learning{' '}
+            <Link
+              href="/register"
+              className="bg-primary text-on-primary px-8 py-4 rounded-xl font-label-md text-label-md font-bold shadow-[0_4px_0_0_#0d2b80] hover:translate-y-[2px] hover:shadow-[0_2px_0_0_#0d2b80] transition-all text-center flex items-center justify-center gap-2 group"
+            >
+              Start Learning
               <span className="material-symbols-outlined text-sm group-hover:translate-x-1 transition-transform">
                 arrow_forward
               </span>
-            </button>
-            <button className="bg-surface-container-lowest text-on-surface border-2 border-outline-variant/30 px-8 py-4 rounded-xl font-label-md text-label-md font-semibold hover:bg-surface-variant hover:border-outline-variant transition-all text-center shadow-sm flex items-center justify-center gap-2">
+            </Link>
+            <Link
+              href="/login"
+              className="bg-surface-container-lowest text-on-surface border-2 border-outline-variant/30 px-8 py-4 rounded-xl font-label-md text-label-md font-semibold hover:bg-surface-variant hover:border-outline-variant transition-all text-center shadow-sm flex items-center justify-center gap-2"
+            >
               <span className="material-symbols-outlined text-sm text-primary">play_circle</span>
               Try Demo
-            </button>
+            </Link>
           </div>
         </div>
 

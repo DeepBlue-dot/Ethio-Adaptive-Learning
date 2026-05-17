@@ -13,6 +13,7 @@ export default function LandingPage() {
     <main className="min-h-screen bg-background text-on-background font-body-md antialiased overflow-x-hidden">
       <style>{`
         .material-symbols-outlined {
+          font-family: 'Material Symbols Outlined', sans-serif;
           font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         .font-body-md {

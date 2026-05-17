@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function CtaFooter() {
   return (
     <>
@@ -12,12 +14,15 @@ export default function CtaFooter() {
             Start Your Journey Toward University Success
           </h2>
           <p className="font-body-lg text-body-lg opacity-90 max-w-xl mx-auto">
-            Join thousands of Ethiopian students mastering the EHSLCE with EthioPrep AI. Earn streaks, track mastery, and get personalized AI tutoring.
+            Join thousands of Ethiopian students mastering the EHSLCE with EthioPrep. Earn streaks, track mastery, and get personalized tutoring.
           </p>
-          <button className="bg-surface-container-lowest text-primary px-10 py-4 rounded-xl font-label-md text-label-md font-bold shadow-xl hover:scale-105 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 mx-auto">
+          <Link
+            href="/register"
+            className="bg-surface-container-lowest text-primary px-10 py-4 rounded-xl font-label-md text-label-md font-bold shadow-xl hover:scale-105 hover:shadow-2xl transition-all duration-300 flex items-center justify-center gap-2 mx-auto"
+          >
             Create Free Account
             <span className="material-symbols-outlined text-warning-gold">local_fire_department</span>
-          </button>
+          </Link>
         </div>
       </section>
 
@@ -28,7 +33,7 @@ export default function CtaFooter() {
               <div className="w-6 h-6 rounded-lg bg-primary flex items-center justify-center grayscale">
                 <span className="text-white font-bold text-xs">E</span>
               </div>
-              <span className="font-headline-md text-headline-md font-bold text-primary">EthioPrep AI</span>
+              <span className="font-headline-md text-headline-md font-bold text-primary">EthioPrep</span>
             </div>
             <p className="font-caption text-caption text-on-surface-variant">
               Empowering academic excellence through innovation.
@@ -128,7 +133,7 @@ export default function CtaFooter() {
         </div>
 
         <div className="border-t border-outline-variant/20 py-6 px-6 md:px-12 text-center">
-          <p className="font-body-md text-xs text-on-surface-variant">© 2026 EthioPrep AI. All rights reserved. 🇪🇹</p>
+          <p className="font-body-md text-xs text-on-surface-variant">© 2026 EthioPrep. All rights reserved. 🇪🇹</p>
         </div>
       </footer>
     </>
