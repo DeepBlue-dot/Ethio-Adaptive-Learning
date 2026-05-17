@@ -61,13 +61,13 @@ export default function FeaturesCarousel() {
   }, []);
 
   return (
-    <section id="features" className="py-24 bg-surface dark:bg-inverse-surface transition-colors duration-300 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
-      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-success-emerald/5 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+    <section id="features" className="py-24 bg-surface dark:bg-slate-950 transition-colors duration-300 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-primary/5 dark:bg-primary/10 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+      <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-success-emerald/5 dark:bg-success-emerald/8 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
       <div className="max-w-[1200px] mx-auto px-6 relative z-10">
         <div className="text-center mb-16">
-          <h2 className="font-display-lg text-4xl md:text-5xl text-on-surface dark:text-surface font-extrabold tracking-tight mb-4">
+          <h2 className="font-display-lg text-4xl md:text-5xl text-on-surface dark:text-on-surface font-extrabold tracking-tight mb-4">
             An Intelligent Learning System Built for
             <br />
             <span className="relative inline-block mt-1">
@@ -97,14 +97,14 @@ export default function FeaturesCarousel() {
         <div className="relative group">
           <button
             ref={prevBtnRef}
-            className="absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 dark:bg-inverse-surface/90 backdrop-blur-md rounded-full border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.1)] flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all hover:scale-110 disabled:opacity-0 hidden md:flex"
+            className="absolute -left-4 md:-left-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full border border-outline-variant/30 dark:border-outline-variant/40 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center justify-center text-primary dark:text-primary opacity-0 group-hover:opacity-100 transition-all hover:scale-110 disabled:opacity-0 hidden md:flex"
           >
             <span className="material-symbols-outlined text-2xl">chevron_left</span>
           </button>
 
           <button
             ref={nextBtnRef}
-            className="absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 dark:bg-inverse-surface/90 backdrop-blur-md rounded-full border border-outline-variant/30 shadow-[0_4px_20px_rgba(0,0,0,0.1)] flex items-center justify-center text-primary opacity-0 group-hover:opacity-100 transition-all hover:scale-110 disabled:opacity-0 hidden md:flex"
+            className="absolute -right-4 md:-right-6 top-1/2 -translate-y-1/2 z-20 w-12 h-12 bg-white/90 dark:bg-slate-800/90 backdrop-blur-md rounded-full border border-outline-variant/30 dark:border-outline-variant/40 shadow-[0_4px_20px_rgba(0,0,0,0.1)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.3)] flex items-center justify-center text-primary dark:text-primary opacity-0 group-hover:opacity-100 transition-all hover:scale-110 disabled:opacity-0 hidden md:flex"
           >
             <span className="material-symbols-outlined text-2xl">chevron_right</span>
           </button>

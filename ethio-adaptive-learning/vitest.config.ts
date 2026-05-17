@@ -10,7 +10,6 @@ export default defineConfig({
     restoreMocks: true,
     pool: "threads",
     maxWorkers: 1,
-    minWorkers: 1,
   },
   resolve: {
     alias: {

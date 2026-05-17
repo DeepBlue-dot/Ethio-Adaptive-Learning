@@ -47,7 +47,7 @@ export function LoginForm({ registered = false }: LoginFormProps) {
       }}
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground" htmlFor="identifier">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="identifier">
           Email or Username
         </label>
         <input
@@ -55,22 +55,27 @@ export function LoginForm({ registered = false }: LoginFormProps) {
           name="identifier"
           type="text"
           autoComplete="username"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100"
           placeholder="student@example.com"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground" htmlFor="password">
-          Password
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="password">
+            Password
+          </label>
+          <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <input
           id="password"
           name="password"
           type="password"
           autoComplete="current-password"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-blue-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-100"
           placeholder="Enter your password"
           required
         />
@@ -88,13 +93,17 @@ export function LoginForm({ registered = false }: LoginFormProps) {
         </p>
       ) : null}
 
-      <Button className="h-11 w-full rounded-xl text-sm" type="submit" disabled={isPending}>
+      <Button
+        className="h-11 w-full rounded-xl text-sm bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow hover:shadow-lg transform transition-all hover:-translate-y-0.5"
+        type="submit"
+        disabled={isPending}
+      >
         {isPending ? "Signing in..." : "Sign In"}
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
-        New here?{" "}
-        <Link className="font-medium text-foreground underline underline-offset-4" href="/register">
+      <p className="text-center text-sm text-muted-foreground mt-4">
+        New here?{' '}
+        <Link className="font-medium text-blue-600 hover:underline" href="/register">
           Create a student account
         </Link>
       </p>

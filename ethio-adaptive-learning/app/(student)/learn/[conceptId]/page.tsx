@@ -3,6 +3,7 @@ import { ArrowRight, BookOpenCheck, BrainCircuit, Clock3, LockKeyhole, RotateCcw
 
 import {
   getConceptLearningWorkspace,
+  LearningWorkspace,
 } from "@/lib/assessment"
 import { requireRole } from "@/lib/auth"
 import { getMasteryStatusLabel } from "@/lib/curriculum"

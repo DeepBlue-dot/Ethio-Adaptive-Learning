@@ -43,3 +43,21 @@ export async function createStudentUser(input: RegistrationInput) {
     throw error
   }
 }
+
+export async function updateUserPassword(email: string, password: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  const passwordHash = await hashPassword(password)
+
+  try {
+    return await prisma.user.update({
+      where: { email: normalizedEmail },
+      data: { passwordHash },
+    })
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+      throw new Error("No account was found for that email address.")
+    }
+
+    throw error
+  }
+}

@@ -48,7 +48,7 @@ export function RegisterForm() {
       }}
     >
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground" htmlFor="username">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="username">
           Username
         </label>
         <input
@@ -56,7 +56,7 @@ export function RegisterForm() {
           name="username"
           type="text"
           autoComplete="username"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+          className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
           placeholder="yeabsira12"
           minLength={3}
           required
@@ -64,7 +64,7 @@ export function RegisterForm() {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground" htmlFor="email">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="email">
           Email
         </label>
         <input
@@ -72,14 +72,14 @@ export function RegisterForm() {
           name="email"
           type="email"
           autoComplete="email"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+          className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
           placeholder="student@example.com"
           required
         />
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium text-foreground" htmlFor="password">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="password">
           Password
         </label>
         <input
@@ -87,7 +87,7 @@ export function RegisterForm() {
           name="password"
           type="password"
           autoComplete="new-password"
-          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary"
+          className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
           placeholder="Choose a strong password"
           minLength={8}
           required
@@ -100,12 +100,16 @@ export function RegisterForm() {
         </p>
       ) : null}
 
-      <Button className="h-11 w-full rounded-xl text-sm" type="submit" disabled={isPending}>
+      <Button
+        className="h-11 w-full rounded-xl text-sm bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg transform transition-all hover:scale-105"
+        type="submit"
+        disabled={isPending}
+      >
         {isPending ? "Creating account..." : "Create Student Account"}
       </Button>
 
       <p className="text-center text-sm text-muted-foreground">
-        Already have an account?{" "}
+        Already have an account?{' '}
         <Link className="font-medium text-foreground underline underline-offset-4" href="/login">
           Sign in
         </Link>
