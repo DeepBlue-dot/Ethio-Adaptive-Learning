@@ -14,7 +14,7 @@ export async function sendEmail({
   to,
   subject,
   template,
-  from = "noreply@ethioadaptive.local",
+  from = "ethioadaptive@resend.dev",
 }: SendEmailOptions): Promise<{
   success: boolean
   messageId?: string

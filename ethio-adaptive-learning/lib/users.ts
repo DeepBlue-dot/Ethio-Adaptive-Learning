@@ -134,3 +134,98 @@ export async function invalidatePasswordResetToken(email: string, token: string)
     },
   })
 }
+
+export async function createEmailVerificationToken(email: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  const user = await prisma.user.findUnique({
+    where: { email: normalizedEmail },
+    select: { email: true },
+  })
+
+  if (!user) {
+    return null
+  }
+
+  const token = randomBytes(32).toString("hex")
+  const expires = new Date(Date.now() + 1000 * 60 * 60 * 24)
+
+  await prisma.verificationToken.deleteMany({
+    where: { identifier: normalizedEmail },
+  })
+
+  await prisma.verificationToken.create({
+    data: {
+      identifier: normalizedEmail,
+      token,
+      expires,
+    },
+  })
+
+  return token
+}
+
+export async function verifyEmailVerificationToken(
+  email: string,
+  token: string
+) {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  if (!normalizedEmail || !token) {
+    return false
+  }
+
+  const verificationToken = await prisma.verificationToken.findUnique({
+    where: { token },
+  })
+
+  if (!verificationToken) {
+    return false
+  }
+
+  if (verificationToken.identifier !== normalizedEmail) {
+    return false
+  }
+
+  if (verificationToken.expires < new Date()) {
+    await prisma.verificationToken.delete({
+      where: { token },
+    })
+    return false
+  }
+
+  return true
+}
+
+export async function invalidateEmailVerificationToken(
+  email: string,
+  token: string
+) {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  await prisma.verificationToken.deleteMany({
+    where: {
+      token,
+      identifier: normalizedEmail,
+    },
+  })
+}
+
+export async function markUserEmailVerified(email: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+
+  try {
+    return await prisma.user.update({
+      where: { email: normalizedEmail },
+      data: { emailVerified: new Date() },
+    })
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2025"
+    ) {
+      throw new Error("No account was found for that email address.")
+    }
+
+    throw error
+  }
+}

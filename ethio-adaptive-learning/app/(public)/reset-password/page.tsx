@@ -1,13 +1,17 @@
 import { ResetPasswordForm } from "@/components/shared/reset-password-form"
 
 type ResetPasswordPageProps = {
-  searchParams: {
+  searchParams: Promise<{
     email?: string
     token?: string
-  }
+  }>
 }
 
-export default function ResetPasswordPage({ searchParams }: ResetPasswordPageProps) {
+export default async function ResetPasswordPage({
+  searchParams,
+}: ResetPasswordPageProps) {
+  const resolvedSearchParams = await searchParams
+
   return (
     <main className="relative flex min-h-screen items-center justify-center px-6 py-12 overflow-hidden transition-colors duration-300 bg-gradient-to-br from-slate-50 to-white dark:from-[#0F1115] dark:to-[#0F1115]">
       {/* Light theme background (visible when not dark) */}
@@ -79,7 +83,10 @@ export default function ResetPasswordPage({ searchParams }: ResetPasswordPagePro
               </p>
 
               <div className="mt-8">
-                <ResetPasswordForm initialEmail={searchParams.email} initialToken={searchParams.token} />
+                <ResetPasswordForm
+                  initialEmail={resolvedSearchParams?.email}
+                  initialToken={resolvedSearchParams?.token}
+                />
               </div>
             </div>
           </section>
