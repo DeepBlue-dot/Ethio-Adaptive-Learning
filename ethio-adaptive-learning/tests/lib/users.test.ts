@@ -63,6 +63,8 @@ describe("lib/users", () => {
       username: "  learner  ",
       email: "  LEARNER@example.com ",
       password: "supersecret",
+      grade: "GRADE_11",
+      phoneNumber: "+251-912345678",
     })
 
     expect(mocks.hashPassword).toHaveBeenCalledWith("supersecret")
@@ -73,6 +75,8 @@ describe("lib/users", () => {
         email: "learner@example.com",
         passwordHash: "hashed-password",
         role: "STUDENT",
+        grade: "GRADE_11",
+        phoneNumber: "+251-912345678",
         profile: {
           create: {},
         },
@@ -89,6 +93,8 @@ describe("lib/users", () => {
         username: "learner",
         email: "learner@example.com",
         password: "supersecret",
+        grade: "GRADE_11",
+        phoneNumber: "+251-912345678",
       })
     ).rejects.toThrow("An account with that username or email already exists.")
   })
@@ -102,6 +108,8 @@ describe("lib/users", () => {
         username: "learner",
         email: "learner@example.com",
         password: "supersecret",
+        grade: "GRADE_11",
+        phoneNumber: "+251-912345678",
       })
     ).rejects.toThrow("database unavailable")
   })

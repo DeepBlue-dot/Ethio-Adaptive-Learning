@@ -4,10 +4,20 @@ import { randomBytes } from "crypto"
 import { prisma } from "@/lib/prisma"
 import { hashPassword } from "@/lib/password"
 
+export type StudentGrade =
+  | "MIDDLE_SCHOOL"
+  | "GRADE_9"
+  | "GRADE_10"
+  | "GRADE_11"
+  | "GRADE_12"
+  | "ABOVE"
+
 export type RegistrationInput = {
   username: string
   email: string
   password: string
+  grade: StudentGrade
+  phoneNumber: string
 }
 
 export async function findUserByIdentifier(identifier: string) {
@@ -31,6 +41,8 @@ export async function createStudentUser(input: RegistrationInput) {
         email,
         passwordHash,
         role: "STUDENT",
+        grade: input.grade,
+        phoneNumber: input.phoneNumber,
         profile: {
           create: {},
         },

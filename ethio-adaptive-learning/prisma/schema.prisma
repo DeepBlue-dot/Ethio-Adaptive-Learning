@@ -23,6 +23,15 @@ enum UserRole {
   ADMIN
 }
 
+enum StudentGrade {
+  MIDDLE_SCHOOL
+  GRADE_9
+  GRADE_10
+  GRADE_11
+  GRADE_12
+  ABOVE
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -32,6 +41,8 @@ model User {
   image         String?
   passwordHash  String
   role          UserRole  @default(STUDENT) // <--- Added Role
+  grade         StudentGrade?
+  phoneNumber   String?
   createdAt     DateTime  @default(now())
   
   // Relations

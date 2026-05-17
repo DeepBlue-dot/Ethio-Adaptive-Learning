@@ -7,7 +7,19 @@ import { WelcomeTemplate } from "@/lib/email/templates"
 import { verifyRecaptcha } from "@/lib/verify-recaptcha"
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+const ETHIOPIAN_PHONE_REGEX = /^\+251-[1-9]\d{8}$/
+const STUDENT_GRADES = [
+  "MIDDLE_SCHOOL",
+  "GRADE_9",
+  "GRADE_10",
+  "GRADE_11",
+  "GRADE_12",
+  "ABOVE",
+] as const
+
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? process.env.NEXTAUTH_URL ?? "http://localhost:3000"
+
+type StudentGrade = (typeof STUDENT_GRADES)[number]
 
 export async function POST(request: Request) {
   try {
@@ -15,12 +27,16 @@ export async function POST(request: Request) {
       username?: string
       email?: string
       password?: string
+      grade?: string
+      phoneNumber?: string
       recaptchaToken?: string
     }
 
     const username = body.username?.trim() ?? ""
     const email = body.email?.trim().toLowerCase() ?? ""
     const password = body.password ?? ""
+    const grade = body.grade?.trim() ?? ""
+    const phoneNumber = body.phoneNumber?.trim() ?? ""
     const recaptchaToken = body.recaptchaToken ?? ""
 
     if (username.length < 3) {
@@ -40,6 +56,23 @@ export async function POST(request: Request) {
     if (password.length < 8) {
       return NextResponse.json(
         { error: "Password must be at least 8 characters long." },
+        { status: 400 }
+      )
+    }
+
+    if (!STUDENT_GRADES.includes(grade as StudentGrade)) {
+      return NextResponse.json(
+        { error: "Please select your grade." },
+        { status: 400 }
+      )
+    }
+
+    if (!ETHIOPIAN_PHONE_REGEX.test(phoneNumber)) {
+      return NextResponse.json(
+        {
+          error:
+            "Please enter a valid Ethiopian phone number in the form +251-XXXXXXXXX.",
+        },
         { status: 400 }
       )
     }
@@ -64,6 +97,8 @@ export async function POST(request: Request) {
       username,
       email,
       password,
+      grade: grade as StudentGrade,
+      phoneNumber,
     })
 
     const dashboardUrl = `${APP_URL}/dashboard`

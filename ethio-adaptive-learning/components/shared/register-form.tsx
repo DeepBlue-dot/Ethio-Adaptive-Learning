@@ -30,6 +30,8 @@ export function RegisterForm() {
         const payload = {
           username: String(formData.get("username") ?? "").trim(),
           email: String(formData.get("email") ?? "").trim(),
+          grade: String(formData.get("grade") ?? ""),
+          phoneNumber: String(formData.get("phoneNumber") ?? "").trim(),
           password: String(formData.get("password") ?? ""),
           recaptchaToken: recaptchaRef.current?.getValue() ?? "",
         }
@@ -85,6 +87,41 @@ export function RegisterForm() {
           autoComplete="email"
           className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
           placeholder="student@example.com"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="grade">
+          Grade
+        </label>
+        <select
+          id="grade"
+          name="grade"
+          className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+          required
+        >
+          <option value="">Select your grade</option>
+          <option value="MIDDLE_SCHOOL">Middle School</option>
+          <option value="GRADE_9">Grade 9</option>
+          <option value="GRADE_10">Grade 10</option>
+          <option value="GRADE_11">Grade 11</option>
+          <option value="GRADE_12">Grade 12</option>
+          <option value="ABOVE">Above Grade 12</option>
+        </select>
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-slate-700 dark:text-slate-200" htmlFor="phoneNumber">
+          Phone number
+        </label>
+        <input
+          id="phoneNumber"
+          name="phoneNumber"
+          type="tel"
+          autoComplete="tel"
+          className="w-full rounded-xl border border-gray-200 bg-white/80 px-4 py-3 text-sm transition focus:outline-none focus:ring-2 focus:ring-emerald-500 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-100"
+          placeholder="+251-912345678"
           required
         />
       </div>
