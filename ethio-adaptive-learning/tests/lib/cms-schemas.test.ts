@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest"
 import { parseConceptDraftFormInput } from "@/lib/cms/schemas/concept-draft-schema"
 import { parseConceptEditorFormInput } from "@/lib/cms/schemas/concept-editor-schema"
 import { parseCourseFormInput } from "@/lib/cms/schemas/course-schema"
+import { parseQuestionFilterInput } from "@/lib/cms/schemas/question-filter-schema"
+import { parseQuestionFormInput } from "@/lib/cms/schemas/question-schema"
 import { parseUnitFormInput } from "@/lib/cms/schemas/unit-schema"
 
 describe("CMS schema parsing", () => {
@@ -121,6 +123,79 @@ describe("CMS schema parsing", () => {
         "chunks.1.order": ["Chunk order values must be unique."],
         "workedExamples.0.order": ["Worked example order values must be unique."],
         "workedExamples.1.order": ["Worked example order values must be unique."],
+      },
+    })
+  })
+
+  it("parses question input and normalizes distractor lines", () => {
+    const result = parseQuestionFormInput({
+      conceptId: " concept_1 ",
+      usage: "PRACTICE",
+      difficulty: "MEDIUM",
+      content: " What is 2 + 2? ",
+      correctAnswer: " 4 ",
+      distractors: " 1 \n\n 3 \n 5 ",
+      hintText: " Think about adding pairs. ",
+      explanation: " 2 + 2 equals 4. ",
+      authorId: " writer_1 ",
+      slug: " add-two-and-two ",
+    })
+
+    expect(result).toEqual({
+      success: true,
+      data: {
+        conceptId: "concept_1",
+        usage: "PRACTICE",
+        difficulty: "MEDIUM",
+        content: "What is 2 + 2?",
+        correctAnswer: "4",
+        distractors: ["1", "3", "5"],
+        hintText: "Think about adding pairs.",
+        explanation: "2 + 2 equals 4.",
+        authorId: "writer_1",
+        slug: "add-two-and-two",
+      },
+    })
+  })
+
+  it("rejects invalid question enum values", () => {
+    const result = parseQuestionFormInput({
+      conceptId: "concept_1",
+      usage: "QUIZ",
+      difficulty: "LEGENDARY",
+      content: "What is 2 + 2?",
+      correctAnswer: "4",
+      distractors: "",
+      hintText: "",
+      explanation: "",
+      authorId: "writer_1",
+      slug: "",
+    })
+
+    expect(result).toEqual({
+      success: false,
+      message: "Please correct the highlighted fields and try again.",
+      statusCode: 400,
+      fieldErrors: {
+        usage: ["Question usage is invalid."],
+        difficulty: ["Difficulty tier is invalid."],
+      },
+    })
+  })
+
+  it("parses question bank filters from search params", () => {
+    const result = parseQuestionFilterInput({
+      courseId: " course_1 ",
+      unitId: ["unit_1"],
+      conceptId: " concept_1 ",
+    })
+
+    expect(result).toEqual({
+      success: true,
+      data: {
+        courseId: "course_1",
+        unitId: undefined,
+        conceptId: "concept_1",
       },
     })
   })

@@ -5,14 +5,16 @@ export function textField(formData: FormData, fieldName: string) {
   return typeof value === "string" ? value : null
 }
 
-export function getReturnTo(formData: FormData, fallback: string) {
-  const rawValue = textField(formData, "returnTo")
-
-  if (!rawValue || !rawValue.startsWith("/admin/")) {
+export function sanitizeAdminPath(pathname: string | null | undefined, fallback: string) {
+  if (!pathname || !pathname.startsWith("/admin/")) {
     return fallback
   }
 
-  return rawValue
+  return pathname
+}
+
+export function getReturnTo(formData: FormData, fallback: string) {
+  return sanitizeAdminPath(textField(formData, "returnTo"), fallback)
 }
 
 export function redirectWithMessage(pathname: string, key: "status" | "error", message: string): never {

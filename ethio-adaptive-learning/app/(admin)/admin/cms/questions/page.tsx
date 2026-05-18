@@ -1,48 +1,33 @@
 import type { ReactNode } from "react"
-import { BookMarked, CircleHelp, Filter } from "lucide-react"
+import Link from "next/link"
+import { BookMarked, CircleHelp, Filter, PencilLine, PlusCircle } from "lucide-react"
 
-import { deleteQuestionAction, saveQuestionAction } from "./actions"
 import { Button } from "@/components/ui/button"
 import { requireRole } from "@/lib/auth"
-import {
-  formatDistractorsForTextarea,
-  getDifficultyOptions,
-  getQuestionCmsData,
-  getQuestionUsageOptions,
-} from "@/lib/curriculum"
+import { parseQuestionFilterInput } from "@/lib/cms/schemas/question-filter-schema"
+import { getQuestionBankCmsData } from "@/lib/curriculum/question-bank"
 
+const QUESTIONS_PATH = "/admin/cms/questions"
 const inputClassName =
   "mt-2 w-full rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-teal-600"
-const textareaClassName = `${inputClassName} min-h-28 resize-y`
 const selectClassName = inputClassName
 
 type AdminQuestionsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>
 }
 
-type QuestionData = Awaited<ReturnType<typeof getQuestionCmsData>>
-type QuestionRecord = QuestionData["questions"][number]
+type QuestionData = Awaited<ReturnType<typeof getQuestionBankCmsData>>
 
-const dateTimeFormatter = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "medium",
-  timeStyle: "short",
-})
-
-export default async function AdminQuestionsPage({
-  searchParams,
-}: AdminQuestionsPageProps) {
+export default async function AdminQuestionsPage({ searchParams }: AdminQuestionsPageProps) {
   await requireRole(["ADMIN", "COURSE_WRITER"])
 
   const params = (await searchParams) ?? {}
-  const filters = {
-    courseId: getSingleValue(params.courseId),
-    unitId: getSingleValue(params.unitId),
-    conceptId: getSingleValue(params.conceptId),
-  }
+  const parsedFilters = parseQuestionFilterInput(params)
+  const filters = parsedFilters.success ? parsedFilters.data : {}
   const status = getSingleValue(params.status)
   const error = getSingleValue(params.error)
-  const { courses, questions } = await getQuestionCmsData(filters)
 
+  const { courses, questions } = await getQuestionBankCmsData(filters)
   const visibleUnits = filters.courseId
     ? courses.find((course) => course.id === filters.courseId)?.units ?? []
     : courses.flatMap((course) => course.units)
@@ -50,31 +35,35 @@ export default async function AdminQuestionsPage({
     ? visibleUnits.find((unit) => unit.id === filters.unitId)?.concepts ?? []
     : visibleUnits.flatMap((unit) => unit.concepts)
   const returnTo = buildQuestionsPath(filters)
+  const createPath = buildQuestionCreatePath(filters, returnTo)
 
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
-        <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">
-          Question Bank
-        </p>
-        <h1 className="mt-4 text-4xl font-semibold tracking-tight">Assessment item authoring</h1>
-        <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
-          Manage practice, checkpoint, and exam questions against the same concept graph that drives
-          student progression.
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">
+              Question Bank
+            </p>
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight">Assessment item library</h1>
+            <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
+              Browse and filter the question bank here, then open a dedicated editor to create or
+              refine assessment items tied to the curriculum graph.
+            </p>
+          </div>
+
+          <Button asChild>
+            <Link href={createPath}>
+              <PlusCircle className="size-4" />
+              New question
+            </Link>
+          </Button>
+        </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <StatCard label="Visible questions" value={questions.length} icon={<BookMarked className="size-5" />} />
-          <StatCard
-            label="Available units"
-            value={visibleUnits.length}
-            icon={<Filter className="size-5" />}
-          />
-          <StatCard
-            label="Available concepts"
-            value={visibleConcepts.length}
-            icon={<CircleHelp className="size-5" />}
-          />
+          <StatCard label="Available units" value={visibleUnits.length} icon={<Filter className="size-5" />} />
+          <StatCard label="Available concepts" value={visibleConcepts.length} icon={<CircleHelp className="size-5" />} />
         </div>
       </section>
 
@@ -89,7 +78,7 @@ export default async function AdminQuestionsPage({
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Filter the question bank</h2>
             <p className="text-sm text-muted-foreground">
-              Narrow the list by course, unit, or concept while keeping the authoring flow server-rendered.
+              Narrow the bank by course, unit, or concept and keep the browser URL shareable.
             </p>
           </div>
         </div>
@@ -113,7 +102,7 @@ export default async function AdminQuestionsPage({
               <option value="">All units</option>
               {visibleUnits.map((unit) => (
                 <option key={unit.id} value={unit.id}>
-                  {unit.title}
+                  Unit {unit.order}: {unit.title}
                 </option>
               ))}
             </select>
@@ -134,211 +123,76 @@ export default async function AdminQuestionsPage({
           <div className="flex items-end gap-3">
             <Button type="submit">Apply filters</Button>
             <Button asChild variant="outline">
-              <a href="/admin/cms/questions">Reset</a>
+              <Link href={QUESTIONS_PATH}>Reset</Link>
             </Button>
           </div>
         </form>
       </section>
 
-      <section className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="rounded-2xl bg-secondary p-3 text-secondary-foreground">
-            <BookMarked className="size-5" />
-          </div>
+      <section className="space-y-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight">Create a new question</h2>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">Existing questions</h2>
             <p className="text-sm text-muted-foreground">
-              Questions are authored against concepts and tagged by difficulty and usage type.
+              Open a dedicated editor for each item to manage prompt, answers, hints, and explanations.
             </p>
           </div>
-        </div>
 
-        <QuestionForm conceptOptions={visibleConcepts} returnTo={returnTo} submitLabel="Create question" />
-      </section>
-
-      <section className="space-y-6">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Existing questions</h2>
-          <p className="text-sm text-muted-foreground">
-            Each item stays linked to its concept, usage mode, and difficulty tier.
-          </p>
+          <Button asChild variant="outline">
+            <Link href={createPath}>
+              <PlusCircle className="size-4" />
+              Create question
+            </Link>
+          </Button>
         </div>
 
         {questions.length ? (
-          questions.map((question) => (
-            <article key={question.id} className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
-                    {question.concept.unit.course.title} / Unit {question.concept.unit.order}
-                  </p>
-                  <h3 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
-                    {question.concept.title}
-                  </h3>
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    {question.difficulty} • {question.usage}
-                    {question.author ? ` • authored by ${question.author.username}` : ""}
-                  </p>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    concept slug: <span className="font-mono">{question.concept.slug}</span>
-                  </p>
+          <div className="space-y-4">
+            {questions.map((question) => (
+              <Link
+                key={question.id}
+                href={buildQuestionEditPath(question.id, returnTo)}
+                className="block rounded-[2rem] border border-border bg-white p-8 shadow-sm transition hover:border-teal-300 hover:bg-teal-50/40"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">
+                      {question.concept.unit.course.title} / Unit {question.concept.unit.order}: {question.concept.unit.title}
+                    </p>
+                    <h3 className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+                      {question.concept.title}
+                    </h3>
+                    <p className="mt-3 line-clamp-3 max-w-4xl text-sm leading-6 text-muted-foreground">
+                      {question.content}
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span className="rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground">
+                        {question.usage}
+                      </span>
+                      <span className="rounded-full bg-secondary px-3 py-1 font-medium text-secondary-foreground">
+                        {question.difficulty}
+                      </span>
+                      <span>slug: <span className="font-mono">{question.slug}</span></span>
+                      {question.author ? <span>author: {question.author.username}</span> : null}
+                    </div>
+                  </div>
+
+                  <span className="inline-flex items-center gap-2 text-sm font-medium text-teal-700">
+                    Edit question
+                    <PencilLine className="size-4" />
+                  </span>
                 </div>
-              </div>
-
-              <QuestionForm
-                conceptOptions={visibleConcepts}
-                question={question}
-                returnTo={returnTo}
-                submitLabel="Save question"
-              />
-
-              <form action={deleteQuestionAction} className="mt-4">
-                <input name="questionId" type="hidden" value={question.id} />
-                <input name="returnTo" type="hidden" value={returnTo} />
-                <Button type="submit" variant="destructive">
-                  Delete question
-                </Button>
-              </form>
-            </article>
-          ))
+              </Link>
+            ))}
+          </div>
         ) : (
           <EmptyState
             title="No questions match the current filters"
-            description="Create the first question for this curriculum slice, or broaden the topic filters above."
+            description="Create the first question for this curriculum slice, or broaden the filters above."
           />
         )}
       </section>
     </div>
-  )
-}
-
-function QuestionForm({
-  submitLabel,
-  conceptOptions,
-  returnTo,
-  question,
-}: {
-  submitLabel: string
-  conceptOptions: Array<{
-    id: string
-    title: string
-    unitId: string
-  }>
-  returnTo: string
-  question?: QuestionRecord
-}) {
-  const difficultyOptions = getDifficultyOptions()
-  const usageOptions = getQuestionUsageOptions()
-
-  return (
-    <form action={saveQuestionAction} className="mt-8 grid gap-4">
-      <input name="questionId" type="hidden" value={question?.id ?? ""} />
-      <input name="returnTo" type="hidden" value={returnTo} />
-
-      <div className="grid gap-4 lg:grid-cols-3">
-        <label className="block text-sm font-medium text-foreground">
-          Concept
-          <select className={selectClassName} defaultValue={question?.conceptId ?? ""} name="conceptId">
-            <option value="">Select a concept</option>
-            {conceptOptions.map((concept) => (
-              <option key={concept.id} value={concept.id}>
-                {concept.title}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block text-sm font-medium text-foreground">
-          Usage
-          <select className={selectClassName} defaultValue={question?.usage ?? "PRACTICE"} name="usage">
-            {usageOptions.map((usage) => (
-              <option key={usage} value={usage}>
-                {usage}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <label className="block text-sm font-medium text-foreground">
-          Difficulty
-          <select
-            className={selectClassName}
-            defaultValue={question?.difficulty ?? "MEDIUM"}
-            name="difficulty"
-          >
-            {difficultyOptions.map((difficulty) => (
-              <option key={difficulty} value={difficulty}>
-                {difficulty}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <label className="block text-sm font-medium text-foreground">
-        Question prompt
-        <textarea
-          className={textareaClassName}
-          defaultValue={question?.content ?? ""}
-          name="content"
-          placeholder="Write the question prompt here."
-          rows={5}
-        />
-      </label>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <label className="block text-sm font-medium text-foreground">
-          Correct answer
-          <input className={inputClassName} defaultValue={question?.correctAnswer ?? ""} name="correctAnswer" />
-        </label>
-
-        <label className="block text-sm font-medium text-foreground">
-          Distractors
-          <textarea
-            className={textareaClassName}
-            defaultValue={formatDistractorsForTextarea(question?.distractors ?? null)}
-            name="distractors"
-            placeholder="One distractor per line"
-            rows={5}
-          />
-        </label>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <label className="block text-sm font-medium text-foreground">
-          Hint
-          <textarea
-            className={textareaClassName}
-            defaultValue={question?.hintText ?? ""}
-            name="hintText"
-            rows={3}
-          />
-        </label>
-
-        <label className="block text-sm font-medium text-foreground">
-          Explanation
-          <textarea
-            className={textareaClassName}
-            defaultValue={question?.explanation ?? ""}
-            name="explanation"
-            rows={5}
-          />
-        </label>
-      </div>
-
-      {question ? (
-        <MetadataRow
-          authorLabel={question.author?.username ?? null}
-          createdAt={question.createdAt}
-          slug={question.slug}
-          updatedAt={question.updatedAt}
-        />
-      ) : null}
-
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit">{submitLabel}</Button>
-      </div>
-    </form>
   )
 }
 
@@ -397,29 +251,6 @@ function EmptyState({
   )
 }
 
-function MetadataRow({
-  slug,
-  createdAt,
-  updatedAt,
-  authorLabel,
-}: {
-  slug: string
-  createdAt: Date
-  updatedAt: Date
-  authorLabel: string | null
-}) {
-  return (
-    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-muted-foreground">
-      <p>
-        slug: <span className="font-mono">{slug}</span>
-      </p>
-      {authorLabel ? <p className="mt-1">author: {authorLabel}</p> : null}
-      <p className="mt-1">created: {dateTimeFormatter.format(createdAt)}</p>
-      <p className="mt-1">updated: {dateTimeFormatter.format(updatedAt)}</p>
-    </div>
-  )
-}
-
 function buildQuestionsPath(filters: {
   courseId?: string
   unitId?: string
@@ -441,7 +272,46 @@ function buildQuestionsPath(filters: {
 
   const query = params.toString()
 
-  return query ? `/admin/cms/questions?${query}` : "/admin/cms/questions"
+  return query ? `${QUESTIONS_PATH}?${query}` : QUESTIONS_PATH
+}
+
+function buildQuestionCreatePath(
+  filters: {
+    courseId?: string
+    unitId?: string
+    conceptId?: string
+  },
+  returnTo: string
+) {
+  const params = new URLSearchParams()
+
+  params.set("returnTo", returnTo)
+
+  if (filters.courseId) {
+    params.set("courseId", filters.courseId)
+  }
+
+  if (filters.unitId) {
+    params.set("unitId", filters.unitId)
+  }
+
+  if (filters.conceptId) {
+    params.set("conceptId", filters.conceptId)
+  }
+
+  return `${QUESTIONS_PATH}/new?${params.toString()}`
+}
+
+function buildQuestionEditPath(questionId: string, returnTo: string) {
+  const params = new URLSearchParams()
+
+  if (returnTo !== QUESTIONS_PATH) {
+    params.set("returnTo", returnTo)
+  }
+
+  const query = params.toString()
+
+  return query ? `${QUESTIONS_PATH}/${questionId}?${query}` : `${QUESTIONS_PATH}/${questionId}`
 }
 
 function getSingleValue(value: string | string[] | undefined) {
