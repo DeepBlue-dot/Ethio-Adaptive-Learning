@@ -122,13 +122,17 @@ Both are authored in the concept CMS page and persist with `createConceptChunk()
 Question authoring is managed from `/admin/cms/questions` and supports:
 
 - browse a filterable question bank
-- create question from `/admin/cms/questions/new`
-- edit/delete question from `/admin/cms/questions/[id]`
-- assign concept, usage type, difficulty tier
-- provide prompt, correct answer, distractors, hint, and explanation
-- filter by course, unit, and concept
+- create a question from `/admin/cms/questions/new`
+- edit or delete a question from `/admin/cms/questions/[id]`
+- assign a linked concept, question usage, and difficulty tier
+- provide prompt content, correct answer, distractors, hint, and explanation
+- filter questions by course, unit, and concept and preserve filters in the URL
+
+The question bank page uses `parseQuestionFilterInput()` and `getQuestionBankCmsData()` to load courses, units, concepts, and filtered question results.
 
 Question persistence is implemented in `lib/curriculum/question.ts` via `saveQuestion()`, `createQuestion()`, `updateQuestion()`, and `deleteQuestion()`. Question bank and editor read models live in `lib/curriculum/question-bank.ts` and are re-exported through `lib/curriculum.ts`.
+
+The question editor flow is anchored by `app/(admin)/admin/cms/questions/question-editor-actions.ts`, which validates form data and returns structured `CmsActionState` when the editor form needs to re-render with field errors.
 
 ## Server-side implementation
 
@@ -227,23 +231,30 @@ The CMS is a Phase 2 authoring surface focused on delivering:
 - `app/(admin)/admin/cms/concepts/course-actions.ts`
 - `app/(admin)/admin/cms/concepts/unit-actions.ts`
 - `app/(admin)/admin/cms/concepts/concept-actions.ts`
+- `app/(admin)/admin/cms/concepts/concept-editor-actions.ts`
+- `app/(admin)/admin/cms/concepts/concept-editor-form.tsx`
 - `app/(admin)/admin/cms/questions/page.tsx`
 - `app/(admin)/admin/cms/questions/new/page.tsx`
 - `app/(admin)/admin/cms/questions/[id]/page.tsx`
 - `app/(admin)/admin/cms/questions/question-editor-form.tsx`
 - `app/(admin)/admin/cms/questions/question-actions.ts`
 - `app/(admin)/admin/cms/questions/question-editor-actions.ts`
-- `ethio-adaptive-learning/lib/curriculum/question.ts`
-- `ethio-adaptive-learning/lib/curriculum/question-bank.ts`
-- `ethio-adaptive-learning/lib/cms/schemas/question-schema.ts`
-- `ethio-adaptive-learning/lib/cms/schemas/question-filter-schema.ts`
-- `app/(admin)/admin/cms/concepts/concept-editor-actions.ts`
-- `app/(admin)/admin/cms/questions/page.tsx`
-- `app/(admin)/admin/cms/questions/actions.ts`
+- `app/(admin)/admin/cms/concepts/action-shared.ts`
+- `app/(admin)/admin/cms/questions/action-shared.ts`
 - `ethio-adaptive-learning/lib/curriculum.ts`
 - `ethio-adaptive-learning/lib/curriculum/course.ts`
+- `ethio-adaptive-learning/lib/curriculum/unit.ts`
+- `ethio-adaptive-learning/lib/curriculum/concept.ts`
 - `ethio-adaptive-learning/lib/curriculum/concept-editor.ts`
-- `ethio-adaptive-learning/lib/curriculum/saveConceptEditor.ts`
+- `ethio-adaptive-learning/lib/curriculum/question.ts`
+- `ethio-adaptive-learning/lib/curriculum/question-bank.ts`
+- `ethio-adaptive-learning/lib/curriculum/shared.ts`
+- `ethio-adaptive-learning/lib/cms/schemas/course-schema.ts`
+- `ethio-adaptive-learning/lib/cms/schemas/unit-schema.ts`
+- `ethio-adaptive-learning/lib/cms/schemas/concept-draft-schema.ts`
+- `ethio-adaptive-learning/lib/cms/schemas/concept-editor-schema.ts`
+- `ethio-adaptive-learning/lib/cms/schemas/question-schema.ts`
+- `ethio-adaptive-learning/lib/cms/schemas/question-filter-schema.ts`
 - `ethio-adaptive-learning/lib/adaptive/graph.ts`
 - `ethio-adaptive-learning/app/(student)/concepts/page.tsx`
 - `prisma/schema.prisma`
