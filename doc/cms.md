@@ -31,7 +31,7 @@ The CMS currently has two main authoring surfaces:
 - `/admin/cms/questions`
   - manage concept-linked questions with usage and difficulty metadata
 
-These pages live under `app/(admin)/admin/cms/` and use server actions from `actions.ts` files to perform writes.
+These pages live under `app/(admin)/admin/cms/` and use feature-specific server action modules to perform writes.
 
 ## Curriculum content model
 
@@ -72,7 +72,7 @@ The course CMS supports:
 - restore archived course
 - delete course and all dependent units, concepts, and related content
 
-Courses are read in the CMS from `getCurriculumCmsData()` in `lib/curriculum.ts`.
+Courses are read in the CMS from `getCurriculumHierarchyCmsData()` in `lib/curriculum/course.ts` and re-exported through `lib/curriculum.ts`.
 
 ### Units
 
@@ -92,7 +92,7 @@ Concept authoring supports:
 - manage concept prerequisites via a multi-select list
 - delete concept and all dependent instructional content
 
-Concept edits are handled by `saveConceptAction` and persisted through `createConcept()` / `updateConcept()`.
+Concept edits are handled by the dedicated concept editor action and persisted through `saveConceptEditor()` in `lib/curriculum/concept-editor.ts`.
 
 ### Prerequisite graph
 
@@ -105,7 +105,7 @@ CMS behavior:
 - selecting prerequisites is handled on the concept form and saved by `setConceptPrerequisites()`
 - the system rebuilds closure data after changes so unlock logic stays consistent
 
-The prerequisite validation is implemented in `lib/adaptive/graph.ts` and enforced in `lib/curriculum.ts`.
+The prerequisite validation is implemented in `lib/adaptive/graph.ts` and enforced in `lib/curriculum/saveConceptEditor.ts` plus concept-level helpers.
 
 ### Content chunks and worked examples
 
@@ -131,11 +131,15 @@ Question persistence is implemented in `lib/curriculum.ts` via `createQuestion()
 
 ### Data access and CMS reads
 
-CMS reads are centralized in `ethio-adaptive-learning/lib/curriculum.ts`:
+CMS reads are split by domain and re-exported through `ethio-adaptive-learning/lib/curriculum.ts`:
 
-- `getCmsAuthors()` returns eligible `ADMIN` and `COURSE_WRITER` users
-- `getCurriculumCmsData()` loads authors plus all courses with active and archived states
-- `getQuestionCmsData(filters)` loads filtered course/unit/concept selections and question records
+- `lib/curriculum/course.ts`
+  - `getCmsAuthors()` returns eligible `ADMIN` and `COURSE_WRITER` users
+  - `getCurriculumHierarchyCmsData()` loads authors plus all courses with active and archived states
+- `lib/curriculum/concept-editor.ts`
+  - `getConceptEditorCmsData(conceptId)` loads the dedicated concept editor view model
+- `lib/curriculum.ts`
+  - `getQuestionCmsData(filters)` loads filtered course/unit/concept selections and question records
 
 These read helpers power the admin pages and their filter states.
 
@@ -143,21 +147,25 @@ These read helpers power the admin pages and their filter states.
 
 The CMS uses Next.js server actions defined in:
 
-- `app/(admin)/admin/cms/concepts/actions.ts`
+- `app/(admin)/admin/cms/concepts/course-actions.ts`
+- `app/(admin)/admin/cms/concepts/unit-actions.ts`
+- `app/(admin)/admin/cms/concepts/concept-actions.ts`
+- `app/(admin)/admin/cms/concepts/concept-editor-actions.ts`
 - `app/(admin)/admin/cms/questions/actions.ts`
 
 Each form submission calls a server action responsible for:
 
 - requiring the CMS role
 - validating form data
-- invoking `lib/curriculum.ts` CRUD helpers
+- invoking domain-specific curriculum services re-exported from `lib/curriculum.ts`
 - revalidating related pages after updates
 - redirecting back to the CMS page with status or error messages
 
 ### Validation and slug generation
 
-`lib/curriculum.ts` includes helper validation such as:
+Validation and slug generation helpers are split between `lib/cms/schemas/*` and `lib/curriculum/shared.ts`:
 
+- `zod` schemas for course, unit, concept draft, and concept editor payloads
 - `requireText()` and `requireId()` for required fields
 - `requireProbability()` for threshold and BKT parameters
 - `requireEnumValue()` for question usage and difficulty
@@ -207,10 +215,16 @@ The CMS is a Phase 2 authoring surface focused on delivering:
 ## Relevant files
 
 - `app/(admin)/admin/cms/concepts/page.tsx`
-- `app/(admin)/admin/cms/concepts/actions.ts`
+- `app/(admin)/admin/cms/concepts/course-actions.ts`
+- `app/(admin)/admin/cms/concepts/unit-actions.ts`
+- `app/(admin)/admin/cms/concepts/concept-actions.ts`
+- `app/(admin)/admin/cms/concepts/concept-editor-actions.ts`
 - `app/(admin)/admin/cms/questions/page.tsx`
 - `app/(admin)/admin/cms/questions/actions.ts`
 - `ethio-adaptive-learning/lib/curriculum.ts`
+- `ethio-adaptive-learning/lib/curriculum/course.ts`
+- `ethio-adaptive-learning/lib/curriculum/concept-editor.ts`
+- `ethio-adaptive-learning/lib/curriculum/saveConceptEditor.ts`
 - `ethio-adaptive-learning/lib/adaptive/graph.ts`
 - `ethio-adaptive-learning/app/(student)/concepts/page.tsx`
 - `prisma/schema.prisma`

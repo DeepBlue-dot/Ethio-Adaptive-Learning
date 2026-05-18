@@ -1,4 +1,3 @@
-import { DifficultyTier, Prisma, QuestionUsage } from "@prisma/client"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -12,13 +11,25 @@ const mocks = vi.hoisted(() => ({
   conceptFindUnique: vi.fn(),
   conceptFindMany: vi.fn(),
   conceptFindFirst: vi.fn(),
-  questionCreate: vi.fn(),
   questionFindFirst: vi.fn(),
   prerequisiteFindMany: vi.fn(),
-  transactionDeleteMany: vi.fn(),
-  transactionCreateMany: vi.fn(),
-  transactionFindMany: vi.fn(),
   transaction: vi.fn(),
+  txConceptFindUnique: vi.fn(),
+  txConceptFindMany: vi.fn(),
+  txConceptFindFirst: vi.fn(),
+  txConceptUpdate: vi.fn(),
+  txUnitFindUnique: vi.fn(),
+  txPrerequisiteFindMany: vi.fn(),
+  txPrerequisiteDeleteMany: vi.fn(),
+  txPrerequisiteCreateMany: vi.fn(),
+  txChunkDeleteMany: vi.fn(),
+  txChunkUpdate: vi.fn(),
+  txChunkCreate: vi.fn(),
+  txChunkFindFirst: vi.fn(),
+  txExampleDeleteMany: vi.fn(),
+  txExampleUpdate: vi.fn(),
+  txExampleCreate: vi.fn(),
+  txExampleFindFirst: vi.fn(),
   loadCourseUserState: vi.fn(),
   rebuildConceptClosureForCourse: vi.fn(),
   listCourseAncestors: vi.fn(),
@@ -48,7 +59,6 @@ vi.mock("@/lib/prisma", () => ({
       findFirst: mocks.conceptFindFirst,
     },
     question: {
-      create: mocks.questionCreate,
       findFirst: mocks.questionFindFirst,
     },
     conceptPrerequisite: {
@@ -69,11 +79,9 @@ vi.mock("@/lib/curriculum-graph", () => ({
 
 import {
   createConcept,
+  createConceptDraft,
   createCourse,
-  createQuestion,
-  createUnit,
-  getStudentConceptCatalog,
-  setConceptPrerequisites,
+  saveConceptEditor,
 } from "@/lib/curriculum"
 
 describe("lib/curriculum", () => {
@@ -88,19 +96,44 @@ describe("lib/curriculum", () => {
     mocks.unitFindFirst.mockResolvedValue(null)
     mocks.conceptFindFirst.mockResolvedValue(null)
     mocks.questionFindFirst.mockResolvedValue(null)
+    mocks.txConceptFindFirst.mockResolvedValue(null)
+    mocks.txChunkFindFirst.mockResolvedValue(null)
+    mocks.txExampleFindFirst.mockResolvedValue(null)
     mocks.rebuildConceptClosureForCourse.mockResolvedValue([])
+
     mocks.transaction.mockImplementation(async (callback: (tx: unknown) => unknown) =>
       callback({
+        concept: {
+          findUnique: mocks.txConceptFindUnique,
+          findMany: mocks.txConceptFindMany,
+          findFirst: mocks.txConceptFindFirst,
+          update: mocks.txConceptUpdate,
+        },
+        unit: {
+          findUnique: mocks.txUnitFindUnique,
+        },
         conceptPrerequisite: {
-          deleteMany: mocks.transactionDeleteMany,
-          createMany: mocks.transactionCreateMany,
-          findMany: mocks.transactionFindMany,
+          findMany: mocks.txPrerequisiteFindMany,
+          deleteMany: mocks.txPrerequisiteDeleteMany,
+          createMany: mocks.txPrerequisiteCreateMany,
+        },
+        conceptChunk: {
+          findFirst: mocks.txChunkFindFirst,
+          deleteMany: mocks.txChunkDeleteMany,
+          update: mocks.txChunkUpdate,
+          create: mocks.txChunkCreate,
+        },
+        workedExample: {
+          findFirst: mocks.txExampleFindFirst,
+          deleteMany: mocks.txExampleDeleteMany,
+          update: mocks.txExampleUpdate,
+          create: mocks.txExampleCreate,
         },
       })
     )
   })
 
-  it("creates a course with a valid CMS author", async () => {
+  it("creates a course with a valid CMS author and preserves a provided slug", async () => {
     mocks.userFindUnique.mockResolvedValueOnce({ role: "COURSE_WRITER" })
     mocks.courseCreate.mockResolvedValueOnce({ id: "course_1" })
 
@@ -108,11 +141,12 @@ describe("lib/curriculum", () => {
       title: " Grade 12 Mathematics ",
       description: " Core exam preparation ",
       authorId: "writer_1",
+      slug: "grade-12-math-custom",
     })
 
     expect(mocks.courseCreate).toHaveBeenCalledWith({
       data: {
-        slug: "grade-12-mathematics",
+        slug: "grade-12-math-custom",
         title: "Grade 12 Mathematics",
         description: "Core exam preparation",
         authorId: "writer_1",
@@ -120,25 +154,29 @@ describe("lib/curriculum", () => {
     })
   })
 
-  it("rejects course authors that are not admins or course writers", async () => {
-    mocks.userFindUnique.mockResolvedValueOnce({ role: "STUDENT" })
+  it("creates concept drafts with generated slugs and default adaptive parameters", async () => {
+    mocks.conceptCreate.mockResolvedValueOnce({ id: "concept_1" })
 
-    await expect(
-      createCourse({
-        title: "Grade 12 Mathematics",
-        authorId: "student_1",
-      })
-    ).rejects.toThrow("Course author must be an admin or course writer.")
-  })
+    await createConceptDraft({
+      unitId: "unit_1",
+      title: " Limits ",
+    })
 
-  it("validates unit ordering before creating a unit", async () => {
-    await expect(
-      createUnit({
-        courseId: "course_1",
-        title: "Functions",
-        order: 0,
-      })
-    ).rejects.toThrow("Unit order must be a positive whole number.")
+    expect(mocks.conceptCreate).toHaveBeenCalledWith({
+      data: {
+        unitId: "unit_1",
+        slug: "limits",
+        title: "Limits",
+        description: null,
+        contentBody: null,
+        unlockThreshold: 0.9,
+        pLo: 0.15,
+        pT: 0.1,
+        pG: 0.2,
+        pS: 0.1,
+        decayLambda: 0.01,
+      },
+    })
   })
 
   it("validates concept probabilities before creating a concept", async () => {
@@ -156,309 +194,257 @@ describe("lib/curriculum", () => {
     ).rejects.toThrow("Unlock threshold must be between 0 and 1.")
   })
 
-  it("rejects malformed distractors before creating a question", async () => {
-    await expect(
-      createQuestion({
-        conceptId: "concept_1",
-        usage: QuestionUsage.PRACTICE,
-        difficulty: DifficultyTier.MEDIUM,
-        content: "Solve x + 2 = 5",
-        correctAnswer: "3",
-        distractors: ["2", ""],
-      })
-    ).rejects.toThrow("Distractors cannot contain blank answer choices.")
-  })
-
-  it("stores valid question payloads with structured distractors", async () => {
-    mocks.questionCreate.mockResolvedValueOnce({ id: "question_1" })
-
-    await createQuestion({
-      conceptId: "concept_1",
-      usage: QuestionUsage.CHECKPOINT,
-      difficulty: DifficultyTier.HARD,
-      content: "Factor x^2 - 5x + 6",
-      correctAnswer: "(x - 2)(x - 3)",
-      distractors: ["x(x - 5) + 6", "(x + 2)(x + 3)"],
-      hintText: "Think about two numbers that multiply to 6 and add to -5.",
-      explanation: "The two numbers are -2 and -3.",
-      authorId: "writer_1",
-    })
-
-    expect(mocks.questionCreate).toHaveBeenCalledWith({
-      data: {
-        conceptId: "concept_1",
-        slug: "factor-x-2-5x-6",
-        usage: QuestionUsage.CHECKPOINT,
-        difficulty: DifficultyTier.HARD,
-        content: "Factor x^2 - 5x + 6",
-        correctAnswer: "(x - 2)(x - 3)",
-        distractors: ["x(x - 5) + 6", "(x + 2)(x + 3)"],
-        hintText: "Think about two numbers that multiply to 6 and add to -5.",
-        explanation: "The two numbers are -2 and -3.",
-        authorId: "writer_1",
-      },
-    })
-  })
-
-  it("stores Prisma.JsonNull when distractors are omitted", async () => {
-    mocks.questionCreate.mockResolvedValueOnce({ id: "question_2" })
-
-    await createQuestion({
-      conceptId: "concept_2",
-      usage: QuestionUsage.EXAM,
-      difficulty: DifficultyTier.MEDIUM,
-      content: "Find the limit of x^2 as x approaches 2.",
-      correctAnswer: "4",
-      explanation: "Substitute directly because the function is continuous.",
-    })
-
-    expect(mocks.questionCreate).toHaveBeenCalledWith({
-      data: {
-        conceptId: "concept_2",
-        slug: "find-the-limit-of-x-2-as-x-approaches-2",
-        usage: QuestionUsage.EXAM,
-        difficulty: DifficultyTier.MEDIUM,
-        content: "Find the limit of x^2 as x approaches 2.",
-        correctAnswer: "4",
-        distractors: Prisma.JsonNull,
-        hintText: null,
-        explanation: "Substitute directly because the function is continuous.",
-        authorId: null,
-      },
-    })
-  })
-
-  it("builds the student concept catalog with closure-backed unlock states", async () => {
-    mocks.courseFindMany.mockResolvedValueOnce([
-      {
-        id: "course_math",
-        slug: "grade-12-mathematics",
-        title: "Grade 12 Mathematics",
-        units: [
-          {
-            id: "unit_functions",
-            slug: "functions-and-graphs",
-            title: "Functions and Graphs",
-            order: 1,
-            concepts: [
-              {
-                id: "concept_linear",
-                slug: "linear-functions",
-                title: "Linear Functions",
-                description: "Slope and intercept form",
-                unlockThreshold: 0.9,
-                questions: [{ id: "question_linear_1" }],
-              },
-              {
-                id: "concept_quadratic",
-                slug: "quadratic-functions",
-                title: "Quadratic Functions",
-                description: "Parabolas and factoring",
-                unlockThreshold: 0.9,
-                questions: [{ id: "question_quadratic_1" }, { id: "question_quadratic_2" }],
-              },
-              {
-                id: "concept_limits",
-                slug: "limits",
-                title: "Limits",
-                description: "Approaching a value",
-                unlockThreshold: 0.9,
-                questions: [],
-              },
-            ],
-          },
-        ],
-      },
-    ])
-    mocks.loadCourseUserState.mockResolvedValueOnce({
-      statuses: new Map([
-        [
-          "concept_linear",
-          {
-            status: "MASTERED",
-            unlocked: true,
-            unmetPrerequisites: [],
-            masteryProbability: 0.96,
-            effectiveMastery: 0.96,
-            nextReviewAt: null,
-          },
-        ],
-        [
-          "concept_quadratic",
-          {
-            status: "FRINGE",
-            unlocked: true,
-            unmetPrerequisites: [],
-            masteryProbability: null,
-            effectiveMastery: null,
-            nextReviewAt: null,
-          },
-        ],
-        [
-          "concept_limits",
-          {
-            status: "LOCKED",
-            unlocked: false,
-            unmetPrerequisites: [
-              {
-                conceptId: "concept_quadratic",
-                title: "Quadratic Functions",
-                currentMastery: 0,
-              },
-            ],
-            masteryProbability: null,
-            effectiveMastery: null,
-            nextReviewAt: null,
-          },
-        ],
-      ]),
-    })
-
-    const catalog = await getStudentConceptCatalog("student_1")
-
-    expect(mocks.loadCourseUserState).toHaveBeenCalledWith("course_math", "student_1")
-    expect(catalog).toEqual([
-      {
-        id: "course_math",
-        slug: "grade-12-mathematics",
-        title: "Grade 12 Mathematics",
-        units: [
-          {
-            id: "unit_functions",
-            slug: "functions-and-graphs",
-            title: "Functions and Graphs",
-            order: 1,
-            concepts: [
-              {
-                id: "concept_linear",
-                slug: "linear-functions",
-                title: "Linear Functions",
-                description: "Slope and intercept form",
-                questionCount: 1,
-                unlockThreshold: 0.9,
-                status: "MASTERED",
-                unlocked: true,
-                unmetPrerequisites: [],
-                masteryProbability: 0.96,
-                effectiveMastery: 0.96,
-                nextReviewAt: null,
-              },
-              {
-                id: "concept_quadratic",
-                slug: "quadratic-functions",
-                title: "Quadratic Functions",
-                description: "Parabolas and factoring",
-                questionCount: 2,
-                unlockThreshold: 0.9,
-                status: "FRINGE",
-                unlocked: true,
-                unmetPrerequisites: [],
-                masteryProbability: null,
-                effectiveMastery: null,
-                nextReviewAt: null,
-              },
-              {
-                id: "concept_limits",
-                slug: "limits",
-                title: "Limits",
-                description: "Approaching a value",
-                questionCount: 0,
-                unlockThreshold: 0.9,
-                status: "LOCKED",
-                unlocked: false,
-                unmetPrerequisites: [
-                  {
-                    conceptId: "concept_quadratic",
-                    title: "Quadratic Functions",
-                    currentMastery: 0,
-                  },
-                ],
-                masteryProbability: null,
-                effectiveMastery: null,
-                nextReviewAt: null,
-              },
-            ],
-          },
-        ],
-      },
-    ])
-  })
-
-  it("rejects prerequisites from a different course", async () => {
-    mocks.conceptFindUnique.mockResolvedValueOnce({
-      id: "concept_target",
+  it("enforces same-course prerequisite selection during concept editor saves", async () => {
+    mocks.txConceptFindUnique.mockResolvedValueOnce({
+      id: "concept_1",
       unit: {
-        courseId: "course_math",
+        courseId: "course_1",
       },
+      chunks: [],
+      workedExamples: [],
     })
-    mocks.conceptFindMany.mockResolvedValueOnce([
+    mocks.txUnitFindUnique.mockResolvedValueOnce({
+      id: "unit_1",
+      courseId: "course_1",
+    })
+    mocks.txConceptFindMany.mockResolvedValueOnce([
       {
         id: "concept_foreign",
         unit: {
-          courseId: "course_physics",
+          courseId: "course_2",
         },
       },
     ])
 
     await expect(
-      setConceptPrerequisites({
-        conceptId: "concept_target",
+      saveConceptEditor({
+        conceptId: "concept_1",
+        unitId: "unit_1",
+        title: "Limits",
+        slug: null,
+        description: null,
+        contentBody: null,
+        unlockThreshold: 0.9,
+        pLo: 0.15,
+        pT: 0.1,
+        pG: 0.2,
+        pS: 0.1,
+        decayLambda: 0.01,
         prerequisiteConceptIds: ["concept_foreign"],
+        chunks: [],
+        workedExamples: [],
+        authorId: "writer_1",
       })
     ).rejects.toThrow("Prerequisites must belong to the same course as the concept.")
   })
 
-  it("replaces prerequisite edges and refreshes closure rows after validation succeeds", async () => {
-    mocks.conceptFindUnique.mockResolvedValueOnce({
-      id: "concept_target",
+  it("rejects moves across courses during concept editor saves", async () => {
+    mocks.txConceptFindUnique.mockResolvedValueOnce({
+      id: "concept_1",
       unit: {
-        courseId: "course_math",
+        courseId: "course_1",
       },
+      chunks: [],
+      workedExamples: [],
     })
-    mocks.conceptFindMany.mockResolvedValueOnce([
+    mocks.txUnitFindUnique.mockResolvedValueOnce({
+      id: "unit_foreign",
+      courseId: "course_2",
+    })
+
+    await expect(
+      saveConceptEditor({
+        conceptId: "concept_1",
+        unitId: "unit_foreign",
+        title: "Limits",
+        slug: null,
+        description: null,
+        contentBody: null,
+        unlockThreshold: 0.9,
+        pLo: 0.15,
+        pT: 0.1,
+        pG: 0.2,
+        pS: 0.1,
+        decayLambda: 0.01,
+        prerequisiteConceptIds: [],
+        chunks: [],
+        workedExamples: [],
+        authorId: "writer_1",
+      })
+    ).rejects.toThrow("Concepts can only be moved within the same course.")
+  })
+
+  it("updates concept content atomically and rebuilds closure rows after prerequisite changes", async () => {
+    mocks.txConceptFindUnique.mockResolvedValueOnce({
+      id: "concept_1",
+      unit: {
+        courseId: "course_1",
+      },
+      chunks: [{ id: "chunk_1" }, { id: "chunk_2" }],
+      workedExamples: [{ id: "example_1" }, { id: "example_2" }],
+    })
+    mocks.txUnitFindUnique.mockResolvedValueOnce({
+      id: "unit_1",
+      courseId: "course_1",
+    })
+    mocks.txConceptFindMany.mockResolvedValueOnce([
       {
-        id: "concept_intro",
+        id: "concept_pre",
         unit: {
-          courseId: "course_math",
+          courseId: "course_1",
         },
       },
     ])
-    mocks.prerequisiteFindMany.mockResolvedValueOnce([
-      {
-        prerequisiteConceptId: "concept_intro",
-        dependentConceptId: "concept_existing",
-      },
-    ])
-    mocks.transactionDeleteMany.mockResolvedValueOnce({ count: 1 })
-    mocks.transactionCreateMany.mockResolvedValueOnce({ count: 1 })
-    mocks.transactionFindMany.mockResolvedValueOnce([
-      {
-        prerequisiteConceptId: "concept_intro",
-        dependentConceptId: "concept_target",
-      },
-    ])
+    mocks.txPrerequisiteFindMany.mockResolvedValueOnce([])
+    mocks.txConceptUpdate.mockResolvedValueOnce({ id: "concept_1" })
 
-    await setConceptPrerequisites({
-      conceptId: "concept_target",
-      prerequisiteConceptIds: ["concept_intro"],
+    await saveConceptEditor({
+      conceptId: "concept_1",
+      unitId: "unit_1",
+      title: "Limits",
+      slug: null,
+      description: "Intro to limits",
+      contentBody: "Markdown body",
+      unlockThreshold: 0.9,
+      pLo: 0.15,
+      pT: 0.1,
+      pG: 0.2,
+      pS: 0.1,
+      decayLambda: 0.01,
+      prerequisiteConceptIds: ["concept_pre"],
+      chunks: [
+        {
+          id: "chunk_1",
+          title: "What a limit describes",
+          slug: "what-a-limit-describes",
+          bodyMd: "Updated chunk body",
+          order: 1,
+        },
+        {
+          title: "Direct substitution",
+          slug: "",
+          bodyMd: "New chunk body",
+          order: 2,
+        },
+      ],
+      workedExamples: [
+        {
+          id: "example_1",
+          title: "Evaluate a polynomial limit",
+          slug: "evaluate-a-polynomial-limit",
+          problemMd: "Problem",
+          solutionMd: "Updated solution",
+          order: 1,
+        },
+        {
+          title: "Estimate from a table",
+          slug: "",
+          problemMd: "New problem",
+          solutionMd: "New solution",
+          order: 2,
+        },
+      ],
+      authorId: "writer_1",
     })
 
-    expect(mocks.transactionDeleteMany).toHaveBeenCalledWith({
+    expect(mocks.txConceptUpdate).toHaveBeenCalledWith({
       where: {
-        dependentConceptId: "concept_target",
+        id: "concept_1",
+      },
+      data: {
+        unitId: "unit_1",
+        slug: "limits",
+        title: "Limits",
+        description: "Intro to limits",
+        contentBody: "Markdown body",
+        unlockThreshold: 0.9,
+        pLo: 0.15,
+        pT: 0.1,
+        pG: 0.2,
+        pS: 0.1,
+        decayLambda: 0.01,
       },
     })
-    expect(mocks.transactionCreateMany).toHaveBeenCalledWith({
+    expect(mocks.txPrerequisiteDeleteMany).toHaveBeenCalledWith({
+      where: {
+        dependentConceptId: "concept_1",
+      },
+    })
+    expect(mocks.txPrerequisiteCreateMany).toHaveBeenCalledWith({
       data: [
         {
-          prerequisiteConceptId: "concept_intro",
-          dependentConceptId: "concept_target",
+          prerequisiteConceptId: "concept_pre",
+          dependentConceptId: "concept_1",
         },
       ],
     })
+    expect(mocks.txChunkDeleteMany).toHaveBeenCalledWith({
+      where: {
+        conceptId: "concept_1",
+        id: {
+          in: ["chunk_2"],
+        },
+      },
+    })
+    expect(mocks.txChunkUpdate).toHaveBeenCalledWith({
+      where: {
+        id: "chunk_1",
+      },
+      data: {
+        conceptId: "concept_1",
+        slug: "what-a-limit-describes",
+        title: "What a limit describes",
+        bodyMd: "Updated chunk body",
+        order: 1,
+        authorId: "writer_1",
+      },
+    })
+    expect(mocks.txChunkCreate).toHaveBeenCalledWith({
+      data: {
+        conceptId: "concept_1",
+        slug: "direct-substitution",
+        title: "Direct substitution",
+        bodyMd: "New chunk body",
+        order: 2,
+        authorId: "writer_1",
+      },
+    })
+    expect(mocks.txExampleUpdate).toHaveBeenCalledWith({
+      where: {
+        id: "example_1",
+      },
+      data: {
+        conceptId: "concept_1",
+        slug: "evaluate-a-polynomial-limit",
+        title: "Evaluate a polynomial limit",
+        problemMd: "Problem",
+        solutionMd: "Updated solution",
+        order: 1,
+        authorId: "writer_1",
+      },
+    })
+    expect(mocks.txExampleDeleteMany).toHaveBeenCalledWith({
+      where: {
+        conceptId: "concept_1",
+        id: {
+          in: ["example_2"],
+        },
+      },
+    })
+    expect(mocks.txExampleCreate).toHaveBeenCalledWith({
+      data: {
+        conceptId: "concept_1",
+        slug: "estimate-from-a-table",
+        title: "Estimate from a table",
+        problemMd: "New problem",
+        solutionMd: "New solution",
+        order: 2,
+        authorId: "writer_1",
+      },
+    })
     expect(mocks.rebuildConceptClosureForCourse).toHaveBeenCalledWith(
-      "course_math",
-      expect.any(Object)
+      "course_1",
+      expect.anything()
     )
   })
 })

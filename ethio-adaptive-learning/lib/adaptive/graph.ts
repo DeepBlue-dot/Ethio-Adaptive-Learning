@@ -43,7 +43,21 @@ export type DerivedConceptStatus = {
   nextReviewAt: Date | null
 }
 
-export function assertAcyclicPrerequisiteSelection({
+export class GraphValidationError extends Error {
+  statusCode: number
+  field: string
+  cyclePath: string[] | null
+
+  constructor(message: string, options?: { field?: string; statusCode?: number; cyclePath?: string[] | null }) {
+    super(message)
+    this.name = "GraphValidationError"
+    this.statusCode = options?.statusCode ?? 400
+    this.field = options?.field ?? "prerequisiteConceptIds"
+    this.cyclePath = options?.cyclePath ?? null
+  }
+}
+
+export function validatePrerequisiteSelection({
   conceptId,
   prerequisiteConceptIds,
   existingEdges,
@@ -55,7 +69,9 @@ export function assertAcyclicPrerequisiteSelection({
   const uniquePrerequisiteIds = [...new Set(prerequisiteConceptIds)]
 
   if (uniquePrerequisiteIds.includes(conceptId)) {
-    throw new Error("A concept cannot depend on itself.")
+    throw new GraphValidationError("A concept cannot depend on itself.", {
+      cyclePath: [conceptId, conceptId],
+    })
   }
 
   const nextEdges = [
@@ -66,9 +82,26 @@ export function assertAcyclicPrerequisiteSelection({
     })),
   ]
 
-  if (graphHasCycle(nextEdges)) {
-    throw new Error("Prerequisite relationships cannot create cycles.")
+  const cyclePath = findCyclePath(nextEdges)
+
+  if (cyclePath) {
+    throw new GraphValidationError(
+      `Saving prerequisites would create a cycle: ${cyclePath.join(" -> ")}.`,
+      {
+        cyclePath,
+      }
+    )
   }
+
+  return uniquePrerequisiteIds
+}
+
+export function assertAcyclicPrerequisiteSelection(args: {
+  conceptId: string
+  prerequisiteConceptIds: string[]
+  existingEdges: GraphEdge[]
+}) {
+  validatePrerequisiteSelection(args)
 }
 
 export function deriveConceptStatus(
@@ -115,7 +148,7 @@ export function deriveConceptStatus(
   }
 }
 
-function graphHasCycle(edges: GraphEdge[]) {
+function findCyclePath(edges: GraphEdge[]) {
   const adjacency = new Map<string, string[]>()
 
   for (const edge of edges) {
@@ -130,35 +163,45 @@ function graphHasCycle(edges: GraphEdge[]) {
 
   const visiting = new Set<string>()
   const visited = new Set<string>()
+  const stack: string[] = []
 
-  function depthFirstSearch(nodeId: string): boolean {
+  function depthFirstSearch(nodeId: string): string[] | null {
     if (visiting.has(nodeId)) {
-      return true
+      const cycleStartIndex = stack.indexOf(nodeId)
+      const cycle = stack.slice(cycleStartIndex)
+      cycle.push(nodeId)
+      return cycle
     }
 
     if (visited.has(nodeId)) {
-      return false
+      return null
     }
 
     visiting.add(nodeId)
+    stack.push(nodeId)
 
     for (const nextNodeId of adjacency.get(nodeId) ?? []) {
-      if (depthFirstSearch(nextNodeId)) {
-        return true
+      const cycle = depthFirstSearch(nextNodeId)
+
+      if (cycle) {
+        return cycle
       }
     }
 
+    stack.pop()
     visiting.delete(nodeId)
     visited.add(nodeId)
 
-    return false
+    return null
   }
 
   for (const nodeId of adjacency.keys()) {
-    if (depthFirstSearch(nodeId)) {
-      return true
+    const cycle = depthFirstSearch(nodeId)
+
+    if (cycle) {
+      return cycle
     }
   }
 
-  return false
+  return null
 }

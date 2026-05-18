@@ -1,10 +1,17 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
-import { redirect } from "next/navigation"
 import { DifficultyTier, QuestionUsage } from "@prisma/client"
 
 import { requireRole } from "@/lib/auth"
+import {
+  enumField,
+  getErrorMessage,
+  getReturnTo,
+  redirectWithMessage,
+  textField,
+  textareaLines,
+} from "@/lib/cms/forms"
 import { createQuestion, deleteQuestion, updateQuestion } from "@/lib/curriculum"
 
 const QUESTIONS_PATH = "/admin/cms/questions"
@@ -34,7 +41,7 @@ export async function saveQuestionAction(formData: FormData) {
       await createQuestion(input)
     }
   } catch (error) {
-    redirectWithMessage(returnTo, "error", getErrorMessage(error))
+    redirectWithMessage(returnTo, "error", getErrorMessage(error, "Unable to save question changes right now."))
   }
 
   revalidateQuestions()
@@ -49,7 +56,7 @@ export async function deleteQuestionAction(formData: FormData) {
   try {
     await deleteQuestion(textField(formData, "questionId") ?? "")
   } catch (error) {
-    redirectWithMessage(returnTo, "error", getErrorMessage(error))
+    redirectWithMessage(returnTo, "error", getErrorMessage(error, "Unable to save question changes right now."))
   }
 
   revalidateQuestions()
@@ -59,59 +66,4 @@ export async function deleteQuestionAction(formData: FormData) {
 function revalidateQuestions() {
   revalidatePath("/admin/dashboard")
   revalidatePath("/admin/cms/questions")
-}
-
-function getReturnTo(formData: FormData, fallback: string) {
-  const rawValue = textField(formData, "returnTo")
-
-  if (!rawValue || !rawValue.startsWith("/admin/")) {
-    return fallback
-  }
-
-  return rawValue
-}
-
-function textField(formData: FormData, fieldName: string) {
-  const value = formData.get(fieldName)
-  return typeof value === "string" ? value : null
-}
-
-function textareaLines(formData: FormData, fieldName: string) {
-  const value = textField(formData, fieldName)
-
-  if (!value) {
-    return null
-  }
-
-  return value
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean)
-}
-
-function enumField<TEnum extends Record<string, string>>(
-  formData: FormData,
-  fieldName: string,
-  enumObject: TEnum
-) {
-  const value = textField(formData, fieldName)
-
-  if (!value || !Object.values(enumObject).includes(value)) {
-    throw new Error(`${fieldName} is invalid.`)
-  }
-
-  return value as TEnum[keyof TEnum]
-}
-
-function redirectWithMessage(pathname: string, key: "status" | "error", message: string): never {
-  const [basePath, search = ""] = pathname.split("?")
-  const params = new URLSearchParams(search)
-
-  params.set(key, message)
-
-  redirect(`${basePath}?${params.toString()}`)
-}
-
-function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "Unable to save question changes right now."
 }
