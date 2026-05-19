@@ -1,9 +1,9 @@
 import { z } from "zod"
 
+import { contentBlocksSchema } from "@/lib/cms/content-blocks"
 import {
   optionalTrimmedStringSchema,
   parseCmsInput,
-  positiveIntegerSchema,
   probabilitySchema,
   requiredIdSchema,
   requiredTextSchema,
@@ -12,45 +12,21 @@ import {
 import type { CmsContentType, CmsValidationResult } from "@/lib/cms/types"
 import type { CreateConceptInput } from "@/lib/curriculum/types"
 
-const conceptChunkEditorSchema = z.object({
-  id: optionalTrimmedStringSchema,
-  title: requiredTextSchema("Chunk title"),
+export const conceptSchema = z.object({
+  unitId: requiredIdSchema("Unit"),
+  title: requiredTextSchema("Concept title"),
   slug: optionalTrimmedStringSchema,
-  bodyMd: requiredTextSchema("Chunk body"),
-  order: positiveIntegerSchema("Chunk order"),
+  description: optionalTrimmedStringSchema,
+  contentBlocks: contentBlocksSchema.default([]),
+  unlockThreshold: probabilitySchema("Unlock threshold").default(0.9),
+  pLo: probabilitySchema("P(L0)").default(0.15),
+  pT: probabilitySchema("P(T)").default(0.1),
+  pG: probabilitySchema("P(G)").default(0.2),
+  pS: probabilitySchema("P(S)").default(0.1),
+  decayLambda: probabilitySchema("Decay lambda").default(0.01),
+  prerequisiteConceptIds: z.array(trimmedStringSchema).default([]),
+  authorId: optionalTrimmedStringSchema,
 })
-
-const workedExampleEditorSchema = z.object({
-  id: optionalTrimmedStringSchema,
-  title: requiredTextSchema("Worked example title"),
-  slug: optionalTrimmedStringSchema,
-  problemMd: requiredTextSchema("Worked example problem"),
-  solutionMd: requiredTextSchema("Worked example solution"),
-  order: positiveIntegerSchema("Worked example order"),
-})
-
-export const conceptSchema = z
-  .object({
-    unitId: requiredIdSchema("Unit"),
-    title: requiredTextSchema("Concept title"),
-    slug: optionalTrimmedStringSchema,
-    description: optionalTrimmedStringSchema,
-    contentBody: optionalTrimmedStringSchema,
-    unlockThreshold: probabilitySchema("Unlock threshold").default(0.9),
-    pLo: probabilitySchema("P(L0)").default(0.15),
-    pT: probabilitySchema("P(T)").default(0.1),
-    pG: probabilitySchema("P(G)").default(0.2),
-    pS: probabilitySchema("P(S)").default(0.1),
-    decayLambda: probabilitySchema("Decay lambda").default(0.01),
-    prerequisiteConceptIds: z.array(trimmedStringSchema).default([]),
-    chunks: z.array(conceptChunkEditorSchema).default([]),
-    workedExamples: z.array(workedExampleEditorSchema).default([]),
-    authorId: optionalTrimmedStringSchema,
-  })
-  .superRefine((value, ctx) => {
-    ensureUniqueOrderValues(value.chunks, "chunks", "Chunk", ctx)
-    ensureUniqueOrderValues(value.workedExamples, "workedExamples", "Worked example", ctx)
-  })
 
 export type ConceptCmsInput = z.output<typeof conceptSchema>
 
@@ -59,7 +35,7 @@ export const conceptDefinition = {
   aliases: ["concepts"],
   label: "Concept",
   pluralLabel: "Concepts",
-  description: "Adaptive knowledge nodes with prerequisite and lesson content semantics.",
+  description: "Adaptive knowledge nodes with prerequisite graph and rich block-based lesson content.",
   schema: conceptSchema,
   defaultValues: {
     unlockThreshold: 0.9,
@@ -69,8 +45,7 @@ export const conceptDefinition = {
     pS: 0.1,
     decayLambda: 0.01,
     prerequisiteConceptIds: [],
-    chunks: [],
-    workedExamples: [],
+    contentBlocks: [],
   },
   fields: [
     {
@@ -102,10 +77,9 @@ export const conceptDefinition = {
       section: "Content",
     },
     {
-      name: "contentBody",
-      label: "Overview / summary",
-      type: "markdown",
-      placeholder: "Use Markdown and LaTeX for the concept overview or study guide.",
+      name: "contentBlocks",
+      label: "Lesson content",
+      type: "content-blocks",
       section: "Content",
     },
     {
@@ -157,74 +131,6 @@ export const conceptDefinition = {
       required: true,
       section: "Adaptive parameters",
     },
-    {
-      name: "chunks",
-      label: "Concept chunks",
-      type: "embedded-list",
-      section: "Instructional blocks",
-      embeddedFields: [
-        {
-          name: "title",
-          label: "Title",
-          type: "text",
-          required: true,
-        },
-        {
-          name: "order",
-          label: "Order",
-          type: "number",
-          required: true,
-        },
-        {
-          name: "slug",
-          label: "Slug",
-          type: "text",
-        },
-        {
-          name: "bodyMd",
-          label: "Body",
-          type: "markdown",
-          required: true,
-        },
-      ],
-    },
-    {
-      name: "workedExamples",
-      label: "Worked examples",
-      type: "embedded-list",
-      section: "Instructional blocks",
-      embeddedFields: [
-        {
-          name: "title",
-          label: "Title",
-          type: "text",
-          required: true,
-        },
-        {
-          name: "order",
-          label: "Order",
-          type: "number",
-          required: true,
-        },
-        {
-          name: "slug",
-          label: "Slug",
-          type: "text",
-        },
-        {
-          name: "problemMd",
-          label: "Problem",
-          type: "markdown",
-          required: true,
-        },
-        {
-          name: "solutionMd",
-          label: "Solution",
-          type: "markdown",
-          required: true,
-        },
-      ],
-    },
   ],
   listFields: [
     {
@@ -240,15 +146,20 @@ export const conceptDefinition = {
       label: "Questions",
     },
   ],
-  getTitle: (entity) => entity.title,
+  getTitle: (entity) => String(entity.data.title ?? entity.title),
   getSubtitle: (entity) => `${String(entity.data.courseLabel ?? "")} / ${String(entity.data.unitLabel ?? "")}`,
+  getStatus: (entity) => {
+    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
+      return "PUBLISHED + DRAFT"
+    }
+
+    return entity.lifecycle?.status ?? null
+  },
   getRevalidationPaths: ({ id }) => [
     "/admin/dashboard",
     "/admin/cms",
     "/admin/cms/concept",
     "/admin/cms/question",
-    "/admin/cms/chunk",
-    "/admin/cms/worked-example",
     "/concepts",
     ...(id ? [`/admin/cms/concept/${id}`, `/learn/${id}`] : []),
   ],
@@ -264,7 +175,7 @@ export function conceptCmsInputToCreateInput(input: ConceptCmsInput): CreateConc
     title: input.title,
     slug: input.slug,
     description: input.description,
-    contentBody: input.contentBody,
+    contentBlocks: input.contentBlocks,
     unlockThreshold: input.unlockThreshold,
     pLo: input.pLo,
     pT: input.pT,
@@ -272,32 +183,4 @@ export function conceptCmsInputToCreateInput(input: ConceptCmsInput): CreateConc
     pS: input.pS,
     decayLambda: input.decayLambda,
   }
-}
-
-function ensureUniqueOrderValues<
-  TItem extends {
-    order: number
-  },
->(items: TItem[], fieldPrefix: "chunks" | "workedExamples", label: string, ctx: z.RefinementCtx) {
-  const orders = new Map<number, number>()
-
-  items.forEach((item, index) => {
-    const previousIndex = orders.get(item.order)
-
-    if (previousIndex !== undefined) {
-      ctx.addIssue({
-        code: "custom",
-        path: [fieldPrefix, index, "order"],
-        message: `${label} order values must be unique.`,
-      })
-      ctx.addIssue({
-        code: "custom",
-        path: [fieldPrefix, previousIndex, "order"],
-        message: `${label} order values must be unique.`,
-      })
-      return
-    }
-
-    orders.set(item.order, index)
-  })
 }

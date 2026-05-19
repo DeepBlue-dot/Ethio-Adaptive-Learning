@@ -134,9 +134,15 @@ export const questionDefinition = {
       label: "Difficulty",
     },
   ],
-  getTitle: (entity) => entity.title,
+  getTitle: (entity) => String(entity.data.content ?? entity.title),
   getSubtitle: (entity) => String(entity.data.conceptLabel ?? ""),
-  getStatus: (entity) => String(entity.data.usage ?? ""),
+  getStatus: (entity) => {
+    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
+      return "PUBLISHED + DRAFT"
+    }
+
+    return entity.lifecycle?.status ?? null
+  },
   getRevalidationPaths: ({ id, result }) => [
     "/admin/dashboard",
     "/admin/cms",

@@ -1,6 +1,7 @@
 import Link from "next/link"
-import { PencilLine, PlusCircle } from "lucide-react"
+import { ImageUp, PencilLine, PlusCircle } from "lucide-react"
 
+import { uploadCmsImageAsset } from "@/app/(admin)/admin/cms/actions"
 import { Button } from "@/components/ui/button"
 import type { CmsEntity, CmsSerializableContentType } from "@/lib/cms/types"
 
@@ -25,6 +26,36 @@ export function CmsList({
           </Link>
         </Button>
       </div>
+
+      {definition.key === "media-asset" ? (
+        <form action={uploadCmsImageAsset} className="rounded-[2rem] border border-border bg-white p-5 shadow-sm">
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto]">
+            <input
+              aria-label="Image file"
+              className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground"
+              name="file"
+              type="file"
+              accept="image/*"
+            />
+            <input
+              aria-label="Image title"
+              className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground"
+              name="title"
+              placeholder="Title"
+            />
+            <input
+              aria-label="Image alt text"
+              className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground"
+              name="alt"
+              placeholder="Alt text"
+            />
+            <Button type="submit">
+              <ImageUp className="size-4" />
+              Upload
+            </Button>
+          </div>
+        </form>
+      ) : null}
 
       {items.length ? (
         <div className="space-y-4">

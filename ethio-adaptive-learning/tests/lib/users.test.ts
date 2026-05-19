@@ -1,4 +1,4 @@
-import { Prisma } from "@prisma/client"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 import { beforeEach, describe, expect, it, vi } from "vitest"
 
 const mocks = vi.hoisted(() => ({
@@ -24,8 +24,8 @@ import { createStudentUser, findUserByIdentifier } from "@/lib/users"
 
 function createKnownRequestError(code: string) {
   const error = Object.create(
-    Prisma.PrismaClientKnownRequestError.prototype
-  ) as Prisma.PrismaClientKnownRequestError & {
+    PrismaClientKnownRequestError.prototype
+  ) as PrismaClientKnownRequestError & {
     code: string
     message: string
   }

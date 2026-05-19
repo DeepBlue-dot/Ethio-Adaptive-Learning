@@ -33,8 +33,8 @@ export type CmsContentTypeKey =
   | "unit"
   | "concept"
   | "question"
-  | "chunk"
-  | "worked-example"
+  | "media-asset"
+  | "content-snippet"
 
 export type CmsFieldType =
   | "text"
@@ -46,6 +46,7 @@ export type CmsFieldType =
   | "reference"
   | "multi-reference"
   | "embedded-list"
+  | "content-blocks"
   | "hidden"
 
 export type CmsFieldOption = {
@@ -107,12 +108,24 @@ export type CmsContentType<TInput = unknown> = {
   getRevalidationPaths?: (context: CmsInvalidationContext) => string[]
 }
 
+export type CmsPublicationStatus = "DRAFT" | "PUBLISHED" | "UNPUBLISHED"
+
+export type CmsLifecycle = {
+  status: CmsPublicationStatus
+  hasDraft: boolean
+  publishedAt?: string | Date | null
+  publishedById?: string | null
+  unpublishedAt?: string | Date | null
+  unpublishedById?: string | null
+}
+
 export type CmsEntity<TData extends Record<string, unknown> = Record<string, unknown>> = {
   id: string
   type: CmsContentTypeKey
   title: string
   subtitle?: string | null
   status?: string | null
+  lifecycle?: CmsLifecycle
   data: TData
 }
 
@@ -154,6 +167,9 @@ export type CmsSerializableContentType = Omit<CmsContentType, "schema" | "getTit
 export type CmsRepository = {
   createItem: (type: CmsContentTypeKey, data: unknown) => Promise<CmsEntity>
   updateItem: (type: CmsContentTypeKey, id: string, data: unknown) => Promise<CmsEntity>
+  saveDraftItem?: (type: CmsContentTypeKey, id: string | null, data: unknown, userId: string) => Promise<CmsEntity>
+  publishItem?: (type: CmsContentTypeKey, id: string | null, data: unknown, userId: string) => Promise<CmsEntity>
+  unpublishItem?: (type: CmsContentTypeKey, id: string, userId: string) => Promise<CmsEntity>
   deleteItem: (type: CmsContentTypeKey, id: string) => Promise<CmsEntity>
   getItem: (type: CmsContentTypeKey, id: string) => Promise<CmsEntity | null>
   listItems: (type: CmsContentTypeKey, filter?: CmsListFilter) => Promise<CmsEntity[]>

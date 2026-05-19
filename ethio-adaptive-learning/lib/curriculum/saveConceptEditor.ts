@@ -1,29 +1,18 @@
-import { Prisma } from "@prisma/client"
-
 import { validatePrerequisiteSelection } from "@/lib/adaptive/graph"
 import { rebuildConceptClosureForCourse } from "@/lib/curriculum-graph"
 import { prisma } from "@/lib/prisma"
 
-import type {
-  ConceptChunkEditorInput,
-  SaveConceptEditorInput,
-  WorkedExampleEditorInput,
-} from "@/lib/curriculum/types"
+import type { SaveConceptEditorInput } from "@/lib/curriculum/types"
 import {
-  optionalId,
   optionalText,
   requireId,
-  requirePositiveInteger,
   requireProbability,
   requireText,
-  resolveConceptChunkSlug,
   resolveConceptSlug,
-  resolveWorkedExampleSlug,
 } from "@/lib/curriculum/shared"
 
 export async function saveConceptEditorTransaction(input: SaveConceptEditorInput) {
   const conceptId = requireId(input.conceptId, "Concept")
-  const authorId = optionalId(input.authorId)
 
   return prisma.$transaction(async (tx) => {
     const concept = await tx.concept.findUnique({
@@ -34,16 +23,6 @@ export async function saveConceptEditorTransaction(input: SaveConceptEditorInput
         unit: {
           select: {
             courseId: true,
-          },
-        },
-        chunks: {
-          select: {
-            id: true,
-          },
-        },
-        workedExamples: {
-          select: {
-            id: true,
           },
         },
       },
@@ -141,6 +120,7 @@ export async function saveConceptEditorTransaction(input: SaveConceptEditorInput
         title: requireText(input.title, "Concept title"),
         description: optionalText(input.description),
         contentBody: optionalText(input.contentBody),
+        contentBlocks: input.contentBlocks ?? [],
         unlockThreshold: requireProbability(input.unlockThreshold, "Unlock threshold"),
         pLo: requireProbability(input.pLo, "P(L0)"),
         pT: requireProbability(input.pT, "P(T)"),
@@ -165,164 +145,8 @@ export async function saveConceptEditorTransaction(input: SaveConceptEditorInput
       })
     }
 
-    await syncConceptChunks({
-      tx,
-      conceptId,
-      inputChunks: input.chunks,
-      existingChunkIds: concept.chunks.map((chunk) => chunk.id),
-      authorId,
-    })
-    await syncWorkedExamples({
-      tx,
-      conceptId,
-      inputExamples: input.workedExamples,
-      existingExampleIds: concept.workedExamples.map((example) => example.id),
-      authorId,
-    })
     await rebuildConceptClosureForCourse(targetUnit.courseId, tx)
 
     return updatedConcept
   })
-}
-
-async function syncConceptChunks(args: {
-  tx: Prisma.TransactionClient
-  conceptId: string
-  inputChunks: ConceptChunkEditorInput[]
-  existingChunkIds: string[]
-  authorId: string | null
-}) {
-  const validExistingIds = new Set(args.existingChunkIds)
-  const submittedIds = args.inputChunks
-    .map((chunk) => optionalId(chunk.id))
-    .filter((value): value is string => Boolean(value))
-
-  submittedIds.forEach((chunkId) => {
-    if (!validExistingIds.has(chunkId)) {
-      throw new Error("One or more explanation chunks do not belong to this concept.")
-    }
-  })
-
-  const removedChunkIds = args.existingChunkIds.filter((chunkId) => !submittedIds.includes(chunkId))
-
-  if (removedChunkIds.length) {
-    await args.tx.conceptChunk.deleteMany({
-      where: {
-        conceptId: args.conceptId,
-        id: {
-          in: removedChunkIds,
-        },
-      },
-    })
-  }
-
-  for (const chunk of args.inputChunks) {
-    const chunkId = optionalId(chunk.id)
-    const slug = await resolveConceptChunkSlug({
-      conceptId: args.conceptId,
-      title: chunk.title,
-      slug: chunk.slug,
-      excludeId: chunkId ?? undefined,
-      db: args.tx,
-    })
-
-    if (chunkId) {
-      await args.tx.conceptChunk.update({
-        where: {
-          id: chunkId,
-        },
-        data: {
-          conceptId: args.conceptId,
-          slug,
-          title: requireText(chunk.title, "Chunk title"),
-          bodyMd: requireText(chunk.bodyMd, "Chunk body"),
-          order: requirePositiveInteger(chunk.order, "Chunk order"),
-          authorId: args.authorId,
-        },
-      })
-    } else {
-      await args.tx.conceptChunk.create({
-        data: {
-          conceptId: args.conceptId,
-          slug,
-          title: requireText(chunk.title, "Chunk title"),
-          bodyMd: requireText(chunk.bodyMd, "Chunk body"),
-          order: requirePositiveInteger(chunk.order, "Chunk order"),
-          authorId: args.authorId,
-        },
-      })
-    }
-  }
-}
-
-async function syncWorkedExamples(args: {
-  tx: Prisma.TransactionClient
-  conceptId: string
-  inputExamples: WorkedExampleEditorInput[]
-  existingExampleIds: string[]
-  authorId: string | null
-}) {
-  const validExistingIds = new Set(args.existingExampleIds)
-  const submittedIds = args.inputExamples
-    .map((example) => optionalId(example.id))
-    .filter((value): value is string => Boolean(value))
-
-  submittedIds.forEach((exampleId) => {
-    if (!validExistingIds.has(exampleId)) {
-      throw new Error("One or more worked examples do not belong to this concept.")
-    }
-  })
-
-  const removedExampleIds = args.existingExampleIds.filter((exampleId) => !submittedIds.includes(exampleId))
-
-  if (removedExampleIds.length) {
-    await args.tx.workedExample.deleteMany({
-      where: {
-        conceptId: args.conceptId,
-        id: {
-          in: removedExampleIds,
-        },
-      },
-    })
-  }
-
-  for (const example of args.inputExamples) {
-    const exampleId = optionalId(example.id)
-    const slug = await resolveWorkedExampleSlug({
-      conceptId: args.conceptId,
-      title: example.title,
-      slug: example.slug,
-      excludeId: exampleId ?? undefined,
-      db: args.tx,
-    })
-
-    if (exampleId) {
-      await args.tx.workedExample.update({
-        where: {
-          id: exampleId,
-        },
-        data: {
-          conceptId: args.conceptId,
-          slug,
-          title: requireText(example.title, "Worked example title"),
-          problemMd: requireText(example.problemMd, "Worked example problem"),
-          solutionMd: requireText(example.solutionMd, "Worked example solution"),
-          order: requirePositiveInteger(example.order, "Worked example order"),
-          authorId: args.authorId,
-        },
-      })
-    } else {
-      await args.tx.workedExample.create({
-        data: {
-          conceptId: args.conceptId,
-          slug,
-          title: requireText(example.title, "Worked example title"),
-          problemMd: requireText(example.problemMd, "Worked example problem"),
-          solutionMd: requireText(example.solutionMd, "Worked example solution"),
-          order: requirePositiveInteger(example.order, "Worked example order"),
-          authorId: args.authorId,
-        },
-      })
-    }
-  }
 }

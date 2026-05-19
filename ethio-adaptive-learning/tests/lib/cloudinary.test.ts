@@ -8,6 +8,12 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock("@/lib/cloudinary/cloudinary", () => ({
+  getCloudinary: () => ({
+    uploader: {
+      upload: mocks.upload,
+      destroy: mocks.destroy,
+    },
+  }),
   default: {
     uploader: {
       upload: mocks.upload,

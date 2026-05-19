@@ -169,6 +169,7 @@ describe("lib/curriculum", () => {
         title: "Limits",
         description: null,
         contentBody: null,
+        contentBlocks: [],
         unlockThreshold: 0.9,
         pLo: 0.15,
         pT: 0.1,
@@ -280,8 +281,6 @@ describe("lib/curriculum", () => {
       unit: {
         courseId: "course_1",
       },
-      chunks: [{ id: "chunk_1" }, { id: "chunk_2" }],
-      workedExamples: [{ id: "example_1" }, { id: "example_2" }],
     })
     mocks.txUnitFindUnique.mockResolvedValueOnce({
       id: "unit_1",
@@ -305,6 +304,14 @@ describe("lib/curriculum", () => {
       slug: null,
       description: "Intro to limits",
       contentBody: "Markdown body",
+      contentBlocks: [
+        {
+          id: "block_1",
+          type: "paragraph",
+          title: null,
+          text: "Updated block body",
+        },
+      ],
       unlockThreshold: 0.9,
       pLo: 0.15,
       pT: 0.1,
@@ -312,38 +319,6 @@ describe("lib/curriculum", () => {
       pS: 0.1,
       decayLambda: 0.01,
       prerequisiteConceptIds: ["concept_pre"],
-      chunks: [
-        {
-          id: "chunk_1",
-          title: "What a limit describes",
-          slug: "what-a-limit-describes",
-          bodyMd: "Updated chunk body",
-          order: 1,
-        },
-        {
-          title: "Direct substitution",
-          slug: "",
-          bodyMd: "New chunk body",
-          order: 2,
-        },
-      ],
-      workedExamples: [
-        {
-          id: "example_1",
-          title: "Evaluate a polynomial limit",
-          slug: "evaluate-a-polynomial-limit",
-          problemMd: "Problem",
-          solutionMd: "Updated solution",
-          order: 1,
-        },
-        {
-          title: "Estimate from a table",
-          slug: "",
-          problemMd: "New problem",
-          solutionMd: "New solution",
-          order: 2,
-        },
-      ],
       authorId: "writer_1",
     })
 
@@ -357,6 +332,14 @@ describe("lib/curriculum", () => {
         title: "Limits",
         description: "Intro to limits",
         contentBody: "Markdown body",
+        contentBlocks: [
+          {
+            id: "block_1",
+            type: "paragraph",
+            title: null,
+            text: "Updated block body",
+          },
+        ],
         unlockThreshold: 0.9,
         pLo: 0.15,
         pT: 0.1,
@@ -378,70 +361,8 @@ describe("lib/curriculum", () => {
         },
       ],
     })
-    expect(mocks.txChunkDeleteMany).toHaveBeenCalledWith({
-      where: {
-        conceptId: "concept_1",
-        id: {
-          in: ["chunk_2"],
-        },
-      },
-    })
-    expect(mocks.txChunkUpdate).toHaveBeenCalledWith({
-      where: {
-        id: "chunk_1",
-      },
-      data: {
-        conceptId: "concept_1",
-        slug: "what-a-limit-describes",
-        title: "What a limit describes",
-        bodyMd: "Updated chunk body",
-        order: 1,
-        authorId: "writer_1",
-      },
-    })
-    expect(mocks.txChunkCreate).toHaveBeenCalledWith({
-      data: {
-        conceptId: "concept_1",
-        slug: "direct-substitution",
-        title: "Direct substitution",
-        bodyMd: "New chunk body",
-        order: 2,
-        authorId: "writer_1",
-      },
-    })
-    expect(mocks.txExampleUpdate).toHaveBeenCalledWith({
-      where: {
-        id: "example_1",
-      },
-      data: {
-        conceptId: "concept_1",
-        slug: "evaluate-a-polynomial-limit",
-        title: "Evaluate a polynomial limit",
-        problemMd: "Problem",
-        solutionMd: "Updated solution",
-        order: 1,
-        authorId: "writer_1",
-      },
-    })
-    expect(mocks.txExampleDeleteMany).toHaveBeenCalledWith({
-      where: {
-        conceptId: "concept_1",
-        id: {
-          in: ["example_2"],
-        },
-      },
-    })
-    expect(mocks.txExampleCreate).toHaveBeenCalledWith({
-      data: {
-        conceptId: "concept_1",
-        slug: "estimate-from-a-table",
-        title: "Estimate from a table",
-        problemMd: "New problem",
-        solutionMd: "New solution",
-        order: 2,
-        authorId: "writer_1",
-      },
-    })
+    expect(mocks.txChunkDeleteMany).not.toHaveBeenCalled()
+    expect(mocks.txExampleDeleteMany).not.toHaveBeenCalled()
     expect(mocks.rebuildConceptClosureForCourse).toHaveBeenCalledWith(
       "course_1",
       expect.anything()

@@ -8,7 +8,10 @@ export {
   getItem,
   listItems,
   normalizeContentTypeKey,
+  publishItem,
   requireCmsAccess,
+  saveDraftItem,
+  unpublishItem,
   updateItem,
 } from "@/lib/cms/core"
 export {
@@ -32,8 +35,10 @@ export type {
   CmsField,
   CmsFieldErrors,
   CmsFieldOption,
+  CmsLifecycle,
   CmsListFilter,
   CmsMutationResult,
+  CmsPublicationStatus,
   CmsReferenceOption,
   CmsReferenceOptions,
   CmsRelation,

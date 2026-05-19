@@ -14,6 +14,8 @@ describe("CMS core registry and validation", () => {
   it("resolves canonical content types and aliases", () => {
     expect(getCmsContentType("question").key).toBe("question")
     expect(resolveCmsContentType("questions")?.key).toBe("question")
+    expect(resolveCmsContentType("media-assets")?.key).toBe("media-asset")
+    expect(resolveCmsContentType("chunks")).toBeUndefined()
     expect(resolveCmsContentType("missing")).toBeUndefined()
   })
 
@@ -29,48 +31,16 @@ describe("CMS core registry and validation", () => {
     formData.set("pG", "0.2")
     formData.set("pS", "0.1")
     formData.set("decayLambda", "0.01")
-    formData.set(
-      "chunks",
-      JSON.stringify([
-        {
-          id: "",
-          title: "Chunk A",
-          slug: "chunk-a",
-          bodyMd: "Body A",
-          order: 1,
-        },
-        {
-          id: "",
-          title: "Chunk B",
-          slug: "chunk-b",
-          bodyMd: "Body B",
-          order: 1,
-        },
-      ])
-    )
-    formData.set(
-      "workedExamples",
-      JSON.stringify([
-        {
-          id: "",
-          title: "Example A",
-          slug: "example-a",
-          problemMd: "Problem A",
-          solutionMd: "Solution A",
-          order: 1,
-        },
-      ])
-    )
+    formData.set("contentBlocks", "{")
 
     const result = parseCmsFormData(conceptDefinition, formData, "writer_1")
 
     expect(result).toEqual({
       success: false,
-      message: "Please correct the highlighted fields and try again.",
+      message: "contentBlocks payload is invalid.",
       statusCode: 400,
       fieldErrors: {
-        "chunks.0.order": ["Chunk order values must be unique."],
-        "chunks.1.order": ["Chunk order values must be unique."],
+        contentBlocks: ["contentBlocks payload is invalid."],
       },
     })
   })

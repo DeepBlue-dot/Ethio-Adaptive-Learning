@@ -62,14 +62,20 @@ describe("CMS schema parsing", () => {
     })
   })
 
-  it("rejects duplicate chunk and worked example order values", () => {
+  it("rejects invalid structured content blocks", () => {
     const result = parseConceptEditorFormInput({
       conceptId: "concept_1",
       unitId: "unit_1",
       title: "Limits",
       slug: "limits",
       description: "",
-      contentBody: "",
+      contentBlocks: JSON.stringify([
+        {
+          id: "block_1",
+          type: "paragraph",
+          text: "",
+        },
+      ]),
       unlockThreshold: "0.9",
       pLo: "0.15",
       pT: "0.1",
@@ -77,40 +83,6 @@ describe("CMS schema parsing", () => {
       pS: "0.1",
       decayLambda: "0.01",
       prerequisiteConceptIds: [],
-      chunks: [
-        {
-          id: "",
-          title: "Chunk A",
-          slug: "chunk-a",
-          bodyMd: "Body A",
-          order: 1,
-        },
-        {
-          id: "",
-          title: "Chunk B",
-          slug: "chunk-b",
-          bodyMd: "Body B",
-          order: 1,
-        },
-      ],
-      workedExamples: [
-        {
-          id: "",
-          title: "Example A",
-          slug: "example-a",
-          problemMd: "Problem A",
-          solutionMd: "Solution A",
-          order: 2,
-        },
-        {
-          id: "",
-          title: "Example B",
-          slug: "example-b",
-          problemMd: "Problem B",
-          solutionMd: "Solution B",
-          order: 2,
-        },
-      ],
       authorId: "writer_1",
     })
 
@@ -119,10 +91,7 @@ describe("CMS schema parsing", () => {
       message: "Please correct the highlighted fields and try again.",
       statusCode: 400,
       fieldErrors: {
-        "chunks.0.order": ["Chunk order values must be unique."],
-        "chunks.1.order": ["Chunk order values must be unique."],
-        "workedExamples.0.order": ["Worked example order values must be unique."],
-        "workedExamples.1.order": ["Worked example order values must be unique."],
+        contentBlocks: ["Content blocks contain invalid fields."],
       },
     })
   })

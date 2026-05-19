@@ -76,6 +76,93 @@ export async function updateItem(
   }
 }
 
+export async function saveDraftItem(
+  type: string,
+  id: string | null,
+  data: unknown,
+  userId: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<CmsMutationResult> {
+  const definition = getCmsContentType(type)
+  const entity = decorateEntity(
+    definition,
+    repository.saveDraftItem
+      ? await repository.saveDraftItem(definition.key, id, data, userId)
+      : id
+        ? await repository.updateItem(definition.key, id, data)
+        : await repository.createItem(definition.key, data)
+  )
+  const revalidationPaths = getCmsRevalidationPaths(definition, {
+    contentType: definition.key,
+    action: id ? "update" : "create",
+    id: entity.id,
+    result: entity,
+  })
+
+  return {
+    entity,
+    message: `${definition.label} draft saved.`,
+    revalidationPaths,
+  }
+}
+
+export async function publishItem(
+  type: string,
+  id: string | null,
+  data: unknown,
+  userId: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<CmsMutationResult> {
+  const definition = getCmsContentType(type)
+  const entity = decorateEntity(
+    definition,
+    repository.publishItem
+      ? await repository.publishItem(definition.key, id, data, userId)
+      : id
+        ? await repository.updateItem(definition.key, id, data)
+        : await repository.createItem(definition.key, data)
+  )
+  const revalidationPaths = getCmsRevalidationPaths(definition, {
+    contentType: definition.key,
+    action: id ? "update" : "create",
+    id: entity.id,
+    result: entity,
+  })
+
+  return {
+    entity,
+    message: `${definition.label} published.`,
+    revalidationPaths,
+  }
+}
+
+export async function unpublishItem(
+  type: string,
+  id: string,
+  userId: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<CmsMutationResult> {
+  const definition = getCmsContentType(type)
+
+  if (!repository.unpublishItem) {
+    throw new Error("This CMS repository does not support unpublishing.")
+  }
+
+  const entity = decorateEntity(definition, await repository.unpublishItem(definition.key, id, userId))
+  const revalidationPaths = getCmsRevalidationPaths(definition, {
+    contentType: definition.key,
+    action: "update",
+    id: entity.id,
+    result: entity,
+  })
+
+  return {
+    entity,
+    message: `${definition.label} unpublished.`,
+    revalidationPaths,
+  }
+}
+
 export async function deleteItem(
   type: string,
   id: string,

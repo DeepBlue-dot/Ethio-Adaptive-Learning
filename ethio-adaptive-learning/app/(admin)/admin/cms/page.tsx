@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Blocks, BookMarked, Database, Network, PlusCircle, Sigma } from "lucide-react"
+import { BookMarked, Database, Image, Network, PlusCircle, ScrollText } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -13,8 +13,8 @@ const iconByType = {
   unit: Database,
   concept: Network,
   question: BookMarked,
-  chunk: Blocks,
-  "worked-example": Sigma,
+  "media-asset": Image,
+  "content-snippet": ScrollText,
 }
 
 export default async function CmsIndexPage() {
@@ -33,8 +33,8 @@ export default async function CmsIndexPage() {
         </p>
         <h1 className="mt-4 text-4xl font-semibold tracking-tight">Content type registry</h1>
         <p className="mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
-          Manage curriculum content through one metadata-driven CMS framework. Courses, concepts,
-          questions, chunks, and worked examples now share the same authoring boundary.
+          Manage curriculum content through one metadata-driven CMS framework with draft publishing,
+          reusable media, content snippets, and block-based lesson authoring.
         </p>
       </section>
 

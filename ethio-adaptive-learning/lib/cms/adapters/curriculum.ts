@@ -15,8 +15,6 @@ import {
 import type { CourseCmsInput } from "@/lib/cms/definitions/course"
 import type { QuestionCmsInput } from "@/lib/cms/definitions/question"
 import type { UnitCmsInput } from "@/lib/cms/definitions/unit"
-import type { ChunkCmsInput } from "@/lib/cms/definitions/chunk"
-import type { WorkedExampleCmsInput } from "@/lib/cms/definitions/worked-example"
 import {
   createConcept,
   createConceptChunk,
@@ -107,11 +105,7 @@ export async function createCurriculumCmsItem(type: CmsContentTypeKey, input: un
       const conceptInput = input as ConceptCmsInput
       const concept = await createConcept(conceptCmsInputToCreateInput(conceptInput))
 
-      if (
-        conceptInput.prerequisiteConceptIds.length ||
-        conceptInput.chunks.length ||
-        conceptInput.workedExamples.length
-      ) {
+      if (conceptInput.prerequisiteConceptIds.length) {
         await saveConceptEditor({
           ...conceptInput,
           conceptId: concept.id,
@@ -128,18 +122,8 @@ export async function createCurriculumCmsItem(type: CmsContentTypeKey, input: un
         id: question.id,
       }
     }
-    case "chunk": {
-      const chunk = await createConceptChunk(input as ChunkCmsInput)
-      return {
-        id: chunk.id,
-      }
-    }
-    case "worked-example": {
-      const example = await createWorkedExample(input as WorkedExampleCmsInput)
-      return {
-        id: example.id,
-      }
-    }
+    default:
+      throw new Error(`Unsupported curriculum CMS type: ${type}.`)
   }
 }
 
@@ -180,18 +164,8 @@ export async function updateCurriculumCmsItem(type: CmsContentTypeKey, id: strin
         id,
       }
     }
-    case "chunk": {
-      await updateConceptChunk(id, input as ChunkCmsInput)
-      return {
-        id,
-      }
-    }
-    case "worked-example": {
-      await updateWorkedExample(id, input as WorkedExampleCmsInput)
-      return {
-        id,
-      }
-    }
+    default:
+      throw new Error(`Unsupported curriculum CMS type: ${type}.`)
   }
 }
 
@@ -209,11 +183,7 @@ export async function deleteCurriculumCmsItem(type: CmsContentTypeKey, id: strin
     case "question":
       await deleteQuestion(id)
       return
-    case "chunk":
-      await deleteConceptChunk(id)
-      return
-    case "worked-example":
-      await deleteWorkedExample(id)
-      return
+    default:
+      throw new Error(`Unsupported curriculum CMS type: ${type}.`)
   }
 }

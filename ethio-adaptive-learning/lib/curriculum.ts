@@ -66,14 +66,21 @@ export async function getStudentConceptCatalog(userId: string) {
   const courses = await prisma.course.findMany({
     where: {
       archivedAt: null,
+      status: "PUBLISHED",
     },
     include: {
       units: {
+        where: {
+          status: "PUBLISHED",
+        },
         orderBy: {
           order: "asc",
         },
         include: {
           concepts: {
+            where: {
+              status: "PUBLISHED",
+            },
             orderBy: {
               title: "asc",
             },
@@ -84,6 +91,9 @@ export async function getStudentConceptCatalog(userId: string) {
               description: true,
               unlockThreshold: true,
               questions: {
+                where: {
+                  status: "PUBLISHED",
+                },
                 select: {
                   id: true,
                 },

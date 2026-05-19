@@ -36,8 +36,10 @@ Supported content type keys are:
 - `question`
 - `chunk`
 - `worked-example`
+- `media-asset`
+- `content-snippet`
 
-Plural aliases such as `questions` and `concepts` resolve to the same definitions for compatibility.
+Plural aliases such as `questions`, `concepts`, `media-assets`, and `content-snippets` resolve to the same definitions for compatibility.
 
 ## Core Architecture
 
@@ -80,6 +82,8 @@ The current definitions are:
 - `definitions/question.ts`
 - `definitions/chunk.ts`
 - `definitions/worked-example.ts`
+- `definitions/media-asset.ts`
+- `definitions/content-snippet.ts`
 
 Concept editing remains richer than a simple flat form. The concept definition includes embedded `chunks` and `workedExamples` collections so a concept can still be saved atomically with its instructional blocks.
 
@@ -93,6 +97,8 @@ The CMS uses existing Prisma models:
 - `Question`
 - `ConceptChunk`
 - `WorkedExample`
+- `MediaAsset`
+- `ContentSnippet`
 - `ConceptPrerequisite`
 - `ConceptClosure`
 
@@ -135,6 +141,8 @@ The form renderer reads field metadata from the content definition and supports:
 - single-reference pickers
 - multi-reference pickers
 - embedded ordered collections
+- reusable content blocks
+- managed media asset inputs for Cloudinary images and YouTube embeds
 
 ## Server Actions
 

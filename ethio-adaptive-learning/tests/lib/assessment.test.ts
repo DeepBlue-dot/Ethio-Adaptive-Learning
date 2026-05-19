@@ -327,6 +327,16 @@ describe("lib/assessment", () => {
           not: null,
           lte: expect.any(Date),
         },
+        concept: {
+          status: "PUBLISHED",
+          unit: {
+            status: "PUBLISHED",
+            course: {
+              archivedAt: null,
+              status: "PUBLISHED",
+            },
+          },
+        },
       },
       orderBy: {
         nextReviewAt: "asc",

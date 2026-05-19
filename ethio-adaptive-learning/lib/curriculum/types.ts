@@ -2,6 +2,7 @@ import type {
   DifficultyTier,
   QuestionUsage,
 } from "@prisma/client"
+import type { CmsContentBlock } from "@/lib/cms/content-blocks"
 
 export type CreateCourseInput = {
   title: string
@@ -22,6 +23,7 @@ export type CreateConceptInput = {
   title: string
   description?: string | null
   contentBody?: string | null
+  contentBlocks?: CmsContentBlock[] | null
   unlockThreshold: number
   pLo: number
   pT: number
@@ -111,7 +113,8 @@ export type SaveConceptEditorInput = {
   pS: number
   decayLambda: number
   prerequisiteConceptIds: string[]
-  chunks: ConceptChunkEditorInput[]
-  workedExamples: WorkedExampleEditorInput[]
+  contentBlocks?: CmsContentBlock[] | null
+  chunks?: ConceptChunkEditorInput[]
+  workedExamples?: WorkedExampleEditorInput[]
   authorId?: string | null
 }

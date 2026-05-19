@@ -1,6 +1,7 @@
 "use client"
 
 import { CmsFieldErrors } from "@/components/cms/cms-feedback"
+import { CmsContentBlockEditor } from "@/components/cms/cms-content-block-editor"
 import { CmsReferencePicker } from "@/components/cms/cms-reference-picker"
 import type { CmsField, CmsReferenceOptions } from "@/lib/cms/types"
 
@@ -22,6 +23,17 @@ export function CmsFieldInput({
 }) {
   if (field.type === "hidden" || field.formHidden || field.type === "embedded-list") {
     return null
+  }
+
+  if (field.type === "content-blocks") {
+    return (
+      <CmsContentBlockEditor
+        errors={errors}
+        name={field.name}
+        referenceOptions={referenceOptions}
+        value={value}
+      />
+    )
   }
 
   const isLongField = field.type === "textarea" || field.type === "markdown" || field.type === "multi-reference"

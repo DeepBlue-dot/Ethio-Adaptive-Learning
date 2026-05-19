@@ -84,8 +84,11 @@ export function CmsForm({
       ))}
 
       <div className="flex flex-wrap gap-3">
-        <Button disabled={isPending} type="submit">
-          {isPending ? "Saving..." : item ? `Save ${definition.label.toLowerCase()}` : `Create ${definition.label.toLowerCase()}`}
+        <Button disabled={isPending} name="intent" type="submit" value="save-draft" variant="outline">
+          {isPending ? "Saving..." : "Save draft"}
+        </Button>
+        <Button disabled={isPending} name="intent" type="submit" value="publish">
+          {isPending ? "Publishing..." : item ? "Publish changes" : `Publish ${definition.label.toLowerCase()}`}
         </Button>
         <Button asChild type="button" variant="outline">
           <a href={returnTo}>Back to {definition.pluralLabel.toLowerCase()}</a>

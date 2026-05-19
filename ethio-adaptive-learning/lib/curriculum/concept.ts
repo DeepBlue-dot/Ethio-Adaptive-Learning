@@ -36,6 +36,7 @@ export async function createConceptDraft(input: CreateConceptDraftInput) {
     decayLambda: 0.01,
     description: null,
     contentBody: null,
+    contentBlocks: [],
   })
 }
 
@@ -61,6 +62,7 @@ export async function createConcept(input: CreateConceptInput) {
       title,
       description: optionalText(input.description),
       contentBody: optionalText(input.contentBody),
+      contentBlocks: input.contentBlocks ?? [],
       unlockThreshold,
       pLo,
       pT,
@@ -98,6 +100,7 @@ export async function updateConcept(conceptId: string, input: CreateConceptInput
       title,
       description: optionalText(input.description),
       contentBody: optionalText(input.contentBody),
+      contentBlocks: input.contentBlocks ?? [],
       unlockThreshold,
       pLo,
       pT,

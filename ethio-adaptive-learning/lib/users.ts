@@ -1,5 +1,5 @@
-import { Prisma } from "@prisma/client"
 import { randomBytes } from "crypto"
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library"
 
 import { prisma } from "@/lib/prisma"
 import { hashPassword } from "@/lib/password"
@@ -49,7 +49,7 @@ export async function createStudentUser(input: RegistrationInput) {
       },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+    if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
       throw new Error("An account with that username or email already exists.")
     }
 
@@ -67,7 +67,7 @@ export async function updateUserPassword(email: string, password: string) {
       data: { passwordHash },
     })
   } catch (error) {
-    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2025") {
+    if (error instanceof PrismaClientKnownRequestError && error.code === "P2025") {
       throw new Error("No account was found for that email address.")
     }
 
@@ -232,7 +232,7 @@ export async function markUserEmailVerified(email: string) {
     })
   } catch (error) {
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error instanceof PrismaClientKnownRequestError &&
       error.code === "P2025"
     ) {
       throw new Error("No account was found for that email address.")

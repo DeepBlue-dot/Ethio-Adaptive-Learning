@@ -73,7 +73,14 @@ export const unitDefinition = {
       label: "Concepts",
     },
   ],
-  getTitle: (entity) => entity.title,
+  getTitle: (entity) => String(entity.data.title ?? entity.title),
   getSubtitle: (entity) => String(entity.data.courseLabel ?? ""),
+  getStatus: (entity) => {
+    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
+      return "PUBLISHED + DRAFT"
+    }
+
+    return entity.lifecycle?.status ?? null
+  },
   getRevalidationPaths: () => ["/admin/dashboard", "/admin/cms", "/admin/cms/unit", "/admin/cms/concept", "/concepts"],
 } satisfies CmsContentType<UnitCmsInput>

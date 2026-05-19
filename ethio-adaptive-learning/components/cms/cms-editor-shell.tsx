@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { ArrowLeft, Trash2 } from "lucide-react"
+import { ArrowLeft, Eye, Trash2, UploadCloud } from "lucide-react"
 
-import { deleteCmsItem } from "@/app/(admin)/admin/cms/actions"
+import { deleteCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/cms/actions"
 import { Button } from "@/components/ui/button"
 import type { CmsEntity, CmsSerializableContentType } from "@/lib/cms/types"
 
@@ -43,18 +43,46 @@ export function CmsEditorShell({
             <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground">
               {definition.description}
             </p>
+            {item?.lifecycle ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                <LifecycleBadge label={item.lifecycle.status} />
+                {item.lifecycle.hasDraft ? <LifecycleBadge label="DRAFT CHANGES" /> : null}
+              </div>
+            ) : null}
           </div>
 
           {item ? (
-            <form action={deleteCmsItem}>
-              <input name="contentType" type="hidden" value={definition.key} />
-              <input name="id" type="hidden" value={item.id} />
-              <input name="returnTo" type="hidden" value={returnTo} />
-              <Button type="submit" variant="destructive">
-                <Trash2 className="size-4" />
-                Delete
-              </Button>
-            </form>
+            <div className="flex flex-wrap gap-3">
+              {definition.key === "concept" ? (
+                <Button asChild type="button" variant="outline">
+                  <Link href={`/learn/${item.id}`}>
+                    <Eye className="size-4" />
+                    Preview
+                  </Link>
+                </Button>
+              ) : null}
+              {item.lifecycle?.status === "PUBLISHED" ? (
+                <form action={unpublishCmsItem}>
+                  <input name="contentType" type="hidden" value={definition.key} />
+                  <input name="id" type="hidden" value={item.id} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <Button type="submit" variant="outline">
+                    <UploadCloud className="size-4" />
+                    Unpublish
+                  </Button>
+                </form>
+              ) : (
+                <form action={deleteCmsItem}>
+                  <input name="contentType" type="hidden" value={definition.key} />
+                  <input name="id" type="hidden" value={item.id} />
+                  <input name="returnTo" type="hidden" value={returnTo} />
+                  <Button type="submit" variant="destructive">
+                    <Trash2 className="size-4" />
+                    Delete
+                  </Button>
+                </form>
+              )}
+            </div>
           ) : null}
         </div>
       </section>
@@ -64,6 +92,14 @@ export function CmsEditorShell({
 
       {children}
     </div>
+  )
+}
+
+function LifecycleBadge({ label }: { label: string }) {
+  return (
+    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-secondary-foreground">
+      {label}
+    </span>
   )
 }
 

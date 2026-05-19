@@ -32,6 +32,17 @@ enum StudentGrade {
   ABOVE
 }
 
+enum CmsPublicationStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum MediaAssetKind {
+  IMAGE
+  YOUTUBE_EMBED
+}
+
 model User {
   id            String    @id @default(cuid())
   name          String?
@@ -60,6 +71,7 @@ model User {
   authoredQuestions      Question[]      @relation("QuestionAuthor")
   authoredConceptChunks  ConceptChunk[]  @relation("ConceptChunkAuthor")
   authoredWorkedExamples WorkedExample[] @relation("WorkedExampleAuthor")
+  authoredContentSnippets ContentSnippet[] @relation("ContentSnippetAuthor")
   passwordResetTokens    PasswordResetToken[]
 }
 
@@ -86,11 +98,19 @@ model Course {
   archivedAt  DateTime?
   units       Unit[]
 
+  // Editorial lifecycle
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
+
   // Audit
   authorId    String?
   author      User?    @relation("CourseAuthor", fields: [authorId], references: [id])
 
   @@index([archivedAt])
+  @@index([status])
 }
 
 
@@ -102,9 +122,15 @@ model Unit {
   courseId  String
   course    Course    @relation(fields: [courseId], references: [id])
   concepts  Concept[]
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
 
   @@unique([courseId, order])
   @@unique([courseId, slug])
+  @@index([status])
 }
 
 model Concept {
@@ -117,7 +143,13 @@ model Concept {
   
   // Instructional Content (Path A)
   contentBody    String?  @db.Text // Markdown/LaTeX content
+  contentBlocks  Json     @default("[]")
   unlockThreshold Float   @default(0.90)
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
   
   // Default BKT Parameters for this Concept
   pLo            Float    @default(0.15) // Initial knowledge
@@ -142,6 +174,7 @@ model Concept {
 
   @@unique([unitId, title])
   @@unique([unitId, slug])
+  @@index([status])
 }
 
 model ConceptPrerequisite {
@@ -164,11 +197,17 @@ model ConceptChunk {
   authorId  String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
   concept   Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   author    User?    @relation("ConceptChunkAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@unique([conceptId, slug])
   @@unique([conceptId, order])
+  @@index([status])
 }
 
 model WorkedExample {
@@ -182,11 +221,17 @@ model WorkedExample {
   authorId   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
   concept    Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   author     User?    @relation("WorkedExampleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
 
   @@unique([conceptId, slug])
   @@unique([conceptId, order])
+  @@index([status])
 }
 
 model ConceptClosure {
@@ -266,12 +311,77 @@ model Question {
   author        User?          @relation("QuestionAuthor", fields: [authorId], references: [id])
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
 
   logs          InteractionLog[]
   practiceAttempts   PracticeAttempt[]
   checkpointAttempts CheckpointAttempt[]
 
   @@unique([conceptId, slug])
+  @@index([status])
+}
+
+model CmsDraft {
+  id          String   @id @default(cuid())
+  contentType String
+  entityId    String
+  data        Json
+  createdById String?
+  updatedById String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([contentType, entityId])
+  @@index([contentType])
+  @@index([updatedAt])
+}
+
+model MediaAsset {
+  id           String @id @default(cuid())
+  kind         MediaAssetKind
+  title        String?
+  alt          String?
+  caption      String?
+  publicId     String? @unique
+  url          String?
+  width        Int?
+  height       Int?
+  bytes        Int?
+  videoId      String?
+  thumbnailUrl String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
+
+  @@index([kind])
+  @@index([status])
+}
+
+model ContentSnippet {
+  id            String @id @default(cuid())
+  slug          String @unique
+  title         String
+  contentBlocks Json   @default("[]")
+  authorId      String?
+  author        User?  @relation("ContentSnippetAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  status          CmsPublicationStatus @default(PUBLISHED)
+  publishedAt     DateTime?
+  publishedById   String?
+  unpublishedAt   DateTime?
+  unpublishedById String?
+
+  @@index([status])
 }
 
 model PracticeAttempt {

@@ -26,7 +26,7 @@ export function parseCmsFormData<TInput>(
       continue
     }
 
-    if (field.type === "embedded-list") {
+    if (field.type === "embedded-list" || field.type === "content-blocks") {
       const parsed = parseEmbeddedListField(formData, field.name)
 
       if (parsed instanceof Error) {

@@ -22,6 +22,11 @@ import {
   deriveMasteryStatus,
   isReviewDue,
 } from "@/lib/adaptive/retention"
+import {
+  getContentBlockReferences,
+  normalizeContentBlocks,
+  type CmsContentBlock,
+} from "@/lib/cms/content-blocks"
 import { loadCourseUserState } from "@/lib/curriculum-graph"
 import { prisma } from "@/lib/prisma"
 
@@ -94,25 +99,30 @@ export type LearningWorkspace = {
     slug: string
     title: string
     description: string | null
-    contentBody: string | null
+    contentBlocks: CmsContentBlock[]
     unlockThreshold: number
     courseTitle: string
     unitTitle: string
     questionCounts: Record<QuestionUsage, number>
-    chunks: Array<{
+    contentBlockAssets: Record<string, {
       id: string
-      slug: string
       title: string
-      bodyMd: string
-      order: number
+      kind: string
+      alt: string | null
+      caption: string | null
+      url: string | null
+      width: number | null
+      height: number | null
+      videoId: string | null
     }>
-    workedExamples: Array<{
+    contentBlockQuestions: Record<string, {
       id: string
-      slug: string
+      content: string
+    }>
+    contentBlockSnippets: Record<string, {
+      id: string
       title: string
-      problemMd: string
-      solutionMd: string
-      order: number
+      contentBlocks: CmsContentBlock[]
     }>
   }
   mastery: {
@@ -155,9 +165,17 @@ export type StudentDashboardSummary = {
 }
 
 export async function getConceptLearningWorkspace(userId: string, conceptId: string): Promise<LearningWorkspace> {
-  const concept = await prisma.concept.findUnique({
+  const concept = await prisma.concept.findFirst({
     where: {
       id: conceptId,
+      status: "PUBLISHED",
+      unit: {
+        status: "PUBLISHED",
+        course: {
+          archivedAt: null,
+          status: "PUBLISHED",
+        },
+      },
     },
     include: {
       unit: {
@@ -177,17 +195,10 @@ export async function getConceptLearningWorkspace(userId: string, conceptId: str
         select: userMasterySelect,
         take: 1,
       },
-      chunks: {
-        orderBy: {
-          order: "asc",
-        },
-      },
-      workedExamples: {
-        orderBy: {
-          order: "asc",
-        },
-      },
       questions: {
+        where: {
+          status: "PUBLISHED",
+        },
         select: {
           id: true,
           usage: true,
@@ -266,6 +277,49 @@ export async function getConceptLearningWorkspace(userId: string, conceptId: str
   const latestExamAttempt = concept.examAttempts[0]
     ? await serializeExamAttempt(concept.examAttempts[0])
     : null
+  const contentBlocks = normalizeContentBlocks(concept.contentBlocks)
+  const contentBlockReferences = getContentBlockReferences(contentBlocks)
+  const [contentBlockAssets, contentBlockQuestions, contentBlockSnippets] = await Promise.all([
+    contentBlockReferences.assetIds.length
+      ? prisma.mediaAsset.findMany({
+          where: {
+            id: {
+              in: contentBlockReferences.assetIds,
+            },
+            status: "PUBLISHED",
+          },
+        })
+      : [],
+    contentBlockReferences.questionIds.length
+      ? prisma.question.findMany({
+          where: {
+            id: {
+              in: contentBlockReferences.questionIds,
+            },
+            status: "PUBLISHED",
+          },
+          select: {
+            id: true,
+            content: true,
+          },
+        })
+      : [],
+    contentBlockReferences.snippetIds.length
+      ? prisma.contentSnippet.findMany({
+          where: {
+            id: {
+              in: contentBlockReferences.snippetIds,
+            },
+            status: "PUBLISHED",
+          },
+          select: {
+            id: true,
+            title: true,
+            contentBlocks: true,
+          },
+        })
+      : [],
+  ])
 
   return {
     concept: {
@@ -273,25 +327,45 @@ export async function getConceptLearningWorkspace(userId: string, conceptId: str
       slug: concept.slug,
       title: concept.title,
       description: concept.description,
-      contentBody: concept.contentBody,
+      contentBlocks,
       unlockThreshold: concept.unlockThreshold,
       courseTitle: concept.unit.course.title,
       unitTitle: concept.unit.title,
-      chunks: concept.chunks.map((chunk) => ({
-        id: chunk.id,
-        slug: chunk.slug,
-        title: chunk.title,
-        bodyMd: chunk.bodyMd,
-        order: chunk.order,
-      })),
-      workedExamples: concept.workedExamples.map((example) => ({
-        id: example.id,
-        slug: example.slug,
-        title: example.title,
-        problemMd: example.problemMd,
-        solutionMd: example.solutionMd,
-        order: example.order,
-      })),
+      contentBlockAssets: Object.fromEntries(
+        contentBlockAssets.map((asset) => [
+          asset.id,
+          {
+            id: asset.id,
+            title: asset.title ?? "",
+            kind: asset.kind,
+            alt: asset.alt,
+            caption: asset.caption,
+            url: asset.url,
+            width: asset.width,
+            height: asset.height,
+            videoId: asset.videoId,
+          },
+        ])
+      ),
+      contentBlockQuestions: Object.fromEntries(
+        contentBlockQuestions.map((question) => [
+          question.id,
+          {
+            id: question.id,
+            content: question.content,
+          },
+        ])
+      ),
+      contentBlockSnippets: Object.fromEntries(
+        contentBlockSnippets.map((snippet) => [
+          snippet.id,
+          {
+            id: snippet.id,
+            title: snippet.title,
+            contentBlocks: normalizeContentBlocks(snippet.contentBlocks),
+          },
+        ])
+      ),
       questionCounts: concept.questions.reduce(
         (counts, question) => ({
           ...counts,
@@ -341,6 +415,16 @@ export async function getReviewQueue(userId: string): Promise<ReviewQueueItem[]>
       nextReviewAt: {
         not: null,
         lte: new Date(),
+      },
+      concept: {
+        status: "PUBLISHED",
+        unit: {
+          status: "PUBLISHED",
+          course: {
+            archivedAt: null,
+            status: "PUBLISHED",
+          },
+        },
       },
     },
     orderBy: {
@@ -393,6 +477,7 @@ export async function getStudentDashboardSummary(userId: string): Promise<Studen
   const courses = await prisma.course.findMany({
     where: {
       archivedAt: null,
+      status: "PUBLISHED",
     },
     select: {
       id: true,
@@ -756,6 +841,7 @@ export async function submitExamAttempt(
         id: {
           in: questionIds,
         },
+        status: "PUBLISHED",
       },
       select: questionSelect,
     })
@@ -918,6 +1004,7 @@ async function serializeExamAttempt(attempt: ExamAttempt): Promise<ExamAttemptSu
           id: {
             in: questionIds,
           },
+          status: "PUBLISHED",
         },
         select: questionSelect,
       })
@@ -979,9 +1066,16 @@ async function getUnlockedConceptOrThrow(db: DbClient, userId: string, conceptId
 }
 
 async function getConceptAccessState(db: DbClient, userId: string, conceptId: string) {
-  const concept = await db.concept.findUnique({
+  const concept = await db.concept.findFirst({
     where: {
       id: requireId(conceptId, "Concept"),
+      status: "PUBLISHED",
+      unit: {
+        status: "PUBLISHED",
+        course: {
+          status: "PUBLISHED",
+        },
+      },
     },
     include: {
       unit: {
@@ -1111,6 +1205,7 @@ async function selectQuestionsForAttempt(
       where: {
         conceptId: concept.id,
         usage,
+        status: "PUBLISHED",
       },
       select: questionSelect,
     }),

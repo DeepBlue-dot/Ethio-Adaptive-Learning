@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Build verification URL and send email
-    const verificationUrl = `${APP_URL}/api/auth/verify-account?email=${encodeURIComponent(
+    const verificationUrl = `${APP_URL}/verify-email?email=${encodeURIComponent(
       user.email
     )}&token=${encodeURIComponent(token)}`
 

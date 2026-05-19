@@ -10,14 +10,19 @@ function getRequiredEnv(name: string): string {
   return value
 }
 
-const CLOUDINARY_CLOUD_NAME = getRequiredEnv("CLOUDINARY_CLOUD_NAME")
-const CLOUDINARY_API_KEY = getRequiredEnv("CLOUDINARY_API_KEY")
-const CLOUDINARY_API_SECRET = getRequiredEnv("CLOUDINARY_API_SECRET")
+let configured = false
 
-cloudinary.config({
-  cloud_name: CLOUDINARY_CLOUD_NAME,
-  api_key: CLOUDINARY_API_KEY,
-  api_secret: CLOUDINARY_API_SECRET,
-})
+export function getCloudinary() {
+  if (!configured) {
+    cloudinary.config({
+      cloud_name: getRequiredEnv("CLOUDINARY_CLOUD_NAME"),
+      api_key: getRequiredEnv("CLOUDINARY_API_KEY"),
+      api_secret: getRequiredEnv("CLOUDINARY_API_SECRET"),
+    })
+    configured = true
+  }
+
+  return cloudinary
+}
 
 export default cloudinary

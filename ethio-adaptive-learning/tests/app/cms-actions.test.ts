@@ -5,9 +5,12 @@ import { initialCmsActionState } from "@/lib/cms/types"
 const mocks = vi.hoisted(() => ({
   createItem: vi.fn(),
   deleteItem: vi.fn(),
+  publishItem: vi.fn(),
   redirect: vi.fn(),
   requireCmsAccess: vi.fn(),
   revalidatePath: vi.fn(),
+  saveDraftItem: vi.fn(),
+  unpublishItem: vi.fn(),
   updateItem: vi.fn(),
 }))
 
@@ -26,12 +29,15 @@ vi.mock("@/lib/cms", async () => {
     ...actual,
     createItem: mocks.createItem,
     deleteItem: mocks.deleteItem,
+    publishItem: mocks.publishItem,
     requireCmsAccess: mocks.requireCmsAccess,
+    saveDraftItem: mocks.saveDraftItem,
+    unpublishItem: mocks.unpublishItem,
     updateItem: mocks.updateItem,
   }
 })
 
-import { deleteCmsItem, saveCmsItem } from "@/app/(admin)/admin/cms/actions"
+import { deleteCmsItem, saveCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/cms/actions"
 
 describe("generic CMS actions", () => {
   beforeEach(() => {
@@ -74,12 +80,12 @@ describe("generic CMS actions", () => {
         correctAnswer: ["Correct answer is required."],
       },
     })
-    expect(mocks.createItem).not.toHaveBeenCalled()
-    expect(mocks.updateItem).not.toHaveBeenCalled()
+    expect(mocks.publishItem).not.toHaveBeenCalled()
+    expect(mocks.saveDraftItem).not.toHaveBeenCalled()
   })
 
-  it("creates items through the generic CMS action and redirects to the editor", async () => {
-    mocks.createItem.mockResolvedValueOnce({
+  it("publishes items through the generic CMS action and redirects to the editor", async () => {
+    mocks.publishItem.mockResolvedValueOnce({
       entity: {
         id: "question_1",
         type: "question",
@@ -88,7 +94,7 @@ describe("generic CMS actions", () => {
           conceptId: "concept_1",
         },
       },
-      message: "Question created.",
+      message: "Question published.",
       revalidationPaths: ["/admin/cms/question", "/learn/concept_1"],
     })
 
@@ -96,10 +102,10 @@ describe("generic CMS actions", () => {
     formData.set("returnTo", "/admin/cms/question?courseId=course_1")
 
     await expect(saveCmsItem(initialCmsActionState, formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/admin/cms/question/question_1?status=Question+created.&returnTo=%2Fadmin%2Fcms%2Fquestion%3FcourseId%3Dcourse_1"
+      "NEXT_REDIRECT:/admin/cms/question/question_1?status=Question+published.&returnTo=%2Fadmin%2Fcms%2Fquestion%3FcourseId%3Dcourse_1"
     )
 
-    expect(mocks.createItem).toHaveBeenCalledWith("question", {
+    expect(mocks.publishItem).toHaveBeenCalledWith("question", null, {
       authorId: "writer_1",
       conceptId: "concept_1",
       content: "What is 2 + 2?",
@@ -110,20 +116,20 @@ describe("generic CMS actions", () => {
       hintText: "Count pairs",
       slug: "two-plus-two",
       usage: "PRACTICE",
-    })
+    }, "writer_1")
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/cms/question")
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/learn/concept_1")
   })
 
-  it("updates items when an id is present", async () => {
-    mocks.updateItem.mockResolvedValueOnce({
+  it("publishes changes when an id is present", async () => {
+    mocks.publishItem.mockResolvedValueOnce({
       entity: {
         id: "course_1",
         type: "course",
         title: "Grade 12 Mathematics",
         data: {},
       },
-      message: "Course saved.",
+      message: "Course published.",
       revalidationPaths: ["/admin/cms/course"],
     })
 
@@ -137,16 +143,42 @@ describe("generic CMS actions", () => {
     formData.set("archived", "active")
 
     await expect(saveCmsItem(initialCmsActionState, formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/admin/cms/course/course_1?status=Course+saved."
+      "NEXT_REDIRECT:/admin/cms/course/course_1?status=Course+published."
     )
 
-    expect(mocks.updateItem).toHaveBeenCalledWith("course", "course_1", {
+    expect(mocks.publishItem).toHaveBeenCalledWith("course", "course_1", {
       archived: "active",
       authorId: null,
       description: "Core course",
       slug: "grade-12-math",
       title: "Grade 12 Mathematics",
+    }, "writer_1")
+  })
+
+  it("saves drafts without publishing canonical content", async () => {
+    mocks.saveDraftItem.mockResolvedValueOnce({
+      entity: {
+        id: "question_1",
+        type: "question",
+        title: "What is 2 + 2?",
+        data: {},
+      },
+      message: "Question draft saved.",
+      revalidationPaths: ["/admin/cms/question"],
     })
+
+    const formData = buildValidQuestionFormData()
+    formData.set("id", "question_1")
+    formData.set("intent", "save-draft")
+
+    await expect(saveCmsItem(initialCmsActionState, formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/admin/cms/question/question_1?status=Question+draft+saved."
+    )
+
+    expect(mocks.saveDraftItem).toHaveBeenCalledWith("question", "question_1", expect.objectContaining({
+      content: "What is 2 + 2?",
+    }), "writer_1")
+    expect(mocks.publishItem).not.toHaveBeenCalled()
   })
 
   it("deletes items through the generic CMS action and revalidates returned paths", async () => {
@@ -175,6 +207,30 @@ describe("generic CMS actions", () => {
     expect(mocks.deleteItem).toHaveBeenCalledWith("question", "question_1")
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/cms/question")
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/learn/concept_1")
+  })
+
+  it("unpublishes items through the lifecycle action", async () => {
+    mocks.unpublishItem.mockResolvedValueOnce({
+      entity: {
+        id: "concept_1",
+        type: "concept",
+        title: "Limits",
+        data: {},
+      },
+      message: "Concept unpublished.",
+      revalidationPaths: ["/admin/cms/concept", "/learn/concept_1"],
+    })
+
+    const formData = new FormData()
+    formData.set("contentType", "concept")
+    formData.set("id", "concept_1")
+    formData.set("returnTo", "/admin/cms/concept")
+
+    await expect(unpublishCmsItem(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/admin/cms/concept/concept_1?status=Concept+unpublished."
+    )
+
+    expect(mocks.unpublishItem).toHaveBeenCalledWith("concept", "concept_1", "writer_1")
   })
 })
 

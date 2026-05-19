@@ -55,7 +55,7 @@ export const courseDefinition = {
     },
     {
       name: "archived",
-      label: "Publishing state",
+      label: "Archive state",
       type: "select",
       section: "Governance",
       options: [
@@ -84,8 +84,14 @@ export const courseDefinition = {
       label: "Units",
     },
   ],
-  getTitle: (entity) => entity.title,
+  getTitle: (entity) => String(entity.data.title ?? entity.title),
   getSubtitle: (entity) => String(entity.data.slug ?? ""),
-  getStatus: (entity) => String(entity.data.archived ?? "active"),
+  getStatus: (entity) => {
+    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
+      return "PUBLISHED + DRAFT"
+    }
+
+    return entity.lifecycle?.status ?? null
+  },
   getRevalidationPaths: () => ["/admin/dashboard", "/admin/cms", "/admin/cms/course", "/concepts"],
 } satisfies CmsContentType<CourseCmsInput>

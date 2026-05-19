@@ -26,8 +26,10 @@ const masterySelect = {
 export async function rebuildConceptClosureForCourse(courseId: string, db: DbClient = prisma) {
   const concepts = await db.concept.findMany({
     where: {
+      status: "PUBLISHED",
       unit: {
         courseId,
+        status: "PUBLISHED",
       },
     },
     select: {
@@ -59,9 +61,14 @@ export async function rebuildConceptClosureForCourse(courseId: string, db: DbCli
 
   const directEdges = await db.conceptPrerequisite.findMany({
     where: {
+      prerequisiteConcept: {
+        status: "PUBLISHED",
+      },
       dependentConcept: {
+        status: "PUBLISHED",
         unit: {
           courseId,
+          status: "PUBLISHED",
         },
       },
     },
@@ -120,8 +127,13 @@ export async function loadCourseGraphContext(courseId: string, db: DbClient = pr
   const [concepts, directEdges, storedClosureRows] = await Promise.all([
     db.concept.findMany({
       where: {
+        status: "PUBLISHED",
         unit: {
           courseId,
+          status: "PUBLISHED",
+          course: {
+            status: "PUBLISHED",
+          },
         },
       },
       select: {
@@ -137,9 +149,14 @@ export async function loadCourseGraphContext(courseId: string, db: DbClient = pr
     }),
     db.conceptPrerequisite.findMany({
       where: {
+        prerequisiteConcept: {
+          status: "PUBLISHED",
+        },
         dependentConcept: {
+          status: "PUBLISHED",
           unit: {
             courseId,
+            status: "PUBLISHED",
           },
         },
       },
@@ -151,9 +168,14 @@ export async function loadCourseGraphContext(courseId: string, db: DbClient = pr
     db.conceptClosure.findMany({
       where: {
         ancestorConcept: {
+          status: "PUBLISHED",
           unit: {
             courseId,
+            status: "PUBLISHED",
           },
+        },
+        descendantConcept: {
+          status: "PUBLISHED",
         },
       },
       select: {
