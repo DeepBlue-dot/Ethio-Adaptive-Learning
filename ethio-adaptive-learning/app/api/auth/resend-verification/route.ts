@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     const token = await createEmailVerificationToken(email)
 
     if (token) {
-      const verificationUrl = `${APP_URL}/api/auth/verify-account?email=${encodeURIComponent(
+      const verificationUrl = `${APP_URL}/verify-email?email=${encodeURIComponent(
         email
       )}&token=${encodeURIComponent(token)}`
 
