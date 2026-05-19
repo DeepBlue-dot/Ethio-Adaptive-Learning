@@ -32,6 +32,8 @@ export type CmsContentTypeKey =
   | "course"
   | "unit"
   | "concept"
+  | "chunk"
+  | "worked-example"
   | "question"
   | "media-asset"
   | "content-snippet"
@@ -70,6 +72,9 @@ export type CmsField = {
   defaultValue?: string | number | string[] | Record<string, unknown>[]
   listHidden?: boolean
   formHidden?: boolean
+  min?: number
+  max?: number
+  step?: number
 }
 
 export type CmsRelation = {
@@ -117,6 +122,7 @@ export type CmsLifecycle = {
   publishedById?: string | null
   unpublishedAt?: string | Date | null
   unpublishedById?: string | null
+  updatedAt?: string | Date | null
 }
 
 export type CmsEntity<TData extends Record<string, unknown> = Record<string, unknown>> = {
@@ -167,9 +173,21 @@ export type CmsSerializableContentType = Omit<CmsContentType, "schema" | "getTit
 
 export type CmsRepository = {
   createItem: (type: CmsContentTypeKey, data: unknown) => Promise<CmsEntity>
-  updateItem: (type: CmsContentTypeKey, id: string, data: unknown) => Promise<CmsEntity>
-  saveDraftItem?: (type: CmsContentTypeKey, id: string | null, data: unknown, userId: string) => Promise<CmsEntity>
-  publishItem?: (type: CmsContentTypeKey, id: string | null, data: unknown, userId: string) => Promise<CmsEntity>
+  updateItem: (type: CmsContentTypeKey, id: string, data: unknown, lastUpdatedAt?: number) => Promise<CmsEntity>
+  saveDraftItem?: (
+    type: CmsContentTypeKey,
+    id: string | null,
+    data: unknown,
+    userId: string,
+    lastUpdatedAt?: number
+  ) => Promise<CmsEntity>
+  publishItem?: (
+    type: CmsContentTypeKey,
+    id: string | null,
+    data: unknown,
+    userId: string,
+    lastUpdatedAt?: number
+  ) => Promise<CmsEntity>
   unpublishItem?: (type: CmsContentTypeKey, id: string, userId: string) => Promise<CmsEntity>
   deleteItem: (type: CmsContentTypeKey, id: string) => Promise<CmsEntity>
   getItem: (type: CmsContentTypeKey, id: string) => Promise<CmsEntity | null>

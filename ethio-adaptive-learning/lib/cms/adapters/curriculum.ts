@@ -15,6 +15,8 @@ import {
 import type { CourseCmsInput } from "@/lib/cms/definitions/course"
 import type { QuestionCmsInput } from "@/lib/cms/definitions/question"
 import type { UnitCmsInput } from "@/lib/cms/definitions/unit"
+import type { ChunkCmsInput } from "@/lib/cms/definitions/chunk"
+import type { WorkedExampleCmsInput } from "@/lib/cms/definitions/worked-example"
 import {
   createConcept,
   createConceptChunk,
@@ -116,6 +118,18 @@ export async function createCurriculumCmsItem(type: CmsContentTypeKey, input: un
         id: concept.id,
       }
     }
+    case "chunk": {
+      const chunk = await createConceptChunk(input as ChunkCmsInput)
+      return {
+        id: chunk.id,
+      }
+    }
+    case "worked-example": {
+      const example = await createWorkedExample(input as WorkedExampleCmsInput)
+      return {
+        id: example.id,
+      }
+    }
     case "question": {
       const question = await createQuestion(input as QuestionCmsInput)
       return {
@@ -158,6 +172,18 @@ export async function updateCurriculumCmsItem(type: CmsContentTypeKey, id: strin
         id,
       }
     }
+    case "chunk": {
+      await updateConceptChunk(id, input as ChunkCmsInput)
+      return {
+        id,
+      }
+    }
+    case "worked-example": {
+      await updateWorkedExample(id, input as WorkedExampleCmsInput)
+      return {
+        id,
+      }
+    }
     case "question": {
       await updateQuestion(id, input as QuestionCmsInput)
       return {
@@ -179,6 +205,12 @@ export async function deleteCurriculumCmsItem(type: CmsContentTypeKey, id: strin
       return
     case "concept":
       await deleteConcept(id)
+      return
+    case "chunk":
+      await deleteConceptChunk(id)
+      return
+    case "worked-example":
+      await deleteWorkedExample(id)
       return
     case "question":
       await deleteQuestion(id)

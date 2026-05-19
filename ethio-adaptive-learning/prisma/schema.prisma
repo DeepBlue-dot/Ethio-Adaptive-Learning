@@ -108,6 +108,8 @@ model Course {
   // Audit
   authorId    String?
   author      User?    @relation("CourseAuthor", fields: [authorId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([archivedAt])
   @@index([status])
@@ -127,6 +129,8 @@ model Unit {
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([courseId, order])
   @@unique([courseId, slug])
@@ -150,6 +154,8 @@ model Concept {
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   
   // Default BKT Parameters for this Concept
   pLo            Float    @default(0.15) // Initial knowledge

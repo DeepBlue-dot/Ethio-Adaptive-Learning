@@ -58,10 +58,11 @@ export async function updateItem(
   type: string,
   id: string,
   data: unknown,
+  lastUpdatedAt?: number,
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
-  const entity = decorateEntity(definition, await repository.updateItem(definition.key, id, data))
+  const entity = decorateEntity(definition, await repository.updateItem(definition.key, id, data, lastUpdatedAt))
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: "update",
@@ -81,15 +82,16 @@ export async function saveDraftItem(
   id: string | null,
   data: unknown,
   userId: string,
+  lastUpdatedAt?: number,
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
   const entity = decorateEntity(
     definition,
     repository.saveDraftItem
-      ? await repository.saveDraftItem(definition.key, id, data, userId)
+      ? await repository.saveDraftItem(definition.key, id, data, userId, lastUpdatedAt)
       : id
-        ? await repository.updateItem(definition.key, id, data)
+        ? await repository.updateItem(definition.key, id, data, lastUpdatedAt)
         : await repository.createItem(definition.key, data)
   )
   const revalidationPaths = getCmsRevalidationPaths(definition, {
@@ -111,15 +113,16 @@ export async function publishItem(
   id: string | null,
   data: unknown,
   userId: string,
+  lastUpdatedAt?: number,
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
   const entity = decorateEntity(
     definition,
     repository.publishItem
-      ? await repository.publishItem(definition.key, id, data, userId)
+      ? await repository.publishItem(definition.key, id, data, userId, lastUpdatedAt)
       : id
-        ? await repository.updateItem(definition.key, id, data)
+        ? await repository.updateItem(definition.key, id, data, lastUpdatedAt)
         : await repository.createItem(definition.key, data)
   )
   const revalidationPaths = getCmsRevalidationPaths(definition, {

@@ -26,6 +26,8 @@ export async function saveCmsItem(
   const session = await requireCmsAccess()
   const contentType = textField(formData, "contentType") ?? ""
   const id = textField(formData, "id")
+  const lastUpdatedAtString = textField(formData, "lastUpdatedAt")
+  const lastUpdatedAt = lastUpdatedAtString ? parseInt(lastUpdatedAtString, 10) : undefined
   const intent = textField(formData, "intent") ?? "publish"
   const returnTo = getReturnTo(formData, CMS_INDEX_PATH)
   const definition = getContentType(contentType)
@@ -45,8 +47,8 @@ export async function saveCmsItem(
   try {
     result =
       intent === "save-draft"
-        ? await saveDraftItem(definition.key, id, parsed.data, session.user.id)
-        : await publishItem(definition.key, id, parsed.data, session.user.id)
+        ? await saveDraftItem(definition.key, id, parsed.data, session.user.id, lastUpdatedAt)
+        : await publishItem(definition.key, id, parsed.data, session.user.id, lastUpdatedAt)
     revalidateCmsPaths(result.revalidationPaths)
   } catch (error) {
     return createCmsErrorState(error)

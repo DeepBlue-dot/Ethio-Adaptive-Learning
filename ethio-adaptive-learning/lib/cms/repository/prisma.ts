@@ -31,14 +31,15 @@ export const prismaCmsRepository: CmsRepository = {
     })
     return getRequiredCmsItem(type, result.id)
   },
-  async updateItem(type, id, data) {
+  async updateItem(type, id, data, lastUpdatedAt) {
+    await assertNoConflict(type, id, lastUpdatedAt)
     await updateCanonicalItem(type, id, data, {
       status: "PUBLISHED",
       userId: null,
     })
     return getRequiredCmsItem(type, id)
   },
-  async saveDraftItem(type, id, data, userId) {
+  async saveDraftItem(type, id, data, userId, lastUpdatedAt) {
     if (!id) {
       const result = await createCanonicalItem(type, data, {
         status: "DRAFT",
@@ -47,6 +48,7 @@ export const prismaCmsRepository: CmsRepository = {
       return getRequiredCmsItem(type, result.id)
     }
 
+    await assertNoConflict(type, id, lastUpdatedAt)
     const lifecycle = await getCanonicalLifecycle(type, id)
 
     if (lifecycle.status === "PUBLISHED") {
@@ -78,7 +80,11 @@ export const prismaCmsRepository: CmsRepository = {
     })
     return getRequiredCmsItem(type, id)
   },
-  async publishItem(type, id, data, userId) {
+  async publishItem(type, id, data, userId, lastUpdatedAt) {
+    if (id) {
+      await assertNoConflict(type, id, lastUpdatedAt)
+    }
+
     const result = id
       ? await updateCanonicalItem(type, id, data, {
           status: "PUBLISHED",
@@ -131,6 +137,22 @@ export const prismaCmsRepository: CmsRepository = {
   getItem: getCmsItem,
   listItems: listCmsItems,
   getReferenceOptions,
+}
+
+async function assertNoConflict(type: CmsContentTypeKey, id: string, lastUpdatedAt?: number) {
+  if (!lastUpdatedAt) return
+
+  const entity = await getBaseCmsItem(type, id)
+  if (!entity?.lifecycle?.updatedAt) return
+
+  const currentUpdatedAt = new Date(entity.lifecycle.updatedAt).getTime()
+
+  // Allow for 1 second tolerance to avoid issues with floating point dates or slight clock drifts
+  if (currentUpdatedAt > lastUpdatedAt + 1000) {
+    throw new Error(
+      `This ${type} has been modified by someone else since you started editing. Please copy your changes and refresh to merge.`
+    )
+  }
 }
 
 async function createCanonicalItem(
@@ -1072,6 +1094,7 @@ function getLifecycle(record: {
   publishedById: string | null
   unpublishedAt: Date | null
   unpublishedById: string | null
+  updatedAt: Date
 }): CmsLifecycle {
   return {
     status: record.status,
@@ -1080,6 +1103,7 @@ function getLifecycle(record: {
     publishedById: record.publishedById,
     unpublishedAt: record.unpublishedAt,
     unpublishedById: record.unpublishedById,
+    updatedAt: record.updatedAt,
   }
 }
 

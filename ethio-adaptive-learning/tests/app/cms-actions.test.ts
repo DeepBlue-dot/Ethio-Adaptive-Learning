@@ -116,7 +116,7 @@ describe("generic CMS actions", () => {
       hintText: "Count pairs",
       slug: "two-plus-two",
       usage: "PRACTICE",
-    }, "writer_1")
+    }, "writer_1", undefined)
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/admin/cms/question")
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/learn/concept_1")
   })
@@ -141,6 +141,7 @@ describe("generic CMS actions", () => {
     formData.set("description", " Core course ")
     formData.set("authorId", "")
     formData.set("archived", "active")
+    formData.set("lastUpdatedAt", "1716110000000")
 
     await expect(saveCmsItem(initialCmsActionState, formData)).rejects.toThrow(
       "NEXT_REDIRECT:/admin/cms/course/course_1?status=Course+published."
@@ -152,7 +153,7 @@ describe("generic CMS actions", () => {
       description: "Core course",
       slug: "grade-12-math",
       title: "Grade 12 Mathematics",
-    }, "writer_1")
+    }, "writer_1", 1716110000000)
   })
 
   it("saves drafts without publishing canonical content", async () => {
@@ -177,7 +178,7 @@ describe("generic CMS actions", () => {
 
     expect(mocks.saveDraftItem).toHaveBeenCalledWith("question", "question_1", expect.objectContaining({
       content: "What is 2 + 2?",
-    }), "writer_1")
+    }), "writer_1", undefined)
     expect(mocks.publishItem).not.toHaveBeenCalled()
   })
 

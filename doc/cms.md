@@ -10,10 +10,12 @@ The CMS is the protected authoring subsystem for `ADMIN` and `COURSE_WRITER` use
 - units
 - concepts
 - questions
-- concept chunks
-- worked examples
+- chunks (Concept Chunks)
+- worked-examples (Worked Examples)
+- media-assets
+- content-snippets
 
-The redesign keeps the database schema unchanged for v1. The CMS core provides a generic service, validation, registry, UI, and server-action boundary while the curriculum adapter preserves domain-specific behavior such as prerequisite validation and adaptive graph updates.
+The redesign keeps the database schema largely unchanged, adding `updatedAt` for concurrency control. The CMS core provides a generic service, validation, registry, UI, and server-action boundary while the curriculum adapter preserves domain-specific behavior such as prerequisite validation and adaptive graph updates.
 
 ## Routes
 
@@ -101,8 +103,13 @@ The CMS uses existing Prisma models:
 - `ContentSnippet`
 - `ConceptPrerequisite`
 - `ConceptClosure`
+- `CmsDraft`
 
-There are no new generic CMS tables in this version. The Prisma repository converts generic CMS operations into concrete Prisma-backed curriculum operations.
+All primary models now include an `updatedAt` field to support optimistic concurrency control.
+
+## Conflict Resolution
+
+The CMS implements basic conflict detection. When an item is loaded for editing, its `updatedAt` timestamp is captured. Upon saving, this timestamp is compared against the current value in the database. If the database record is newer than the captured timestamp, the save is rejected with a conflict error, prompting the author to refresh and merge changes manually.
 
 ## Domain Rules
 
@@ -129,8 +136,9 @@ Reusable CMS UI components live under `ethio-adaptive-learning/components/cms/`:
 - `cms-relation-manager.tsx`
 - `cms-editor-shell.tsx`
 - `cms-feedback.tsx`
+- `publication-controls.tsx`
 
-The form renderer reads field metadata from the content definition and supports:
+The form renderer reads field metadata from the content definition (including `min`, `max`, `step` constraints) and supports:
 
 - text inputs
 - textareas

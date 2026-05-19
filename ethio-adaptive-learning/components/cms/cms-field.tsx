@@ -62,15 +62,16 @@ function renderFieldControl(field: CmsField, value: unknown, referenceOptions: C
   }
 
   if (field.type === "number" || field.type === "probability") {
+    const isProb = field.type === "probability"
     return (
       <input
         className={inputClassName}
         defaultValue={toInputValue(value)}
-        max={field.type === "probability" ? 1 : undefined}
-        min={field.type === "probability" ? 0 : 1}
+        max={field.max ?? (isProb ? 1 : undefined)}
+        min={field.min ?? (isProb ? 0 : 1)}
         name={field.name}
         placeholder={field.placeholder}
-        step={field.type === "probability" ? "0.01" : "1"}
+        step={field.step ?? (isProb ? "0.01" : "1")}
         type="number"
       />
     )
