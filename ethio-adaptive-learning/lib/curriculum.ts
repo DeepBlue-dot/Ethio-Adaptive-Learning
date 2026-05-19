@@ -11,50 +11,42 @@ import { prisma } from "@/lib/prisma"
 
 export {
   archiveCourse,
-  createCourse,
-  deleteCourse,
-  getCmsAuthors,
-  getCurriculumHierarchyCmsData,
-  restoreCourse,
-  updateCourse,
-} from "@/lib/curriculum/course"
-export {
   createConcept,
   createConceptChunk,
-  createConceptDraft,
+  createCourse,
+  createQuestion,
+  createUnit,
   createWorkedExample,
   deleteConcept,
   deleteConceptChunk,
-  deleteWorkedExample,
-  setConceptPrerequisites,
-  updateConcept,
-  updateConceptChunk,
-  updateWorkedExample,
-} from "@/lib/curriculum/concept"
-export {
-  getConceptEditorCmsData,
-  saveConceptEditor,
-} from "@/lib/curriculum/concept-editor"
-export {
-  formatDistractorsForTextarea,
-  getQuestionDifficultyOptions,
-  getQuestionDifficultyOptions as getDifficultyOptions,
-  getQuestionUsageOptions,
-  saveQuestion,
-  createQuestion,
-  updateQuestion,
+  deleteCourse,
   deleteQuestion,
-} from "@/lib/curriculum/question"
-export {
+  deleteUnit,
+  deleteWorkedExample,
+  formatDistractorsForTextarea,
+  getCmsAuthors,
+  getConceptEditorCmsData,
+  getCurriculumHierarchyCmsData,
+  getDifficultyOptions,
   getQuestionBankCmsData,
   getQuestionBankCmsData as getQuestionCmsData,
+  getQuestionDifficultyOptions,
   getQuestionEditorCmsData,
-} from "@/lib/curriculum/question-bank"
-export {
-  createUnit,
-  deleteUnit,
+  getQuestionUsageOptions,
+  restoreCourse,
+  saveConceptEditor,
+  saveQuestion,
+  updateConceptChunk,
+  updateCourse,
+  updateQuestion,
   updateUnit,
-} from "@/lib/curriculum/unit"
+  updateWorkedExample,
+} from "@/lib/cms/adapters/curriculum"
+export {
+  createConceptDraft,
+  setConceptPrerequisites,
+  updateConcept,
+} from "@/lib/curriculum/concept"
 export type {
   ConceptChunkEditorInput,
   CreateConceptChunkInput,

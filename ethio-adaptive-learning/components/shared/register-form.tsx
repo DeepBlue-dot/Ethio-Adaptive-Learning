@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useState, useTransition, useRef, useEffect } from "react"
+import { useState, useSyncExternalStore, useTransition, useRef } from "react"
 import ReCAPTCHA from "react-google-recaptcha"
 import { useTheme } from "next-themes"
 
@@ -11,14 +11,10 @@ import { Button } from "@/components/ui/button"
 export function RegisterForm() {
   const router = useRouter()
   const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const mounted = useClientMounted()
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
   const recaptchaRef = useRef<ReCAPTCHA>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   return (
     <form
@@ -174,4 +170,20 @@ export function RegisterForm() {
       </p>
     </form>
   )
+}
+
+function useClientMounted() {
+  return useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot)
+}
+
+function emptySubscribe() {
+  return () => {}
+}
+
+function getClientSnapshot() {
+  return true
+}
+
+function getServerSnapshot() {
+  return false
 }

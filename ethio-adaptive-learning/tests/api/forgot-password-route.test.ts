@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   createPasswordResetToken: vi.fn(),
   sendEmail: vi.fn(),
   userFindUnique: vi.fn(),
+  verifyRecaptcha: vi.fn(),
 }))
 
 vi.mock("@/lib/users", () => ({
@@ -12,6 +13,10 @@ vi.mock("@/lib/users", () => ({
 
 vi.mock("@/lib/email/send-email", () => ({
   sendEmail: mocks.sendEmail,
+}))
+
+vi.mock("@/lib/verify-recaptcha", () => ({
+  verifyRecaptcha: mocks.verifyRecaptcha,
 }))
 
 vi.mock("@/lib/prisma", () => ({
@@ -29,6 +34,8 @@ describe("POST /api/auth/forgot-password", () => {
     mocks.createPasswordResetToken.mockReset()
     mocks.sendEmail.mockReset()
     mocks.userFindUnique.mockReset()
+    mocks.verifyRecaptcha.mockReset()
+    mocks.verifyRecaptcha.mockResolvedValue(true)
   })
 
   it("rejects malformed email addresses", async () => {
@@ -36,7 +43,7 @@ describe("POST /api/auth/forgot-password", () => {
       new Request("http://localhost/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "not-an-email" }),
+        body: JSON.stringify({ email: "not-an-email", recaptchaToken: "captcha-token" }),
       })
     )
 
@@ -55,7 +62,7 @@ describe("POST /api/auth/forgot-password", () => {
       new Request("http://localhost/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "learner@example.com" }),
+        body: JSON.stringify({ email: "learner@example.com", recaptchaToken: "captcha-token" }),
       })
     )
 
@@ -78,7 +85,7 @@ describe("POST /api/auth/forgot-password", () => {
       new Request("http://localhost/api/auth/forgot-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "learner@example.com" }),
+        body: JSON.stringify({ email: "learner@example.com", recaptchaToken: "captcha-token" }),
       })
     )
 

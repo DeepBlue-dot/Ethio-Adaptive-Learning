@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useState, useTransition, useRef, useEffect } from "react"
+import { useState, useSyncExternalStore, useTransition, useRef } from "react"
 import ReCAPTCHA from "react-google-recaptcha"
 import { useTheme } from "next-themes"
 
@@ -16,7 +16,7 @@ type SubmitStatus = "idle" | "pending" | "success"
 
 export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordFormProps) {
   const { theme } = useTheme()
-  const [mounted, setMounted] = useState(false)
+  const mounted = useClientMounted()
   const [email, setEmail] = useState(initialEmail ?? "")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -24,10 +24,6 @@ export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordF
   const [status, setStatus] = useState<SubmitStatus>("idle")
   const [isPending, startTransition] = useTransition()
   const recaptchaRef = useRef<ReCAPTCHA>(null)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
 
   return (
     <form
@@ -174,4 +170,20 @@ export function ResetPasswordForm({ initialEmail, initialToken }: ResetPasswordF
       </p>
     </form>
   )
+}
+
+function useClientMounted() {
+  return useSyncExternalStore(emptySubscribe, getClientSnapshot, getServerSnapshot)
+}
+
+function emptySubscribe() {
+  return () => {}
+}
+
+function getClientSnapshot() {
+  return true
+}
+
+function getServerSnapshot() {
+  return false
 }

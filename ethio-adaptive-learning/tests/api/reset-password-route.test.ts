@@ -4,12 +4,17 @@ const mocks = vi.hoisted(() => ({
   verifyPasswordResetToken: vi.fn(),
   updateUserPassword: vi.fn(),
   invalidatePasswordResetToken: vi.fn(),
+  verifyRecaptcha: vi.fn(),
 }))
 
 vi.mock("@/lib/users", () => ({
   verifyPasswordResetToken: mocks.verifyPasswordResetToken,
   updateUserPassword: mocks.updateUserPassword,
   invalidatePasswordResetToken: mocks.invalidatePasswordResetToken,
+}))
+
+vi.mock("@/lib/verify-recaptcha", () => ({
+  verifyRecaptcha: mocks.verifyRecaptcha,
 }))
 
 import { POST } from "@/app/api/auth/reset-password/route"
@@ -19,6 +24,8 @@ describe("POST /api/auth/reset-password", () => {
     mocks.verifyPasswordResetToken.mockReset()
     mocks.updateUserPassword.mockReset()
     mocks.invalidatePasswordResetToken.mockReset()
+    mocks.verifyRecaptcha.mockReset()
+    mocks.verifyRecaptcha.mockResolvedValue(true)
   })
 
   it("rejects malformed email addresses", async () => {
@@ -76,7 +83,12 @@ describe("POST /api/auth/reset-password", () => {
       new Request("http://localhost/api/auth/reset-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "learner@example.com", password: "newpassword", token: "invalid-token" }),
+        body: JSON.stringify({
+          email: "learner@example.com",
+          password: "newpassword",
+          token: "invalid-token",
+          recaptchaToken: "captcha-token",
+        }),
       })
     )
 
@@ -100,6 +112,7 @@ describe("POST /api/auth/reset-password", () => {
           email: "learner@example.com",
           password: "newstrongpassword",
           token: "valid-token",
+          recaptchaToken: "captcha-token",
         }),
       })
     )

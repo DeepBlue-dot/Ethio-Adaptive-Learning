@@ -1,3 +1,5 @@
+import type { z } from "zod"
+
 export type CmsValidationResult<T> =
   | {
       success: true
@@ -24,4 +26,136 @@ export const initialCmsActionState: CmsActionState = {
   message: null,
   statusCode: null,
   fieldErrors: {},
+}
+
+export type CmsContentTypeKey =
+  | "course"
+  | "unit"
+  | "concept"
+  | "question"
+  | "chunk"
+  | "worked-example"
+
+export type CmsFieldType =
+  | "text"
+  | "textarea"
+  | "markdown"
+  | "number"
+  | "probability"
+  | "select"
+  | "reference"
+  | "multi-reference"
+  | "embedded-list"
+  | "hidden"
+
+export type CmsFieldOption = {
+  label: string
+  value: string
+}
+
+export type CmsEmbeddedField = Omit<CmsField, "embeddedFields" | "referenceTo">
+
+export type CmsField = {
+  name: string
+  label: string
+  type: CmsFieldType
+  required?: boolean
+  description?: string
+  placeholder?: string
+  section?: string
+  options?: CmsFieldOption[]
+  referenceTo?: CmsContentTypeKey | "author"
+  embeddedFields?: CmsEmbeddedField[]
+  defaultValue?: string | number | string[] | Record<string, unknown>[]
+  listHidden?: boolean
+  formHidden?: boolean
+}
+
+export type CmsRelation = {
+  name: string
+  label: string
+  type: "belongsTo" | "references" | "embeds"
+  target: CmsContentTypeKey
+}
+
+export type CmsListField = {
+  name: string
+  label: string
+}
+
+export type CmsInvalidationContext = {
+  contentType: CmsContentTypeKey
+  action: "create" | "update" | "delete"
+  id?: string
+  result?: CmsEntity
+}
+
+export type CmsContentType<TInput = unknown> = {
+  key: CmsContentTypeKey
+  aliases?: string[]
+  label: string
+  pluralLabel: string
+  description: string
+  fields: CmsField[]
+  listFields: CmsListField[]
+  relations?: CmsRelation[]
+  schema: z.ZodType<TInput>
+  defaultValues?: Record<string, unknown>
+  getTitle: (entity: CmsEntity) => string
+  getSubtitle?: (entity: CmsEntity) => string | null
+  getStatus?: (entity: CmsEntity) => string | null
+  getRevalidationPaths?: (context: CmsInvalidationContext) => string[]
+}
+
+export type CmsEntity<TData extends Record<string, unknown> = Record<string, unknown>> = {
+  id: string
+  type: CmsContentTypeKey
+  title: string
+  subtitle?: string | null
+  status?: string | null
+  data: TData
+}
+
+export type CmsListFilter = {
+  courseId?: string
+  unitId?: string
+  conceptId?: string
+  query?: string
+}
+
+export type CmsListResult = {
+  contentType: CmsContentTypeKey
+  items: CmsEntity[]
+}
+
+export type CmsMutationResult = {
+  entity: CmsEntity
+  message: string
+  revalidationPaths: string[]
+}
+
+export type CmsReferenceOption = {
+  label: string
+  value: string
+  description?: string
+}
+
+export type CmsReferenceOptions = Record<string, CmsReferenceOption[]>
+
+export type CmsEditorModel = {
+  definition: CmsSerializableContentType
+  item: CmsEntity | null
+  referenceOptions: CmsReferenceOptions
+  returnTo: string
+}
+
+export type CmsSerializableContentType = Omit<CmsContentType, "schema" | "getTitle" | "getSubtitle" | "getStatus" | "getRevalidationPaths">
+
+export type CmsRepository = {
+  createItem: (type: CmsContentTypeKey, data: unknown) => Promise<CmsEntity>
+  updateItem: (type: CmsContentTypeKey, id: string, data: unknown) => Promise<CmsEntity>
+  deleteItem: (type: CmsContentTypeKey, id: string) => Promise<CmsEntity>
+  getItem: (type: CmsContentTypeKey, id: string) => Promise<CmsEntity | null>
+  listItems: (type: CmsContentTypeKey, filter?: CmsListFilter) => Promise<CmsEntity[]>
+  getReferenceOptions: (type: CmsContentTypeKey, id?: string) => Promise<CmsReferenceOptions>
 }

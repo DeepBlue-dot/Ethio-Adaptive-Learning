@@ -1,9 +1,9 @@
-import type { DestroyApiResponse, UploadApiOptions, UploadApiResponse } from "cloudinary"
+import type { DeleteApiResponse, UploadApiOptions, UploadApiResponse } from "cloudinary"
 
 export type CloudinaryUploadOptions = Omit<UploadApiOptions, "resource_type">
 
 export type CloudinaryUploadResult = UploadApiResponse
-export type CloudinaryDeleteResult = DestroyApiResponse
+export type CloudinaryDeleteResult = DeleteApiResponse
 
 export type CloudinaryImageUrlOptions = {
   width?: number
