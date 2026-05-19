@@ -353,7 +353,7 @@ async function getRequiredCmsItem(type: CmsContentTypeKey, id: string) {
 async function listBaseCmsItems(type: CmsContentTypeKey, filter: CmsListFilter = {}) {
   switch (type) {
     case "course":
-      return listCourses()
+      return listCourses(filter)
     case "unit":
       return listUnits(filter)
     case "concept":
@@ -361,9 +361,9 @@ async function listBaseCmsItems(type: CmsContentTypeKey, filter: CmsListFilter =
     case "question":
       return listQuestions(filter)
     case "media-asset":
-      return listMediaAssets()
+      return listMediaAssets(filter)
     case "content-snippet":
-      return listContentSnippets()
+      return listContentSnippets(filter)
   }
 }
 
@@ -384,8 +384,11 @@ async function getBaseCmsItem(type: CmsContentTypeKey, id: string) {
   }
 }
 
-async function listCourses() {
+async function listCourses(filter: CmsListFilter) {
   const courses = await prisma.course.findMany({
+    where: {
+      status: filter.status as CmsPublicationStatus | undefined,
+    },
     include: {
       author: {
         select: {
@@ -471,6 +474,7 @@ async function listUnits(filter: CmsListFilter) {
   const units = await prisma.unit.findMany({
     where: {
       courseId: filter.courseId,
+      status: filter.status as CmsPublicationStatus | undefined,
     },
     include: {
       course: true,
@@ -552,6 +556,7 @@ async function listConcepts(filter: CmsListFilter) {
       unit: {
         courseId: filter.courseId,
       },
+      status: filter.status as CmsPublicationStatus | undefined,
     },
     include: {
       unit: {
@@ -651,6 +656,7 @@ async function listQuestions(filter: CmsListFilter) {
           courseId: filter.courseId,
         },
       },
+      status: filter.status as CmsPublicationStatus | undefined,
     },
     include: {
       author: {
@@ -747,8 +753,11 @@ async function getQuestionItem(id: string) {
   )
 }
 
-async function listMediaAssets() {
+async function listMediaAssets(filter: CmsListFilter) {
   const assets = await prisma.mediaAsset.findMany({
+    where: {
+      status: filter.status as CmsPublicationStatus | undefined,
+    },
     orderBy: [
       {
         kind: "asc",
@@ -790,8 +799,11 @@ async function getMediaAssetItem(id: string) {
   )
 }
 
-async function listContentSnippets() {
+async function listContentSnippets(filter: CmsListFilter) {
   const snippets = await prisma.contentSnippet.findMany({
+    where: {
+      status: filter.status as CmsPublicationStatus | undefined,
+    },
     include: {
       author: {
         select: {
@@ -965,6 +977,10 @@ async function getReferenceOptions(type: CmsContentTypeKey, id?: string): Promis
       label: asset.title ?? asset.videoId ?? asset.publicId ?? "Untitled media",
       value: asset.id,
       description: asset.kind,
+      metadata: {
+        thumbnailUrl: asset.kind === "YOUTUBE_EMBED" ? asset.thumbnailUrl : asset.url,
+        kind: asset.kind,
+      },
     })),
     snippetId: snippets.map((snippet) => ({
       label: snippet.title,

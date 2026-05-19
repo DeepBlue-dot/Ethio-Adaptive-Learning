@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { PlusCircle, Trash2 } from "lucide-react"
+import { Image as ImageIcon, PlusCircle, Play, Search, Trash2, Video } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { CmsFieldErrors } from "@/components/cms/cms-feedback"
 import type { CmsContentBlock } from "@/lib/cms/content-blocks"
-import type { CmsReferenceOptions } from "@/lib/cms/types"
+import type { CmsReferenceOptions, CmsReferenceOption } from "@/lib/cms/types"
 
 type BlockType = CmsContentBlock["type"]
 type EditableBlock = {
@@ -134,10 +134,10 @@ function BlockFields({
   if (block.type === "image") {
     return (
       <>
-        <SelectInput
-          label="Image asset"
+        <MediaPicker
+          label="Select Image Asset"
           options={referenceOptions.assetId ?? []}
-          value={block.assetId}
+          value={String(block.assetId)}
           onChange={(assetId) => onChange({ assetId })}
         />
         <TextInput label="Alt text" value={block.alt} onChange={(alt) => onChange({ alt })} />
@@ -186,10 +186,9 @@ function BlockFields({
 
   if (block.type === "snippet") {
     return (
-      <SelectInput
-        label="Snippet"
+      <SnippetPicker
         options={referenceOptions.snippetId ?? []}
-        value={block.snippetId}
+        value={String(block.snippetId)}
         onChange={(snippetId) => onChange({ snippetId })}
       />
     )
@@ -200,6 +199,173 @@ function BlockFields({
       <TextInput label="Title" value={block.title} onChange={(title) => onChange({ title })} />
       <TextareaInput label="Text" value={block.text} onChange={(text) => onChange({ text })} />
     </>
+  )
+}
+
+function MediaPicker({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  options: CmsReferenceOption[]
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const selected = options.find((opt) => opt.value === value)
+
+  return (
+    <div className="lg:col-span-2">
+      <span className="block text-sm font-medium text-foreground">{label}</span>
+      <div className="mt-2 flex items-center gap-4">
+        <button
+          className="flex h-24 w-40 items-center justify-center overflow-hidden rounded-2xl border border-border bg-slate-50 transition hover:border-teal-600 group"
+          onClick={() => setIsOpen(!isOpen)}
+          type="button"
+        >
+          {selected?.metadata?.thumbnailUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              alt={selected.label}
+              className="h-full w-full object-cover"
+              src={String(selected.metadata.thumbnailUrl)}
+            />
+          ) : (
+            <div className="flex flex-col items-center gap-1 text-muted-foreground group-hover:text-teal-600">
+              <ImageIcon className="size-6" />
+              <span className="text-[10px] font-bold uppercase tracking-wider">Choose Media</span>
+            </div>
+          )}
+        </button>
+        {selected && (
+          <div className="flex-1">
+            <p className="text-sm font-semibold text-foreground">{selected.label}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">
+              {String(selected.description)}
+            </p>
+            <button
+              className="mt-2 text-xs font-bold text-red-600 hover:underline"
+              onClick={() => onChange("")}
+              type="button"
+            >
+              Clear selection
+            </button>
+          </div>
+        )}
+      </div>
+
+      {isOpen && (
+        <div className="mt-4 rounded-3xl border border-border bg-slate-50 p-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                className={`group relative aspect-video overflow-hidden rounded-2xl border-2 transition ${
+                  value === option.value ? "border-teal-600 ring-2 ring-teal-600/20" : "border-transparent hover:border-slate-300"
+                }`}
+                onClick={() => {
+                  onChange(option.value)
+                  setIsOpen(false)
+                }}
+                type="button"
+              >
+                {option.metadata?.thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    alt={option.label}
+                    className="h-full w-full object-cover"
+                    src={String(option.metadata.thumbnailUrl)}
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-white text-muted-foreground">
+                    <ImageIcon className="size-6 opacity-20" />
+                  </div>
+                )}
+                {option.metadata?.kind === "YOUTUBE_EMBED" && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20">
+                    <Play className="size-5 fill-white text-white" />
+                  </div>
+                )}
+                <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 text-left backdrop-blur-sm">
+                  <p className="truncate text-[10px] font-bold text-white uppercase tracking-wider">{option.label}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+          <Button className="mt-4 w-full" onClick={() => setIsOpen(false)} type="button" variant="outline">
+            Close Media Library
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function SnippetPicker({
+  options,
+  value,
+  onChange,
+}: {
+  options: CmsReferenceOption[]
+  value: string
+  onChange: (value: string) => void
+}) {
+  const [query, setQuery] = useState("")
+  const filtered = options.filter(
+    (opt) =>
+      opt.label.toLowerCase().includes(query.toLowerCase()) || opt.description?.toLowerCase().includes(query.toLowerCase())
+  )
+  const selected = options.find((opt) => opt.value === value)
+
+  return (
+    <div className="lg:col-span-2">
+      <span className="block text-sm font-medium text-foreground">Content Snippet</span>
+      <div className="mt-2 relative">
+        <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+        <input
+          className={`${inputClassName} !mt-0 !pl-11`}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search snippets..."
+          type="text"
+          value={query}
+        />
+      </div>
+
+      <div className="mt-3 max-h-48 overflow-y-auto rounded-2xl border border-border bg-slate-50 p-2 space-y-1">
+        {filtered.length ? (
+          filtered.map((option) => (
+            <button
+              key={option.value}
+              className={`flex w-full flex-col rounded-xl px-4 py-3 text-left transition ${
+                value === option.value ? "bg-teal-600 text-white shadow-md" : "hover:bg-white"
+              }`}
+              onClick={() => onChange(option.value)}
+              type="button"
+            >
+              <span className="text-sm font-semibold">{option.label}</span>
+              <span className={`text-[10px] uppercase tracking-widest ${value === option.value ? "text-teal-100" : "text-muted-foreground"}`}>
+                {option.description}
+              </span>
+            </button>
+          ))
+        ) : (
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">No snippets found matching "{query}"</div>
+        )}
+      </div>
+
+      {selected && (
+        <div className="mt-3 flex items-center justify-between rounded-2xl border border-teal-100 bg-teal-50 px-4 py-2">
+          <p className="text-xs font-medium text-teal-800 tracking-wide">
+            Selected: <span className="font-bold">{selected.label}</span>
+          </p>
+          <button className="text-[10px] font-bold uppercase text-red-600 hover:underline" onClick={() => onChange("")} type="button">
+            Clear
+          </button>
+        </div>
+      )}
+    </div>
   )
 }
 

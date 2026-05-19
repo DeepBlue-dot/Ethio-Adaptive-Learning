@@ -151,6 +151,7 @@ export type CmsReferenceOption = {
   label: string
   value: string
   description?: string
+  metadata?: Record<string, unknown>
 }
 
 export type CmsReferenceOptions = Record<string, CmsReferenceOption[]>

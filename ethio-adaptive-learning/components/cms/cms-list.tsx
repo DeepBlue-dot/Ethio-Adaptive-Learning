@@ -1,7 +1,7 @@
 import Link from "next/link"
-import { ImageUp, PencilLine, PlusCircle } from "lucide-react"
+import { ExternalLink, Eye, ImageUp, PencilLine, Play, PlusCircle, UploadCloud, Video, XCircle } from "lucide-react"
 
-import { uploadCmsImageAsset } from "@/app/(admin)/admin/cms/actions"
+import { uploadCmsImageAsset, saveCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/cms/actions"
 import { Button } from "@/components/ui/button"
 import type { CmsEntity, CmsSerializableContentType } from "@/lib/cms/types"
 
@@ -12,31 +12,187 @@ export function CmsList({
   definition: CmsSerializableContentType
   items: CmsEntity[]
 }) {
+  const isMedia = definition.key === "media-asset"
+
   return (
     <section className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Existing {definition.pluralLabel.toLowerCase()}</h2>
-          <p className="text-sm text-muted-foreground">{items.length} item{items.length === 1 ? "" : "s"} in this content type.</p>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            Existing {definition.pluralLabel.toLowerCase()}
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {items.length} item{items.length === 1 ? "" : "s"} in this content type.
+          </p>
         </div>
-        <Button asChild>
-          <Link href={`/admin/cms/${definition.key}/new`}>
-            <PlusCircle className="size-4" />
-            New {definition.label.toLowerCase()}
-          </Link>
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button asChild variant="outline">
+            <Link href={`/admin/cms/${definition.key}`}>
+              Clear Filters
+            </Link>
+          </Button>
+          <Button asChild>
+            <Link href={`/admin/cms/${definition.key}/new`}>
+              <PlusCircle className="size-4" />
+              New {definition.label.toLowerCase()}
+            </Link>
+          </Button>
+        </div>
       </div>
 
-      {definition.key === "media-asset" ? (
-        <form action={uploadCmsImageAsset} className="rounded-[2rem] border border-border bg-white p-5 shadow-sm">
-          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr_auto]">
-            <input
-              aria-label="Image file"
-              className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground"
-              name="file"
-              type="file"
-              accept="image/*"
-            />
+      <div className="flex flex-wrap items-center gap-4 py-2 border-b border-border pb-4">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Filter by status:</span>
+        <div className="flex flex-wrap gap-2">
+          {["PUBLISHED", "DRAFT", "UNPUBLISHED"].map((s) => (
+            <Link
+              key={s}
+              href={`/admin/cms/${definition.key}?status=${s}`}
+              className="rounded-full border border-border bg-white px-4 py-1 text-[10px] font-bold text-foreground transition hover:border-teal-300 hover:bg-teal-50"
+            >
+              {s}
+            </Link>
+          ))}
+        </div>
+      </div>
+
+      {isMedia ? <MediaCreationControls /> : null}
+
+      {items.length ? (
+        isMedia ? (
+          <MediaGrid items={items} />
+        ) : (
+          <div className="space-y-4">
+            {items.map((item) => (
+              <div
+                key={item.id}
+                className="group relative rounded-[2rem] border border-border bg-white p-6 shadow-sm transition hover:border-teal-300 hover:shadow-md"
+              >
+                <div className="flex flex-wrap items-start justify-between gap-6">
+                  <div className="flex-1 min-w-[280px]">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Link 
+                        href={`/admin/cms/${definition.key}/${item.id}`}
+                        className="text-2xl font-semibold tracking-tight text-foreground hover:text-teal-700 transition"
+                      >
+                        {item.title}
+                      </Link>
+                      <LifecycleBadge label={item.status || "UNKNOWN"} hasDraft={item.lifecycle?.hasDraft} />
+                    </div>
+                    
+                    <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
+                      {definition.listFields.map((field) => (
+                        <div key={field.name} className="flex items-baseline gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                            {field.label}:
+                          </span>
+                          <span className="text-sm font-medium text-foreground">
+                            {formatListValue(item.data[field.name])}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Button asChild size="sm" variant="ghost">
+                      <Link href={`/admin/cms/${definition.key}/${item.id}/preview`} target="_blank">
+                        <Eye className="size-4" />
+                        Preview
+                      </Link>
+                    </Button>
+                    <Button asChild size="sm" variant="outline">
+                      <Link href={`/admin/cms/${definition.key}/${item.id}`}>
+                        <PencilLine className="size-4" />
+                        Edit
+                      </Link>
+                    </Button>
+                    <QuickActions item={item} definition={definition} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )
+      ) : (
+        <div className="rounded-[2rem] border border-dashed border-border bg-white px-6 py-10 text-center shadow-sm">
+          <h3 className="text-xl font-semibold text-foreground">No {definition.pluralLabel.toLowerCase()} yet</h3>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">
+            Create the first {definition.label.toLowerCase()} to start filling this CMS type.
+          </p>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function QuickActions({ item, definition }: { item: CmsEntity, definition: CmsSerializableContentType }) {
+  if (item.status === "PUBLISHED") {
+    return (
+      <form action={unpublishCmsItem}>
+        <input name="contentType" type="hidden" value={definition.key} />
+        <input name="id" type="hidden" value={item.id} />
+        <Button size="sm" variant="ghost" type="submit" className="text-rose-600 hover:text-rose-700 hover:bg-rose-50">
+          <XCircle className="size-4" />
+          Unpublish
+        </Button>
+      </form>
+    )
+  }
+
+  return (
+    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" disabled>
+      <UploadCloud className="size-4" />
+      Quick Publish
+    </Button>
+  )
+}
+
+function LifecycleBadge({ label, hasDraft }: { label: string, hasDraft?: boolean }) {
+  const colors = {
+    DRAFT: "bg-slate-100 text-slate-700",
+    PUBLISHED: "bg-emerald-100 text-emerald-700",
+    UNPUBLISHED: "bg-rose-100 text-rose-700",
+  }
+
+  return (
+    <div className="flex gap-2">
+      <span
+        className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
+          colors[label as keyof typeof colors] || "bg-secondary text-secondary-foreground"
+        }`}
+      >
+        {label}
+      </span>
+      {hasDraft && (
+        <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">
+          HAS DRAFT
+        </span>
+      )}
+    </div>
+  )
+}
+
+function MediaCreationControls() {
+  return (
+    <div className="grid gap-5 xl:grid-cols-2">
+      <form
+        action={uploadCmsImageAsset}
+        className="flex flex-col rounded-[2rem] border border-border bg-white p-6 shadow-sm"
+      >
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-teal-700">
+          <ImageUp className="size-4" />
+          Upload Image
+        </div>
+        <div className="mt-4 grid gap-4">
+          <input
+            aria-label="Image file"
+            className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground"
+            name="file"
+            required
+            type="file"
+            accept="image/*"
+          />
+          <div className="grid gap-4 sm:grid-cols-2">
             <input
               aria-label="Image title"
               className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground"
@@ -49,58 +205,103 @@ export function CmsList({
               name="alt"
               placeholder="Alt text"
             />
-            <Button type="submit">
-              <ImageUp className="size-4" />
-              Upload
-            </Button>
           </div>
-        </form>
-      ) : null}
+          <Button type="submit">Upload to Cloudinary</Button>
+        </div>
+      </form>
 
-      {items.length ? (
-        <div className="space-y-4">
-          {items.map((item) => (
-            <Link
-              key={item.id}
-              className="block rounded-[2rem] border border-border bg-white p-6 shadow-sm transition hover:border-teal-300 hover:bg-teal-50/40"
-              href={`/admin/cms/${definition.key}/${item.id}`}
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="text-2xl font-semibold tracking-tight text-foreground">{item.title}</h3>
-                    {item.status ? (
-                      <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-secondary-foreground">
-                        {item.status}
-                      </span>
-                    ) : null}
-                  </div>
-                  <dl className="mt-4 grid gap-3 text-sm text-muted-foreground sm:grid-cols-2 xl:grid-cols-3">
-                    {definition.listFields.map((field) => (
-                      <div key={field.name} className="rounded-2xl bg-slate-50 px-4 py-3">
-                        <dt className="text-xs uppercase tracking-[0.2em]">{field.label}</dt>
-                        <dd className="mt-1 font-medium text-foreground">{formatListValue(item.data[field.name])}</dd>
-                      </div>
-                    ))}
-                  </dl>
+      <form
+        action={async (formData) => {
+          formData.set("contentType", "media-asset")
+          formData.set("kind", "YOUTUBE_EMBED")
+          formData.set("intent", "publish")
+          await saveCmsItem({ ok: true, message: "", fieldErrors: {}, statusCode: null }, formData)
+        }}
+        className="flex flex-col rounded-[2rem] border border-border bg-white p-6 shadow-sm"
+      >
+        <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-red-700">
+          <Video className="size-4" />
+          Add YouTube Embed
+        </div>
+        <div className="mt-4 grid gap-4">
+          <input
+            aria-label="YouTube URL"
+            className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-red-600"
+            name="url"
+            placeholder="https://www.youtube.com/watch?v=..."
+            required
+            type="url"
+          />
+          <input
+            aria-label="Video title"
+            className="rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground outline-none transition focus:border-red-600"
+            name="title"
+            placeholder="Title (optional)"
+          />
+          <Button className="bg-red-600 hover:bg-red-700" type="submit">
+            Add Video
+          </Button>
+        </div>
+      </form>
+    </div>
+  )
+}
+
+function MediaGrid({ items }: { items: CmsEntity[] }) {
+  return (
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {items.map((item) => {
+        const isVideo = item.data.kind === "YOUTUBE_EMBED"
+        const thumbnail = isVideo ? item.data.thumbnailUrl : item.data.url
+
+        return (
+          <Link
+            key={item.id}
+            className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-border bg-white shadow-sm transition hover:border-teal-300"
+            href={`/admin/cms/media-asset/${item.id}`}
+          >
+            <div className="relative aspect-video w-full overflow-hidden bg-slate-100">
+              {thumbnail ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  alt={String(item.data.alt || item.title)}
+                  className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
+                  src={String(thumbnail)}
+                />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                  <ImageUp className="size-8 opacity-20" />
                 </div>
-                <span className="inline-flex items-center gap-2 text-sm font-medium text-teal-700">
-                  Edit
-                  <PencilLine className="size-4" />
-                </span>
+              )}
+              {isVideo && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/10 transition group-hover:bg-black/20">
+                  <div className="rounded-full bg-white/90 p-3 text-red-600 shadow-md">
+                    <Play className="size-5 fill-current" />
+                  </div>
+                </div>
+              )}
+              <div className="absolute right-3 top-3 rounded-full bg-black/50 px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
+                {String(item.data.kind).replace("_EMBED", "")}
               </div>
-            </Link>
-          ))}
-        </div>
-      ) : (
-        <div className="rounded-[2rem] border border-dashed border-border bg-white px-6 py-10 text-center shadow-sm">
-          <h3 className="text-xl font-semibold text-foreground">No {definition.pluralLabel.toLowerCase()} yet</h3>
-          <p className="mt-3 text-sm leading-6 text-muted-foreground">
-            Create the first {definition.label.toLowerCase()} to start filling this CMS type.
-          </p>
-        </div>
-      )}
-    </section>
+            </div>
+            <div className="flex flex-1 flex-col p-4">
+              <h3 className="line-clamp-1 text-sm font-semibold text-foreground">{item.title}</h3>
+              <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+                {String(item.data.caption || item.data.publicId || item.data.videoId || "")}
+              </p>
+              <div className="mt-auto pt-3 flex items-center justify-between">
+                <span className="text-[10px] font-medium uppercase tracking-widest text-teal-700">Edit Asset</span>
+                {item.status === "DRAFT" && (
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                    DRAFT
+                  </span>
+                )}
+              </div>
+            </div>
+          </Link>
+        )
+      })}
+    </div>
   )
 }
 

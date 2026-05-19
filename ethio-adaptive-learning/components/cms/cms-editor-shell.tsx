@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { ArrowLeft, Eye, Trash2, UploadCloud } from "lucide-react"
+import { ArrowLeft, Eye, Monitor, Trash2, UploadCloud } from "lucide-react"
 
 import { deleteCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/cms/actions"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,8 @@ export function CmsEditorShell({
   status?: string
   error?: string
 }) {
+  const supportsPreview = ["concept", "question", "course"].includes(definition.key)
+
   return (
     <div className="space-y-8">
       <section className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
@@ -46,18 +48,30 @@ export function CmsEditorShell({
             {item?.lifecycle ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 <LifecycleBadge label={item.lifecycle.status} />
-                {item.lifecycle.hasDraft ? <LifecycleBadge label="DRAFT CHANGES" /> : null}
+                {item.lifecycle.hasDraft ? (
+                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-amber-700">
+                    UNSAVED DRAFT
+                  </span>
+                ) : null}
               </div>
             ) : null}
           </div>
 
           {item ? (
             <div className="flex flex-wrap gap-3">
-              {definition.key === "concept" ? (
+              {supportsPreview && (
                 <Button asChild type="button" variant="outline">
-                  <Link href={`/learn/${item.id}`}>
+                  <Link href={`/admin/cms/${definition.key}/${item.id}/preview`} target="_blank">
+                    <Monitor className="size-4" />
+                    Draft Preview
+                  </Link>
+                </Button>
+              )}
+              {definition.key === "concept" && item.lifecycle?.status === "PUBLISHED" ? (
+                <Button asChild type="button" variant="ghost">
+                  <Link href={`/learn/${item.id}`} target="_blank">
                     <Eye className="size-4" />
-                    Preview
+                    View Live
                   </Link>
                 </Button>
               ) : null}
@@ -96,8 +110,18 @@ export function CmsEditorShell({
 }
 
 function LifecycleBadge({ label }: { label: string }) {
+  const colors = {
+    DRAFT: "bg-slate-100 text-slate-700",
+    PUBLISHED: "bg-emerald-100 text-emerald-700",
+    UNPUBLISHED: "bg-rose-100 text-rose-700",
+  }
+
   return (
-    <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-secondary-foreground">
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${
+        colors[label as keyof typeof colors] || "bg-secondary text-secondary-foreground"
+      }`}
+    >
       {label}
     </span>
   )
