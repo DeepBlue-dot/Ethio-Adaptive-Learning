@@ -1,0 +1,542 @@
+<!DOCTYPE html><html class="h-full" lang="en"><head>
+        <meta charset="utf-8">
+        <meta content="width=device-width, initial-scale=1.0" name="viewport">
+        <title>EthioPrep Studio - Curriculum Browser</title>
+        <script
+            src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800;900&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap"
+            rel="stylesheet">
+        <link
+            href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+            rel="stylesheet">
+        <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container": "#eceef0",
+                        "secondary": "#585e73",
+                        "on-tertiary-fixed-variant": "#3f465c",
+                        "on-tertiary-container": "#fefcff",
+                        "background": "#f7f9fb",
+                        "on-surface": "#191c1e",
+                        "surface-container-high": "#e6e8ea",
+                        "surface-variant": "#e0e3e5",
+                        "surface-dim": "#d8dadc",
+                        "on-error": "#ffffff",
+                        "inverse-primary": "#6bd8cb",
+                        "surface-container-highest": "#e0e3e5",
+                        "outline-variant": "#bcc9c6",
+                        "on-secondary-fixed-variant": "#40465a",
+                        "on-background": "#191c1e",
+                        "on-primary-fixed": "#00201d",
+                        "outline": "#6d7a77",
+                        "secondary-fixed": "#dce1fb",
+                        "primary-fixed-dim": "#6bd8cb",
+                        "on-secondary": "#ffffff",
+                        "primary": "#00685f",
+                        "tertiary-container": "#6c748b",
+                        "on-error-container": "#93000a",
+                        "on-secondary-fixed": "#151b2d",
+                        "on-tertiary": "#ffffff",
+                        "primary-fixed": "#89f5e7",
+                        "on-primary-container": "#f4fffc",
+                        "on-secondary-container": "#5e6479",
+                        "error-container": "#ffdad6",
+                        "on-primary": "#ffffff",
+                        "inverse-on-surface": "#eff1f3",
+                        "surface-tint": "#006a61",
+                        "inverse-surface": "#2d3133",
+                        "on-tertiary-fixed": "#131b2e",
+                        "surface": "#f7f9fb",
+                        "error": "#ba1a1a",
+                        "tertiary-fixed": "#dae2fd",
+                        "primary-container": "#008378",
+                        "secondary-container": "#dce1fb",
+                        "secondary-fixed-dim": "#c0c6de",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container-lowest": "#ffffff",
+                        "on-surface-variant": "#3d4947",
+                        "surface-container-low": "#f2f4f6",
+                        "on-primary-fixed-variant": "#005049",
+                        "tertiary": "#545c72",
+                        "tertiary-fixed-dim": "#bec6e0"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "1px",
+                        "padding-lg": "1.5rem",
+                        "sidebar-width": "240px",
+                        "padding-sm": "0.5rem",
+                        "padding-md": "1rem",
+                        "context-width": "320px",
+                        "padding-xs": "0.25rem"
+                    },
+                    "fontFamily": {
+                        "display": ["Geist"],
+                        "label-sm": ["Geist"],
+                        "headline-lg": ["Geist"],
+                        "body-md": ["Geist"],
+                        "body-lg": ["Geist"],
+                        "label-md": ["Geist"],
+                        "headline-md": ["Geist"],
+                        "mono": ["JetBrains Mono"]
+                    },
+                    "fontSize": {
+                        "display": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-sm": ["11px", { "lineHeight": "1", "letterSpacing": "0.02em", "fontWeight": "600" }],
+                        "headline-lg": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "body-lg": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-md": ["12px", { "lineHeight": "1", "letterSpacing": "0.01em", "fontWeight": "500" }],
+                        "headline-md": ["18px", { "lineHeight": "1.4", "fontWeight": "500" }],
+                        "mono": ["13px", { "lineHeight": "1.5", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+        <style>
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: theme('colors.outline-variant');
+            border-radius: theme('borderRadius.full');
+        }
+        .tree-line {
+            position: absolute;
+            left: 12px;
+            top: 24px;
+            bottom: 0;
+            width: 1px;
+            background-color: theme('colors.outline-variant');
+        }
+    </style>
+    </head>
+    <body
+        class="bg-background text-on-surface font-body-md h-full overflow-hidden flex">
+        <!-- Primary Sidebar: Global Nexus -->
+        <nav
+            class="bg-inverse-surface dark:bg-inverse-surface text-primary-fixed dark:text-primary-fixed-dim font-label-md text-label-md docked fixed left-0 h-full w-[240px] border-r border-outline-variant flat no shadows flex flex-col h-full w-[240px] z-50">
+            <!-- Header -->
+            <div
+                class="flex items-center gap-3 p-padding-lg border-b border-on-surface/10 mb-4">
+                <div
+                    class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center shrink-0">
+                    <span
+                        class="material-symbols-outlined text-on-primary-container"
+                        style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+                </div>
+                <div>
+                    <h1
+                        class="font-display text-display font-black text-primary-fixed text-[20px]">EthioPrep</h1>
+                    <p class="text-secondary-fixed-dim opacity-80 mt-1">Studio
+                        Admin</p>
+                </div>
+            </div>
+            <!-- Main Navigation -->
+            <div class="flex-1 px-padding-sm space-y-1"><a
+                    class="flex items-center gap-3 px-3 py-2 text-primary-fixed font-bold border-l-4 border-primary-fixed bg-on-tertiary-fixed-variant hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="dashboard">dashboard</span>
+                    <span class>Dashboard</span>
+                </a>
+                <!-- Active Tab: Studio -->
+                <a
+                    class="flex items-center gap-3 px-3 py-2 ml-1 text-secondary-fixed-dim font-medium hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75 rounded-DEFAULT"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="edit_note">edit_note</span>
+                    <span class>Studio</span>
+                </a>
+                <a
+                    class="flex items-center gap-3 px-3 py-2 ml-1 text-secondary-fixed-dim font-medium hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75 rounded-DEFAULT"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="inventory_2">inventory_2</span>
+                    <span class>Assets</span>
+                </a>
+                <a
+                    class="flex items-center gap-3 px-3 py-2 ml-1 text-secondary-fixed-dim font-medium hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75 rounded-DEFAULT"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="psychology">psychology</span>
+                    <span class>Intelligence</span>
+                </a>
+                <a
+                    class="flex items-center gap-3 px-3 py-2 ml-1 text-secondary-fixed-dim font-medium hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75 rounded-DEFAULT"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="gavel">gavel</span>
+                    <span class>Governance</span>
+                </a>
+            </div>
+            <!-- Footer Navigation -->
+            <div
+                class="p-padding-sm border-t border-on-surface/10 space-y-1 mt-auto">
+                <a
+                    class="flex items-center gap-3 px-3 py-2 ml-1 text-secondary-fixed-dim font-medium hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75 rounded-DEFAULT"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="settings">settings</span>
+                    <span class>Settings</span>
+                </a>
+                <a
+                    class="flex items-center gap-3 px-3 py-2 ml-1 text-secondary-fixed-dim font-medium hover:bg-on-tertiary-fixed-variant hover:text-primary-fixed transition-colors scale-95 duration-75 rounded-DEFAULT"
+                    href="#">
+                    <span class="material-symbols-outlined"
+                        data-icon="help">help</span>
+                    <span class>Support</span>
+                </a>
+            </div>
+        </nav>
+        <!-- Context Pane: Curriculum Tree Browser -->
+        <aside
+            class="bg-surface-container dark:bg-surface-container text-primary font-label-md text-label-md docked fixed left-[240px] h-full w-[320px] border-r border-outline-variant flat no shadows flex flex-col h-full w-[320px] z-40">
+            <!-- Header -->
+            <div
+                class="p-padding-md border-b border-outline-variant bg-surface-container-highest shrink-0">
+                <h2
+                    class="font-display text-label-md font-bold text-on-surface uppercase tracking-wider text-xs">Curriculum
+                    Tree</h2>
+                <p class="text-on-surface-variant mt-1">Browser</p>
+                <!-- Context Tabs -->
+                <div
+                    class="flex gap-1 mt-4 overflow-x-auto custom-scrollbar pb-1">
+                    <button
+                        class="px-3 py-1.5 text-on-surface font-bold bg-surface-variant rounded-lg hover:bg-surface-container-high transition-colors cursor-pointer shrink-0 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]"
+                            data-icon="account_tree">account_tree</span>
+                        <span class>Courses</span>
+                    </button>
+                    <button
+                        class="px-3 py-1.5 text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer shrink-0 rounded-lg flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]"
+                            data-icon="layers">layers</span>
+                        <span class>Units</span>
+                    </button>
+                    <button
+                        class="px-3 py-1.5 text-on-surface-variant hover:bg-surface-container-high transition-colors cursor-pointer shrink-0 rounded-lg flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[16px]"
+                            data-icon="lightbulb">lightbulb</span>
+                        <span class>Concepts</span>
+                    </button>
+                    <!-- Omitted others for horizontal space -->
+                </div>
+            </div>
+            <!-- Tree View -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-padding-sm">
+                <!-- Root Node -->
+                <div class="space-y-1">
+                    <div
+                        class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-DEFAULT cursor-pointer text-on-surface font-medium">
+                        <span
+                            class="material-symbols-outlined text-secondary text-[18px]">expand_more</span>
+                        <span
+                            class="material-symbols-outlined text-primary text-[18px]">menu_book</span>
+                        <span class="truncate">Grade 12 Biology</span>
+                    </div>
+                    <!-- Children of Root -->
+                    <div class="pl-6 relative space-y-1">
+                        <div class="tree-line"></div>
+                        <!-- Unit 1 (Expanded) -->
+                        <div class="space-y-1">
+                            <div
+                                class="flex items-center gap-2 p-1.5 bg-surface-variant rounded-DEFAULT cursor-pointer text-on-surface font-medium border-l-2 border-primary -ml-[2px]">
+                                <span
+                                    class="material-symbols-outlined text-secondary text-[18px]">expand_more</span>
+                                <span
+                                    class="material-symbols-outlined text-primary text-[18px]">layers</span>
+                                <span class="truncate">Unit 1: Molecules of
+                                    Life</span>
+                            </div>
+                            <!-- Children of Unit 1 -->
+                            <div class="pl-6 relative space-y-1">
+                                <div class="tree-line"></div>
+                                <div
+                                    class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-DEFAULT cursor-pointer text-on-surface-variant">
+                                    <span
+                                        class="material-symbols-outlined text-secondary text-[18px] opacity-0">chevron_right</span>
+                                    <span
+                                        class="material-symbols-outlined text-tertiary-container text-[18px]">lightbulb</span>
+                                    <span class="truncate">1.1 Water and its
+                                        Properties</span>
+                                </div>
+                                <div
+                                    class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-DEFAULT cursor-pointer text-on-surface-variant">
+                                    <span
+                                        class="material-symbols-outlined text-secondary text-[18px] opacity-0">chevron_right</span>
+                                    <span
+                                        class="material-symbols-outlined text-tertiary-container text-[18px]">lightbulb</span>
+                                    <span class="truncate">1.2
+                                        Carbohydrates</span>
+                                </div>
+                                <div
+                                    class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-DEFAULT cursor-pointer text-on-surface-variant">
+                                    <span
+                                        class="material-symbols-outlined text-secondary text-[18px] opacity-0">chevron_right</span>
+                                    <span
+                                        class="material-symbols-outlined text-tertiary-container text-[18px]">quiz</span>
+                                    <span class="truncate">Quiz: Organic
+                                        Compounds</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Unit 2 -->
+                        <div
+                            class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-DEFAULT cursor-pointer text-on-surface-variant">
+                            <span
+                                class="material-symbols-outlined text-secondary text-[18px]">chevron_right</span>
+                            <span
+                                class="material-symbols-outlined text-secondary text-[18px]">layers</span>
+                            <span class="truncate">Unit 2: Cell Biology</span>
+                        </div>
+                        <!-- Unit 3 -->
+                        <div
+                            class="flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-DEFAULT cursor-pointer text-on-surface-variant">
+                            <span
+                                class="material-symbols-outlined text-secondary text-[18px]">chevron_right</span>
+                            <span
+                                class="material-symbols-outlined text-secondary text-[18px]">layers</span>
+                            <span class="truncate">Unit 3: Energy and
+                                Metabolism</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <!-- Main Workspace -->
+        <main
+            class="flex-1 ml-[560px] flex flex-col h-full bg-surface-container-lowest">
+            <!-- TopAppBar -->
+            <header
+                class="bg-surface-container-lowest dark:bg-surface-container-lowest text-primary dark:text-primary-fixed-dim font-headline-md text-headline-md docked full-width top-0 sticky border-b border-outline-variant flat no shadows flex justify-between items-center w-full px-padding-lg h-16 shadow-sm z-30">
+                <div class="flex items-center gap-6">
+                    <h1
+                        class="font-display text-headline-md font-bold text-on-surface">Curriculum
+                        Architect</h1>
+                    <!-- Navigation Links -->
+                    <nav class="hidden md:flex gap-4 ml-8 text-sm">
+                        <a
+                            class="text-on-surface-variant font-medium hover:text-primary transition-all opacity-80 active:opacity-100 py-4"
+                            href="#">Drafts</a>
+                        <a
+                            class="text-primary font-bold border-b-2 border-primary pb-1 py-4"
+                            href="#">Review</a>
+                        <a
+                            class="text-on-surface-variant font-medium hover:text-primary transition-all opacity-80 active:opacity-100 py-4"
+                            href="#">Archive</a>
+                    </nav>
+                </div>
+                <div class="flex items-center gap-4">
+                    <!-- Search Bar -->
+                    <div class="relative hidden lg:block">
+                        <span
+                            class="material-symbols-outlined absolute left-2.5 top-2 text-secondary text-[18px]">search</span>
+                        <input
+                            class="pl-9 pr-3 py-1.5 bg-surface border border-outline-variant rounded-full text-sm w-64 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-shadow"
+                            placeholder="Search curriculum..." type="text">
+                        <div
+                            class="absolute right-2 top-1.5 px-1.5 bg-surface-variant rounded text-[10px] text-secondary font-mono">⌘K</div>
+                    </div>
+                    <!-- Icon Actions -->
+                    <button
+                        class="text-secondary hover:text-primary transition-colors p-1"><span
+                            class="material-symbols-outlined"
+                            data-icon="notifications">notifications</span></button>
+                    <button
+                        class="text-secondary hover:text-primary transition-colors p-1"><span
+                            class="material-symbols-outlined"
+                            data-icon="history">history</span></button>
+                    <div class="w-px h-6 bg-outline-variant mx-2"></div>
+                    <!-- Actions -->
+                    <button
+                        class="px-4 py-1.5 text-sm font-medium border border-outline-variant text-on-surface rounded-DEFAULT hover:bg-surface-container transition-colors">Save</button>
+                    <button
+                        class="px-4 py-1.5 text-sm font-medium bg-primary text-on-primary rounded-DEFAULT hover:bg-primary-container transition-colors shadow-sm">Publish</button>
+                </div>
+            </header>
+            <!-- Canvas Content -->
+            <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                <div class="max-w-5xl mx-auto space-y-8">
+                    <!-- Dashboard Header -->
+                    <div>
+                        <div
+                            class="flex items-center gap-2 text-sm text-secondary mb-2">
+                            <span class>Courses</span>
+                            <span
+                                class="material-symbols-outlined text-[14px]">chevron_right</span>
+                            <span class="text-on-surface font-medium">Grade 12
+                                Biology</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <h1
+                                    class="font-display text-display text-on-surface">Course
+                                    Overview</h1>
+                                <p class="text-secondary mt-1">High-level
+                                    metrics and recent structural changes.</p>
+                            </div>
+                            <span
+                                class="px-2 py-1 bg-primary/10 text-primary font-label-sm uppercase tracking-wider rounded border border-primary/20">Published</span>
+                        </div>
+                    </div>
+                    <!-- Bento Grid Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Metric 1 -->
+                        <div
+                            class="p-6 bg-surface border border-outline-variant rounded-xl flex flex-col justify-between">
+                            <div
+                                class="flex items-center justify-between text-secondary mb-4">
+                                <span class="font-label-md">Completion
+                                    Rate</span>
+                                <span
+                                    class="material-symbols-outlined">donut_large</span>
+                            </div>
+                            <div>
+                                <div
+                                    class="text-3xl font-display font-semibold text-on-surface">92%</div>
+                                <div
+                                    class="text-xs text-primary mt-1 flex items-center gap-1">
+                                    <span
+                                        class="material-symbols-outlined text-[14px]">trending_up</span>
+                                    +2% this week
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Metric 2 -->
+                        <div
+                            class="p-6 bg-surface border border-outline-variant rounded-xl flex flex-col justify-between">
+                            <div
+                                class="flex items-center justify-between text-secondary mb-4">
+                                <span class="font-label-md">Active
+                                    Authors</span>
+                                <span
+                                    class="material-symbols-outlined">group</span>
+                            </div>
+                            <div>
+                                <div
+                                    class="text-3xl font-display font-semibold text-on-surface">4</div>
+                                <div class="flex -space-x-2 mt-2">
+                                    <div
+                                        class="w-6 h-6 rounded-full bg-secondary-container border-2 border-surface flex items-center justify-center text-[10px] font-bold text-on-surface">JD</div>
+                                    <div
+                                        class="w-6 h-6 rounded-full bg-tertiary-container border-2 border-surface flex items-center justify-center text-[10px] font-bold text-on-tertiary">SA</div>
+                                    <div
+                                        class="w-6 h-6 rounded-full bg-primary-container border-2 border-surface flex items-center justify-center text-[10px] font-bold text-on-primary">MK</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Metric 3 -->
+                        <div
+                            class="p-6 bg-surface border border-outline-variant rounded-xl flex flex-col justify-between">
+                            <div
+                                class="flex items-center justify-between text-secondary mb-4">
+                                <span class="font-label-md">Avg. Quiz
+                                    Score</span>
+                                <span
+                                    class="material-symbols-outlined">analytics</span>
+                            </div>
+                            <div>
+                                <div
+                                    class="text-3xl font-display font-semibold text-on-surface">76.4</div>
+                                <div class="text-xs text-secondary mt-1">Across
+                                    12 assessments</div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Recent Edits Section -->
+                    <div>
+                        <h3
+                            class="font-headline-md text-on-surface mb-4 border-b border-outline-variant pb-2">Recently
+                            Edited Concepts</h3>
+                        <div
+                            class="bg-surface border border-outline-variant rounded-xl overflow-hidden">
+                            <table
+                                class="w-full text-left border-collapse text-sm">
+                                <thead>
+                                    <tr
+                                        class="bg-surface-container-low text-secondary border-b border-outline-variant">
+                                        <th
+                                            class="py-3 px-4 font-medium">Concept</th>
+                                        <th class="py-3 px-4 font-medium">Parent
+                                            Unit</th>
+                                        <th
+                                            class="py-3 px-4 font-medium">Status</th>
+                                        <th class="py-3 px-4 font-medium">Last
+                                            Modified</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-outline-variant">
+                                    <tr
+                                        class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                                        <td
+                                            class="py-3 px-4 text-on-surface font-medium flex items-center gap-2">
+                                            <span
+                                                class="material-symbols-outlined text-tertiary-container text-[18px]">lightbulb</span>
+                                            1.1 Water and its Properties
+                                        </td>
+                                        <td
+                                            class="py-3 px-4 text-secondary">Unit
+                                            1: Molecules of Life</td>
+                                        <td class="py-3 px-4"><span
+                                                class="px-2 py-0.5 bg-primary/10 text-primary font-label-sm rounded border border-primary/20">REVIEW</span></td>
+                                        <td class="py-3 px-4 text-secondary">2
+                                            hours ago</td>
+                                    </tr>
+                                    <tr
+                                        class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                                        <td
+                                            class="py-3 px-4 text-on-surface font-medium flex items-center gap-2">
+                                            <span
+                                                class="material-symbols-outlined text-tertiary-container text-[18px]">quiz</span>
+                                            Quiz: Organic Compounds
+                                        </td>
+                                        <td
+                                            class="py-3 px-4 text-secondary">Unit
+                                            1: Molecules of Life</td>
+                                        <td class="py-3 px-4"><span
+                                                class="px-2 py-0.5 bg-secondary-container text-on-surface font-label-sm rounded border border-outline-variant">DRAFT</span></td>
+                                        <td
+                                            class="py-3 px-4 text-secondary">Yesterday</td>
+                                    </tr>
+                                    <tr
+                                        class="hover:bg-surface-container-low transition-colors group cursor-pointer">
+                                        <td
+                                            class="py-3 px-4 text-on-surface font-medium flex items-center gap-2">
+                                            <span
+                                                class="material-symbols-outlined text-tertiary-container text-[18px]">lightbulb</span>
+                                            2.3 Membrane Structure
+                                        </td>
+                                        <td
+                                            class="py-3 px-4 text-secondary">Unit
+                                            2: Cell Biology</td>
+                                        <td class="py-3 px-4"><span
+                                                class="px-2 py-0.5 bg-primary/10 text-primary font-label-sm rounded border border-primary/20">PUBLISHED</span></td>
+                                        <td class="py-3 px-4 text-secondary">3
+                                            days ago</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+    </body></html>
