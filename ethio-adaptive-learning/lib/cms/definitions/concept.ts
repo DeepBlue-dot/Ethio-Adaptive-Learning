@@ -95,6 +95,7 @@ export const conceptDefinition = {
       type: "probability",
       required: true,
       section: "Adaptive parameters",
+      adminOnly: true,
     },
     {
       name: "pLo",
@@ -102,6 +103,7 @@ export const conceptDefinition = {
       type: "probability",
       required: true,
       section: "Adaptive parameters",
+      adminOnly: true,
     },
     {
       name: "pT",
@@ -109,6 +111,7 @@ export const conceptDefinition = {
       type: "probability",
       required: true,
       section: "Adaptive parameters",
+      adminOnly: true,
     },
     {
       name: "pG",
@@ -116,6 +119,7 @@ export const conceptDefinition = {
       type: "probability",
       required: true,
       section: "Adaptive parameters",
+      adminOnly: true,
     },
     {
       name: "pS",
@@ -123,6 +127,7 @@ export const conceptDefinition = {
       type: "probability",
       required: true,
       section: "Adaptive parameters",
+      adminOnly: true,
     },
     {
       name: "decayLambda",
@@ -130,6 +135,7 @@ export const conceptDefinition = {
       type: "probability",
       required: true,
       section: "Adaptive parameters",
+      adminOnly: true,
     },
   ],
   listFields: [

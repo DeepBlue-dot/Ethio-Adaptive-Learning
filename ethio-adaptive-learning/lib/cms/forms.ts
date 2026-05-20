@@ -17,7 +17,7 @@ export function getReturnTo(formData: FormData, fallback: string) {
   return sanitizeAdminPath(textField(formData, "returnTo"), fallback)
 }
 
-export function redirectWithMessage(pathname: string, key: "status" | "error", message: string): never {
+export function redirectWithMessage(pathname: string, key: "msg" | "status" | "error", message: string): never {
   const [basePath, search = ""] = pathname.split("?")
   const params = new URLSearchParams(search)
 

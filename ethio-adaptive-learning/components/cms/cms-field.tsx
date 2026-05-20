@@ -14,14 +14,21 @@ export function CmsFieldInput({
   errors,
   field,
   referenceOptions,
+  userRole,
   value,
 }: {
   errors: Record<string, string[]>
   field: CmsField
   referenceOptions: CmsReferenceOptions
+  userRole: string
   value: unknown
 }) {
   if (field.type === "hidden" || field.formHidden || field.type === "embedded-list") {
+    return null
+  }
+
+  // Admin-only fields are hidden for non-admins
+  if (field.adminOnly && userRole !== "ADMIN") {
     return null
   }
 
@@ -37,11 +44,20 @@ export function CmsFieldInput({
   }
 
   const isLongField = field.type === "textarea" || field.type === "markdown" || field.type === "multi-reference"
+  const isReadOnly = field.readOnly || (field.adminOnly && userRole !== "ADMIN")
 
   return (
     <label className={`block text-sm font-medium text-foreground ${isLongField ? "lg:col-span-2" : ""}`}>
       {field.label}
-      {renderFieldControl(field, value, referenceOptions)}
+      {isReadOnly ? (
+        <div className="mt-2 rounded-2xl border border-dashed border-border bg-slate-50 px-4 py-3 text-sm text-muted-foreground">
+          {toInputValue(value) || "(Empty)"}
+          {/* Still include hidden input so the value persists on save if not changed */}
+          <input type="hidden" name={field.name} value={toInputValue(value)} />
+        </div>
+      ) : (
+        renderFieldControl(field, value, referenceOptions)
+      )}
       {field.description ? <span className="mt-2 block text-xs text-muted-foreground">{field.description}</span> : null}
       <CmsFieldErrors errors={errors} path={field.name} />
     </label>

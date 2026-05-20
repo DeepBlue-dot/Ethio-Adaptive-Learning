@@ -1,4 +1,7 @@
 export {
+  bulkDeleteItems,
+  bulkPublishItems,
+  bulkUnpublishItems,
   createItem,
   deleteItem,
   getContentType,

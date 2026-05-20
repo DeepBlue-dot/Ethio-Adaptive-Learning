@@ -1,10 +1,28 @@
 "use client"
 
 import { useState } from "react"
-import { Image as ImageIcon, PlusCircle, Play, Search, Trash2, Video } from "lucide-react"
+import { GripVertical, PlusCircle, Search, Trash2 } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 import { Button } from "@/components/ui/button"
 import { CmsFieldErrors } from "@/components/cms/cms-feedback"
+import { CmsMediaPicker } from "@/components/cms/cms-media-picker"
 import type { CmsContentBlock } from "@/lib/cms/content-blocks"
 import type { CmsReferenceOptions, CmsReferenceOption } from "@/lib/cms/types"
 
@@ -46,6 +64,23 @@ export function CmsContentBlockEditor({
 }) {
   const [blocks, setBlocks] = useEditableBlocks(value)
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = blocks.findIndex((block) => block.id === active.id)
+      const newIndex = blocks.findIndex((block) => block.id === over.id)
+      setBlocks(arrayMove(blocks, oldIndex, newIndex))
+    }
+  }
+
   return (
     <div className="lg:col-span-2">
       <input name={name} type="hidden" value={JSON.stringify(blocks)} />
@@ -62,44 +97,101 @@ export function CmsContentBlockEditor({
         <CmsFieldErrors errors={errors} path={name} />
 
         <div className="mt-5 space-y-4">
-          {blocks.map((block, index) => (
-            <div key={block.id} className="rounded-3xl border border-border bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <select
-                  className="rounded-2xl border border-border bg-white px-4 py-2 text-sm text-foreground outline-none transition focus:border-teal-600"
-                  onChange={(event) =>
-                    updateBlock(setBlocks, blocks, index, createBlock(event.currentTarget.value as BlockType, block.id))
-                  }
-                  value={block.type}
-                >
-                  {blockTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  onClick={() => setBlocks(blocks.filter((_, blockIndex) => blockIndex !== index))}
-                  type="button"
-                  variant="destructive"
-                >
-                  <Trash2 className="size-4" />
-                  Remove
-                </Button>
-              </div>
-
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                <BlockFields
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+              {blocks.map((block, index) => (
+                <SortableBlock
+                  key={block.id}
                   block={block}
-                  onChange={(patch) => updateBlock(setBlocks, blocks, index, { ...block, ...patch })}
+                  errors={errors}
+                  index={index}
+                  name={name}
+                  onRemove={() => setBlocks(blocks.filter((_, i) => i !== index))}
+                  onUpdate={(patch) => updateBlock(setBlocks, blocks, index, { ...block, ...patch })}
                   referenceOptions={referenceOptions}
+                  setBlocks={setBlocks}
+                  blocks={blocks}
                 />
-              </div>
-              <CmsFieldErrors errors={errors} path={`${name}.${index}`} />
-            </div>
-          ))}
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
+    </div>
+  )
+}
+
+function SortableBlock({
+  block,
+  errors,
+  index,
+  name,
+  onRemove,
+  onUpdate,
+  referenceOptions,
+  setBlocks,
+  blocks,
+}: {
+  block: EditableBlock
+  errors: Record<string, string[]>
+  index: number
+  name: string
+  onRemove: () => void
+  onUpdate: (patch: Partial<EditableBlock>) => void
+  referenceOptions: CmsReferenceOptions
+  setBlocks: (blocks: EditableBlock[]) => void
+  blocks: EditableBlock[]
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-3xl border border-border bg-white p-5 shadow-sm ${
+        isDragging ? "opacity-50 ring-2 ring-teal-600/20" : ""
+      }`}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab p-1 text-muted-foreground transition hover:text-teal-600 active:cursor-grabbing"
+            type="button"
+          >
+            <GripVertical className="size-5" />
+          </button>
+          <select
+            className="rounded-2xl border border-border bg-white px-4 py-2 text-sm text-foreground outline-none transition focus:border-teal-600"
+            onChange={(event) =>
+              updateBlock(setBlocks, blocks, index, createBlock(event.currentTarget.value as BlockType, block.id))
+            }
+            value={block.type}
+          >
+            {blockTypes.map((type) => (
+              <option key={type.value} value={type.value}>
+                {type.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Button onClick={onRemove} type="button" variant="destructive" size="sm">
+          <Trash2 className="size-4" />
+          Remove
+        </Button>
+      </div>
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <BlockFields block={block} onChange={onUpdate} referenceOptions={referenceOptions} />
+      </div>
+      <CmsFieldErrors errors={errors} path={`${name}.${index}`} />
     </div>
   )
 }
@@ -134,7 +226,7 @@ function BlockFields({
   if (block.type === "image") {
     return (
       <>
-        <MediaPicker
+        <CmsMediaPicker
           label="Select Image Asset"
           options={referenceOptions.assetId ?? []}
           value={String(block.assetId)}
@@ -202,107 +294,6 @@ function BlockFields({
   )
 }
 
-function MediaPicker({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  options: CmsReferenceOption[]
-  value: string
-  onChange: (value: string) => void
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-  const selected = options.find((opt) => opt.value === value)
-
-  return (
-    <div className="lg:col-span-2">
-      <span className="block text-sm font-medium text-foreground">{label}</span>
-      <div className="mt-2 flex items-center gap-4">
-        <button
-          className="flex h-24 w-40 items-center justify-center overflow-hidden rounded-2xl border border-border bg-slate-50 transition hover:border-teal-600 group"
-          onClick={() => setIsOpen(!isOpen)}
-          type="button"
-        >
-          {selected?.metadata?.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              alt={selected.label}
-              className="h-full w-full object-cover"
-              src={String(selected.metadata.thumbnailUrl)}
-            />
-          ) : (
-            <div className="flex flex-col items-center gap-1 text-muted-foreground group-hover:text-teal-600">
-              <ImageIcon className="size-6" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Choose Media</span>
-            </div>
-          )}
-        </button>
-        {selected && (
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">{selected.label}</p>
-            <p className="text-xs text-muted-foreground uppercase tracking-widest mt-1">
-              {String(selected.description)}
-            </p>
-            <button
-              className="mt-2 text-xs font-bold text-red-600 hover:underline"
-              onClick={() => onChange("")}
-              type="button"
-            >
-              Clear selection
-            </button>
-          </div>
-        )}
-      </div>
-
-      {isOpen && (
-        <div className="mt-4 rounded-3xl border border-border bg-slate-50 p-4">
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {options.map((option) => (
-              <button
-                key={option.value}
-                className={`group relative aspect-video overflow-hidden rounded-2xl border-2 transition ${
-                  value === option.value ? "border-teal-600 ring-2 ring-teal-600/20" : "border-transparent hover:border-slate-300"
-                }`}
-                onClick={() => {
-                  onChange(option.value)
-                  setIsOpen(false)
-                }}
-                type="button"
-              >
-                {option.metadata?.thumbnailUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    alt={option.label}
-                    className="h-full w-full object-cover"
-                    src={String(option.metadata.thumbnailUrl)}
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-white text-muted-foreground">
-                    <ImageIcon className="size-6 opacity-20" />
-                  </div>
-                )}
-                {option.metadata?.kind === "YOUTUBE_EMBED" && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20">
-                    <Play className="size-5 fill-white text-white" />
-                  </div>
-                )}
-                <div className="absolute inset-x-0 bottom-0 bg-black/60 p-2 text-left backdrop-blur-sm">
-                  <p className="truncate text-[10px] font-bold text-white uppercase tracking-wider">{option.label}</p>
-                </div>
-              </button>
-            ))}
-          </div>
-          <Button className="mt-4 w-full" onClick={() => setIsOpen(false)} type="button" variant="outline">
-            Close Media Library
-          </Button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 function SnippetPicker({
   options,
   value,
@@ -351,7 +342,7 @@ function SnippetPicker({
             </button>
           ))
         ) : (
-          <div className="px-4 py-8 text-center text-sm text-muted-foreground">No snippets found matching "{query}"</div>
+          <div className="px-4 py-8 text-center text-sm text-muted-foreground">No snippets found matching &quot;{query}&quot;</div>
         )}
       </div>
 

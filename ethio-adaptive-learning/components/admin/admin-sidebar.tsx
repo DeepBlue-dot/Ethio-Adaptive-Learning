@@ -1,10 +1,11 @@
 import Link from "next/link"
-import { Database, LayoutDashboard, SquareTerminal, Users } from "lucide-react"
+import { Activity, Database, LayoutDashboard, SquareTerminal, Users } from "lucide-react"
 import type { UserRole } from "@prisma/client"
 
 const adminLinks = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/cms", label: "Global CMS", icon: Database },
+  { href: "/admin/cms/activity", label: "Activity Log", icon: Activity },
 ]
 
 const platformLinks = [{ href: "/admin/users", label: "Users", icon: Users }]

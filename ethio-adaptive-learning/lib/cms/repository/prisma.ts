@@ -380,6 +380,10 @@ async function listBaseCmsItems(type: CmsContentTypeKey, filter: CmsListFilter =
       return listUnits(filter)
     case "concept":
       return listConcepts(filter)
+    case "chunk":
+      return listChunks(filter)
+    case "worked-example":
+      return listWorkedExamples(filter)
     case "question":
       return listQuestions(filter)
     case "media-asset":
@@ -397,6 +401,10 @@ async function getBaseCmsItem(type: CmsContentTypeKey, id: string) {
       return getUnitItem(id)
     case "concept":
       return getConceptItem(id)
+    case "chunk":
+      return getChunkItem(id)
+    case "worked-example":
+      return getWorkedExampleItem(id)
     case "question":
       return getQuestionItem(id)
     case "media-asset":
@@ -406,10 +414,32 @@ async function getBaseCmsItem(type: CmsContentTypeKey, id: string) {
   }
 }
 
+function buildSearchFilter(query?: string, fields: string[] = ["title", "slug"]) {
+  if (!query) return undefined
+  return {
+    OR: fields.map((field) => ({
+      [field]: { contains: query, mode: "insensitive" },
+    })),
+  }
+}
+
+function buildDateFilter(startDate?: string, endDate?: string) {
+  if (!startDate && !endDate) return undefined
+  return {
+    createdAt: {
+      gte: startDate ? new Date(startDate) : undefined,
+      lte: endDate ? new Date(endDate) : undefined,
+    },
+  }
+}
+
 async function listCourses(filter: CmsListFilter) {
   const courses = await prisma.course.findMany({
     where: {
       status: filter.status as CmsPublicationStatus | undefined,
+      authorId: filter.authorId,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query),
     },
     include: {
       author: {
@@ -448,6 +478,87 @@ async function listCourses(filter: CmsListFilter) {
         unitCount: course._count.units,
       },
       getLifecycle(course)
+    )
+  )
+}
+
+async function listChunks(filter: CmsListFilter) {
+  const chunks = await prisma.conceptChunk.findMany({
+    where: {
+      conceptId: filter.conceptId,
+      status: filter.status as CmsPublicationStatus | undefined,
+      authorId: filter.authorId,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query),
+    },
+    include: {
+      concept: true,
+    },
+    orderBy: [
+      {
+        conceptId: "asc",
+      },
+      {
+        order: "asc",
+      },
+    ],
+  })
+
+  return chunks.map((chunk) =>
+    createEntity(
+      "chunk",
+      chunk.id,
+      chunk.title,
+      {
+        conceptId: chunk.conceptId,
+        conceptLabel: chunk.concept.title,
+        title: chunk.title,
+        bodyMd: chunk.bodyMd,
+        order: chunk.order,
+        slug: chunk.slug,
+      },
+      getLifecycle(chunk)
+    )
+  )
+}
+
+async function listWorkedExamples(filter: CmsListFilter) {
+  const examples = await prisma.workedExample.findMany({
+    where: {
+      conceptId: filter.conceptId,
+      status: filter.status as CmsPublicationStatus | undefined,
+      authorId: filter.authorId,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query),
+    },
+    include: {
+      concept: true,
+    },
+    orderBy: [
+      {
+        conceptId: "asc",
+      },
+      {
+        order: "asc",
+      },
+    ],
+  })
+
+  return examples.map((example) =>
+    createEntity(
+      "worked-example",
+      example.id,
+      example.title,
+      {
+        conceptId: example.conceptId,
+        conceptLabel: example.concept.title,
+        title: example.title,
+        problemMd: example.problemMd,
+        solutionMd: example.solutionMd,
+        order: example.order,
+        slug: example.slug,
+      },
+      getLifecycle(example)
     )
   )
 }
@@ -497,6 +608,8 @@ async function listUnits(filter: CmsListFilter) {
     where: {
       courseId: filter.courseId,
       status: filter.status as CmsPublicationStatus | undefined,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query),
     },
     include: {
       course: true,
@@ -579,6 +692,8 @@ async function listConcepts(filter: CmsListFilter) {
         courseId: filter.courseId,
       },
       status: filter.status as CmsPublicationStatus | undefined,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query),
     },
     include: {
       unit: {
@@ -679,6 +794,9 @@ async function listQuestions(filter: CmsListFilter) {
         },
       },
       status: filter.status as CmsPublicationStatus | undefined,
+      authorId: filter.authorId,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query, ["content", "slug"]),
     },
     include: {
       author: {
@@ -723,6 +841,67 @@ async function listQuestions(filter: CmsListFilter) {
         getLifecycle(question)
       )
     )
+}
+
+async function getChunkItem(id: string) {
+  const chunk = await prisma.conceptChunk.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      concept: true,
+    },
+  })
+
+  if (!chunk) {
+    return null
+  }
+
+  return createEntity(
+    "chunk",
+    chunk.id,
+    chunk.title,
+    {
+      conceptId: chunk.conceptId,
+      conceptLabel: chunk.concept.title,
+      title: chunk.title,
+      bodyMd: chunk.bodyMd,
+      order: chunk.order,
+      slug: chunk.slug,
+    },
+    getLifecycle(chunk)
+  )
+}
+
+async function getWorkedExampleItem(id: string) {
+  const example = await prisma.workedExample.findUnique({
+    where: {
+      id,
+    },
+    include: {
+      concept: true,
+    },
+  })
+
+  if (!example) {
+    return null
+  }
+
+  return createEntity(
+    "worked-example",
+    example.id,
+    example.title,
+    {
+      conceptId: example.conceptId,
+      conceptLabel: example.concept.title,
+      title: example.title,
+      problemMd: example.problemMd,
+      solutionMd: example.solutionMd,
+      order: example.order,
+      slug: example.slug,
+    },
+    getLifecycle(example)
+  )
 }
 
 async function getQuestionItem(id: string) {
@@ -779,6 +958,9 @@ async function listMediaAssets(filter: CmsListFilter) {
   const assets = await prisma.mediaAsset.findMany({
     where: {
       status: filter.status as CmsPublicationStatus | undefined,
+      createdById: filter.authorId,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query, ["title", "publicId", "videoId"]),
     },
     orderBy: [
       {
@@ -825,6 +1007,9 @@ async function listContentSnippets(filter: CmsListFilter) {
   const snippets = await prisma.contentSnippet.findMany({
     where: {
       status: filter.status as CmsPublicationStatus | undefined,
+      authorId: filter.authorId,
+      ...buildDateFilter(filter.startDate, filter.endDate),
+      ...buildSearchFilter(filter.query),
     },
     include: {
       author: {

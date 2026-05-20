@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { BookMarked, Database, Image, Network, PlusCircle, ScrollText } from "lucide-react"
+import { BookMarked, Database, FileText, Image, Network, PlusCircle, ScrollText, Sparkles } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -13,6 +13,8 @@ const iconByType = {
   unit: Database,
   concept: Network,
   question: BookMarked,
+  chunk: FileText,
+  "worked-example": Sparkles,
   "media-asset": Image,
   "content-snippet": ScrollText,
 }
@@ -40,7 +42,7 @@ export default async function CmsIndexPage() {
 
       <section className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {definitions.map((definition) => {
-          const Icon = iconByType[definition.key]
+          const Icon = iconByType[definition.key] ?? FileText
 
           return (
             <Link

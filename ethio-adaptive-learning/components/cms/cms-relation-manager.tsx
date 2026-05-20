@@ -1,6 +1,23 @@
 "use client"
 
-import { PlusCircle, Trash2 } from "lucide-react"
+import { GripVertical, PlusCircle, Trash2 } from "lucide-react"
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
 
 import { Button } from "@/components/ui/button"
 import { CmsFieldErrors } from "@/components/cms/cms-feedback"
@@ -25,6 +42,35 @@ export function CmsRelationManager({
 }) {
   const embeddedFields = field.embeddedFields ?? []
 
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event
+
+    if (over && active.id !== over.id) {
+      const oldIndex = items.findIndex((item) => item.id === active.id)
+      const newIndex = items.findIndex((item) => item.id === over.id)
+      
+      const nextItems = arrayMove(items, oldIndex, newIndex).map((item, idx) => ({
+        ...item,
+        order: idx + 1,
+      }))
+      
+      onChange(nextItems)
+    }
+  }
+
+  // Ensure every item has an ID for dnd-kit (some might not if they are new)
+  const itemsWithIds = items.map((item, index) => ({
+    ...item,
+    id: item.id || `item-${index}`,
+  }))
+
   return (
     <div className="lg:col-span-2">
       <input name={field.name} type="hidden" value={JSON.stringify(items)} />
@@ -44,39 +90,100 @@ export function CmsRelationManager({
         <CmsFieldErrors errors={errors} path={field.name} />
 
         <div className="mt-5 space-y-4">
-          {items.map((item, index) => (
-            <div key={`${field.name}-${index}`} className="rounded-3xl border border-border bg-white p-5 shadow-sm">
-              <div className="grid gap-4 lg:grid-cols-2">
-                {embeddedFields.map((embeddedField) => (
-                  <EmbeddedFieldInput
-                    key={embeddedField.name}
-                    errors={errors}
-                    field={embeddedField}
-                    item={item}
-                    onChange={(value) => {
-                      const nextItems = items.map((currentItem, itemIndex) =>
-                        itemIndex === index ? { ...currentItem, [embeddedField.name]: value } : currentItem
-                      )
-                      onChange(nextItems)
-                    }}
-                    path={`${field.name}.${index}.${embeddedField.name}`}
-                  />
-                ))}
-              </div>
-
-              <div className="mt-4">
-                <Button
-                  onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
-                  type="button"
-                  variant="destructive"
-                >
-                  <Trash2 className="size-4" />
-                  Remove
-                </Button>
-              </div>
-            </div>
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={itemsWithIds.map((item) => item.id as string)} strategy={verticalListSortingStrategy}>
+              {itemsWithIds.map((item, index) => (
+                <SortableRelationItem
+                  key={item.id as string}
+                  embeddedFields={embeddedFields}
+                  errors={errors}
+                  field={field}
+                  index={index}
+                  item={item}
+                  items={items}
+                  onChange={onChange}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
         </div>
+      </div>
+    </div>
+  )
+}
+
+function SortableRelationItem({
+  embeddedFields,
+  errors,
+  field,
+  index,
+  item,
+  items,
+  onChange,
+}: {
+  embeddedFields: CmsEmbeddedField[]
+  errors: Record<string, string[]>
+  field: CmsField
+  index: number
+  item: EmbeddedItem
+  items: EmbeddedItem[]
+  onChange: (items: EmbeddedItem[]) => void
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: item.id as string })
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : undefined,
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`rounded-3xl border border-border bg-white p-5 shadow-sm ${
+        isDragging ? "opacity-50 ring-2 ring-teal-600/20" : ""
+      }`}
+    >
+      <div className="mb-4 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <button
+            {...attributes}
+            {...listeners}
+            className="cursor-grab p-1 text-muted-foreground transition hover:text-teal-600 active:cursor-grabbing"
+            type="button"
+          >
+            <GripVertical className="size-5" />
+          </button>
+          <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Item #{index + 1}</span>
+        </div>
+        <Button
+          onClick={() => onChange(items.filter((_, itemIndex) => itemIndex !== index))}
+          type="button"
+          variant="destructive"
+          size="sm"
+        >
+          <Trash2 className="size-4" />
+          Remove
+        </Button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {embeddedFields.map((embeddedField) => (
+          <EmbeddedFieldInput
+            key={embeddedField.name}
+            errors={errors}
+            field={embeddedField}
+            item={item}
+            onChange={(value) => {
+              const nextItems = items.map((currentItem, itemIndex) =>
+                itemIndex === index ? { ...currentItem, [embeddedField.name]: value } : currentItem
+              )
+              onChange(nextItems)
+            }}
+            path={`${field.name}.${index}.${embeddedField.name}`}
+          />
+        ))}
       </div>
     </div>
   )

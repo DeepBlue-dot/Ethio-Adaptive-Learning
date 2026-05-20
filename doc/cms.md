@@ -1,201 +1,87 @@
 # Global CMS
 
-This document describes the redesigned Ethio Adaptive Learning CMS. The CMS is now a generic in-app content framework backed by the existing Prisma curriculum models.
+This document describes the Ethio Adaptive Learning CMS architecture. The CMS is a generic in-app content framework backed by Prisma curriculum models, optimized for authoring efficiency and collaborative workflows.
 
 ## Purpose
 
-The CMS is the protected authoring subsystem for `ADMIN` and `COURSE_WRITER` users. It manages the current curriculum domain as first-class content types inside one shared framework:
+The CMS is the protected authoring subsystem for `ADMIN` and `COURSE_WRITER` users. It manages the curriculum domain as first-class content types:
 
-- courses
-- units
-- concepts
-- questions
-- chunks (Concept Chunks)
-- worked-examples (Worked Examples)
-- media-assets
-- content-snippets
-
-The redesign keeps the database schema largely unchanged, adding `updatedAt` for concurrency control. The CMS core provides a generic service, validation, registry, UI, and server-action boundary while the curriculum adapter preserves domain-specific behavior such as prerequisite validation and adaptive graph updates.
-
-## Routes
-
-The hard-coded `/admin/cms/concepts` and `/admin/cms/questions` route split has been replaced by generic App Router pages:
-
-- `/admin/cms`
-  - global content type index
-- `/admin/cms/[type]`
-  - list view for a content type
-- `/admin/cms/[type]/new`
-  - generic create form
-- `/admin/cms/[type]/[id]`
-  - generic edit form
-
-Supported content type keys are:
-
-- `course`
-- `unit`
-- `concept`
-- `question`
-- `chunk`
-- `worked-example`
-- `media-asset`
-- `content-snippet`
-
-Plural aliases such as `questions`, `concepts`, `media-assets`, and `content-snippets` resolve to the same definitions for compatibility.
+- **Courses:** Top-level curriculum containers.
+- **Units:** Sequential modules within courses.
+- **Concepts:** Adaptive knowledge nodes with prerequisite graphs.
+- **Questions:** Assessment items linked to concepts.
+- **Chunks & Worked Examples:** Instructional blocks embedded within concepts.
+- **Media Assets:** Cloudinary images and YouTube embeds.
+- **Content Snippets:** Reusable UI text fragments.
 
 ## Core Architecture
 
 The CMS core lives under `ethio-adaptive-learning/lib/cms/`:
 
-- `core.ts`
-  - generic operations: `createItem`, `updateItem`, `deleteItem`, `getItem`, `listItems`
-  - CMS role access helper
-  - editor model helpers
-- `types.ts`
-  - shared CMS interfaces such as `CmsContentType`, `CmsField`, `CmsEntity`, `CmsRelation`, and `CmsActionState`
-- `registry.ts`
-  - content type lookup, alias resolution, and serializable UI definitions
-- `validation.ts`
-  - metadata-driven form parsing, Zod validation, field-error flattening, and invalidation path helpers
-- `repository/prisma.ts`
-  - Prisma-backed repository that maps generic CMS operations to existing Prisma models
-- `adapters/curriculum.ts`
-  - curriculum-specific behavior and compatibility exports
-- `definitions/*`
-  - declarative metadata and Zod schemas for each content type
+- `core.ts`: Generic operations (`createItem`, `updateItem`, `deleteItem`, `listItems`) and access control.
+- `types.ts`: Shared interfaces (`CmsContentType`, `CmsField`, `CmsEntity`, `CmsActionState`).
+- `registry.ts`: Content type registration and metadata-driven lookup.
+- `validation.ts`: Zod-backed form parsing and field-level validation.
+- `repository/prisma.ts`: Persistence layer mapping generic actions to Prisma models with **Optimistic Concurrency Control**.
+- `activity.ts`: Audit trail logging (`CREATE`, `UPDATE`, `PUBLISH`, etc.).
+- `definitions/`: Declarative schemas for each content type.
 
-## Content Definitions
+## Key Features
 
-Each content type definition owns:
+### 1. Collaborative Workflow & Draft System
+- **Draft Overlay:** Authors can save "unsaved drafts" for published entities without affecting the live student experience.
+- **Activity Logs:** Every change is recorded in an audit trail, visible at `/admin/cms/activity`.
+- **Conflict Detection:** Uses `updatedAt` timestamps to prevent save conflicts if multiple authors edit the same item simultaneously.
 
-- field metadata used by the admin UI
-- list columns
-- default values
-- Zod schema
-- route aliases
-- revalidation paths
-- display metadata
+### 2. Advanced Authoring UI
+- **Drag-and-Drop Reordering:** Lesson blocks and related collections (chunks, examples) can be reordered visually using a drag handle.
+- **Media Library:** A dedicated `CmsMediaPicker` modal allows authors to search and select assets instead of manual ID entry.
+- **Entity Reordering:** Admins can reorder child entities (e.g., Units within a Course) directly from the parent's edit page.
 
-The current definitions are:
+### 3. Bulk Management & Filtering
+- **Advanced Lists:** CMS lists support searching, status filtering, and multi-select bulk actions (publish, unpublish, delete).
+- **Metadata Filters:** Lists can be filtered by **Author** and **Date Range** (Created After/Before).
 
-- `definitions/course.ts`
-- `definitions/unit.ts`
-- `definitions/concept.ts`
-- `definitions/question.ts`
-- `definitions/chunk.ts`
-- `definitions/worked-example.ts`
-- `definitions/media-asset.ts`
-- `definitions/content-snippet.ts`
+### 4. Role-Based Access Control (RBAC)
+- **Field Gating:** Specific fields (e.g., critical BKT parameters like `pLo`, `pT`) can be marked as `adminOnly: true`.
+- **Access Level:** `COURSE_WRITER` users can author content but may be restricted from modifying sensitive adaptive parameters reserved for `ADMIN` users.
 
-Concept editing remains richer than a simple flat form. The concept definition includes embedded `chunks` and `workedExamples` collections so a concept can still be saved atomically with its instructional blocks.
+## Routes
 
-## Persistence Strategy
+- `/admin/cms`: Global content type index.
+- `/admin/cms/[type]`: List view with advanced filtering and bulk actions.
+- `/admin/cms/[type]/new`: Generic creation form.
+- `/admin/cms/[type]/[id]`: Generic editor with embedded reordering tools.
+- `/admin/cms/activity`: System-wide audit log.
 
-The CMS uses existing Prisma models:
+## Admin UI Components
 
-- `Course`
-- `Unit`
-- `Concept`
-- `Question`
-- `ConceptChunk`
-- `WorkedExample`
-- `MediaAsset`
-- `ContentSnippet`
-- `ConceptPrerequisite`
-- `ConceptClosure`
-- `CmsDraft`
+Located in `ethio-adaptive-learning/components/cms/`:
 
-All primary models now include an `updatedAt` field to support optimistic concurrency control.
-
-## Conflict Resolution
-
-The CMS implements basic conflict detection. When an item is loaded for editing, its `updatedAt` timestamp is captured. Upon saving, this timestamp is compared against the current value in the database. If the database record is newer than the captured timestamp, the save is rejected with a conflict error, prompting the author to refresh and merge changes manually.
-
-## Domain Rules
-
-Curriculum-specific rules stay in the adapter/service layer:
-
-- concept prerequisites must belong to the same course
-- prerequisite cycles are rejected
-- concept closure rows are rebuilt after graph changes
-- slugs remain unique within their existing scopes
-- question deletion clears dependent attempt/log records
-- course and unit deletion preserve existing deep cleanup behavior
-- student-facing catalog behavior remains backed by the same curriculum facade
-
-`lib/curriculum.ts` remains as a compatibility facade for student and adaptive modules, but CMS-facing operations now pass through the global CMS adapter boundary.
-
-## Admin UI
-
-Reusable CMS UI components live under `ethio-adaptive-learning/components/cms/`:
-
-- `cms-list.tsx`
-- `cms-form.tsx`
-- `cms-field.tsx`
-- `cms-reference-picker.tsx`
-- `cms-relation-manager.tsx`
-- `cms-editor-shell.tsx`
-- `cms-feedback.tsx`
-- `publication-controls.tsx`
-
-The form renderer reads field metadata from the content definition (including `min`, `max`, `step` constraints) and supports:
-
-- text inputs
-- textareas
-- Markdown textareas
-- number fields
-- probability fields
-- select fields
-- single-reference pickers
-- multi-reference pickers
-- embedded ordered collections
-- reusable content blocks
-- managed media asset inputs for Cloudinary images and YouTube embeds
+- `cms-list.tsx`: Enhanced list with filtering and bulk actions.
+- `cms-form.tsx`: Dynamic form renderer.
+- `cms-content-block-editor.tsx`: Drag-and-drop block editor.
+- `cms-relation-manager.tsx`: Drag-and-drop relation list.
+- `cms-media-picker.tsx`: Searchable media library modal.
+- `cms-entity-reorderer.tsx`: Standalone drag-and-drop reordering tool.
 
 ## Server Actions
 
-All CMS mutations now enter through:
+Found in `app/(admin)/admin/cms/actions.ts`:
 
-- `app/(admin)/admin/cms/actions.ts`
-
-Generic actions:
-
-- `saveCmsItem`
-- `deleteCmsItem`
-
-The action boundary:
-
-- requires `ADMIN` or `COURSE_WRITER`
-- resolves the content type
-- parses form data through metadata
-- validates with the content definition Zod schema
-- executes through the CMS core
-- revalidates paths from type metadata
-- redirects with structured status/error messages
-- returns `CmsActionState` for inline validation errors
+- `saveCmsItem`: Handles both "Publish" and "Save Draft" intents.
+- `unpublishCmsItem` / `deleteCmsItem`: Lifecycle management.
+- `bulkActionCmsItems`: Executes actions on multiple IDs simultaneously.
+- `reorderCmsEntities`: Persists new sort orders for collections.
 
 ## Revalidation
 
-Each content definition declares invalidation paths. Common paths include:
-
-- `/admin/dashboard`
-- `/admin/cms`
-- `/admin/cms/[type]`
-- `/concepts`
-
-Concept and question changes also invalidate relevant learning surfaces such as `/learn/[conceptId]`.
+Each content definition declares revalidation paths. Mutations automatically trigger `revalidatePath` for relevant admin views and student-facing learning surfaces (e.g., `/learn/[conceptId]`).
 
 ## Verification
 
-The CMS redesign is covered by:
+Recommended development cycle:
 
-- registry and alias resolution tests
-- metadata-driven validation tests
-- generic CMS action tests
-- existing curriculum service tests for graph rules, slug behavior, question cleanup, and student integration
-
-Recommended checks:
-
-- `npm run test`
-- `npm run lint`
-- `npm run build`
+- `npm run test`: Run unit tests for CMS core and validation.
+- `npm run lint`: Ensure code style and type safety.
+- `npm run build`: Verify production compilation.

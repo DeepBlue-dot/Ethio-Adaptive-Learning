@@ -72,6 +72,8 @@ export type CmsField = {
   defaultValue?: string | number | string[] | Record<string, unknown>[]
   listHidden?: boolean
   formHidden?: boolean
+  adminOnly?: boolean
+  readOnly?: boolean
   min?: number
   max?: number
   step?: number
@@ -139,7 +141,11 @@ export type CmsListFilter = {
   courseId?: string
   unitId?: string
   conceptId?: string
+  authorId?: string
+  startDate?: string
+  endDate?: string
   query?: string
+  status?: string
 }
 
 export type CmsListResult = {

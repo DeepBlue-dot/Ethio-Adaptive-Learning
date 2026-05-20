@@ -11,6 +11,7 @@ import {
   resolveCmsContentType,
   toSerializableContentType,
 } from "@/lib/cms"
+import { getCmsAuthors } from "@/lib/cms/adapters/curriculum"
 
 type CmsTypePageProps = {
   params: Promise<{
@@ -30,12 +31,17 @@ export default async function CmsTypePage({ params, searchParams }: CmsTypePageP
   }
 
   const query = (await searchParams) ?? {}
-  const status = getSingleValue(query.status)
-  const error = getSingleValue(query.error)
+  const authors = await getCmsAuthors()
+
   const items = await listItems(definition.key, {
     courseId: getSingleValue(query.courseId),
     unitId: getSingleValue(query.unitId),
     conceptId: getSingleValue(query.conceptId),
+    authorId: getSingleValue(query.authorId),
+    startDate: getSingleValue(query.startDate),
+    endDate: getSingleValue(query.endDate),
+    query: getSingleValue(query.query),
+    status: getSingleValue(query.status),
   })
   const serializableDefinition = toSerializableContentType(definition)
 
@@ -72,10 +78,14 @@ export default async function CmsTypePage({ params, searchParams }: CmsTypePageP
         </div>
       </section>
 
-      {status ? <CmsFeedback message={status} tone="success" /> : null}
-      {error ? <CmsFeedback message={error} tone="error" /> : null}
+      {getSingleValue(query.msg) ? <CmsFeedback message={getSingleValue(query.msg)!} tone="success" /> : null}
+      {getSingleValue(query.error) ? <CmsFeedback message={getSingleValue(query.error)!} tone="error" /> : null}
 
-      <CmsList definition={serializableDefinition} items={items} />
+      <CmsList
+        definition={serializableDefinition}
+        items={items}
+        authors={authors.map((a) => ({ id: a.id, username: a.username }))}
+      />
     </div>
   )
 }

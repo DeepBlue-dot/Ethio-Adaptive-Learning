@@ -2,8 +2,10 @@ import { notFound } from "next/navigation"
 
 import { CmsEditorShell } from "@/components/cms/cms-editor-shell"
 import { CmsForm } from "@/components/cms/cms-form"
+import { CmsEntityReorderer } from "@/components/cms/cms-entity-reorderer"
 import {
   getEditorModel,
+  listItems,
   requireCmsAccess,
   resolveCmsContentType,
 } from "@/lib/cms"
@@ -18,7 +20,7 @@ type EditCmsItemPageProps = {
 }
 
 export default async function EditCmsItemPage({ params, searchParams }: EditCmsItemPageProps) {
-  await requireCmsAccess()
+  const session = await requireCmsAccess()
 
   const { type, id } = await params
   const definition = resolveCmsContentType(type)
@@ -35,20 +37,43 @@ export default async function EditCmsItemPage({ params, searchParams }: EditCmsI
     notFound()
   }
 
+  const units = definition.key === "course" 
+    ? await listItems("unit", { courseId: id })
+    : []
+
   return (
     <CmsEditorShell
       definition={model.definition}
       item={model.item}
       returnTo={returnTo}
-      status={getSingleValue(query.status)}
+      status={getSingleValue(query.msg)}
       error={getSingleValue(query.error)}
     >
-      <CmsForm
-        definition={model.definition}
-        item={model.item}
-        referenceOptions={model.referenceOptions}
-        returnTo={model.returnTo}
-      />
+      <div className="space-y-12">
+        <CmsForm
+          definition={model.definition}
+          item={model.item}
+          referenceOptions={model.referenceOptions}
+          returnTo={model.returnTo}
+          userRole={session.user.role}
+        />
+
+        {definition.key === "course" && units.length > 0 && (
+          <section className="space-y-6">
+            <div className="h-px bg-border" />
+            <CmsEntityReorderer
+              contentType="unit"
+              initialItems={units.map(u => ({
+                id: u.id,
+                title: u.title,
+                subtitle: `Slug: ${u.data.slug}`
+              }))}
+              label="Unit Reordering"
+              revalidationPaths={[`/admin/cms/course/${id}`, `/admin/cms/unit`]}
+            />
+          </section>
+        )}
+      </div>
     </CmsEditorShell>
   )
 }

@@ -73,6 +73,23 @@ model User {
   authoredWorkedExamples WorkedExample[] @relation("WorkedExampleAuthor")
   authoredContentSnippets ContentSnippet[] @relation("ContentSnippetAuthor")
   passwordResetTokens    PasswordResetToken[]
+  activityLogs           ActivityLog[]
+}
+
+model ActivityLog {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id])
+  action        String   // CREATE, UPDATE, DELETE, PUBLISH, UNPUBLISH
+  contentType   String
+  entityId      String
+  entityTitle   String?
+  details       Json?
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+  @@index([contentType, entityId])
+  @@index([createdAt])
 }
 
 

@@ -4,6 +4,9 @@ import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
 
 import {
+  bulkDeleteItems,
+  bulkPublishItems,
+  bulkUnpublishItems,
   createCmsErrorState,
   deleteItem,
   getContentType,
@@ -76,7 +79,7 @@ export async function unpublishCmsItem(formData: FormData) {
 }
 
 export async function deleteCmsItem(formData: FormData) {
-  await requireCmsAccess()
+  const session = await requireCmsAccess()
 
   const contentType = textField(formData, "contentType") ?? ""
   const id = textField(formData, "id") ?? ""
@@ -84,13 +87,72 @@ export async function deleteCmsItem(formData: FormData) {
   const definition = getContentType(contentType)
 
   try {
-    const result = await deleteItem(definition.key, id)
+    const result = await deleteItem(definition.key, id, session.user.id)
     revalidateCmsPaths(result.revalidationPaths)
   } catch (error) {
     redirectWithMessage(returnTo, "error", error instanceof Error ? error.message : "Unable to delete CMS item.")
   }
 
-  redirectWithMessage(returnTo, "status", `${definition.label} deleted.`)
+  redirectWithMessage(returnTo, "msg", `${definition.label} deleted.`)
+}
+
+export async function bulkActionCmsItems(formData: FormData) {
+  const session = await requireCmsAccess()
+  const contentType = textField(formData, "contentType") ?? ""
+  const ids = formData.getAll("ids") as string[]
+  const intent = textField(formData, "intent") ?? ""
+  const returnTo = getReturnTo(formData, `${CMS_INDEX_PATH}/${contentType}`)
+
+  if (!ids.length) {
+    redirectWithMessage(returnTo, "error", "No items selected.")
+  }
+
+  let result: { count: number; revalidationPaths: string[] }
+
+  try {
+    switch (intent) {
+      case "bulk-publish":
+        result = await bulkPublishItems(contentType, ids, session.user.id)
+        break
+      case "bulk-unpublish":
+        result = await bulkUnpublishItems(contentType, ids, session.user.id)
+        break
+      case "bulk-delete":
+        result = await bulkDeleteItems(contentType, ids, session.user.id)
+        break
+      default:
+        throw new Error("Invalid bulk action intent.")
+    }
+
+    revalidateCmsPaths(result.revalidationPaths)
+    redirectWithMessage(returnTo, "msg", `Bulk action completed: ${result.count} items processed.`)
+  } catch (error) {
+    redirectWithMessage(returnTo, "error", error instanceof Error ? error.message : "Bulk action failed.")
+  }
+}
+
+export async function reorderCmsEntities(
+  contentType: string,
+  ids: string[],
+  revalidationPaths: string[] = []
+) {
+  await requireCmsAccess()
+  const definition = getContentType(contentType)
+
+  try {
+    // We update each item's order field based on its position in the ids array
+    await Promise.all(
+      ids.map((id, index) =>
+        prismaCmsRepository.updateItem(definition.key, id, { order: index + 1 })
+      )
+    )
+
+    revalidateCmsPaths(revalidationPaths)
+    return { ok: true, message: "Order updated successfully." }
+  } catch (error) {
+    console.error(`Failed to reorder ${contentType}:`, error)
+    return { ok: false, message: error instanceof Error ? error.message : "Reordering failed." }
+  }
 }
 
 export async function uploadCmsImageAsset(formData: FormData) {
@@ -155,7 +217,7 @@ function revalidateCmsPaths(paths: string[]) {
 function buildEditorRedirectPath(contentType: string, id: string, returnTo: string, status: string) {
   const params = new URLSearchParams()
 
-  params.set("status", status)
+  params.set("msg", status)
 
   if (returnTo !== `/admin/cms/${contentType}`) {
     params.set("returnTo", returnTo)

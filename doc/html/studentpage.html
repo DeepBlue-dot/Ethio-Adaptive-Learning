@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>EthioPrep AI - Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:ital,wght@0,100..900;1,100..900&amp;family=Inter:wght@100..900&amp;family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-surface": "#191c1e",
+                        "surface": "#f7f9fb",
+                        "primary-fixed": "#dde1ff",
+                        "surface-container": "#eceef0",
+                        "error-container": "#ffdad6",
+                        "on-background": "#191c1e",
+                        "on-primary-fixed": "#001453",
+                        "inverse-on-surface": "#eff1f3",
+                        "secondary-container": "#65fc80",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#0037b9",
+                        "on-tertiary-fixed-variant": "#594400",
+                        "surface-dim": "#d8dadc",
+                        "surface-glass": "rgba(255, 255, 255, 0.7)",
+                        "tertiary-container": "#917000",
+                        "on-secondary-container": "#00732a",
+                        "outline": "#747687",
+                        "on-tertiary-fixed": "#251a00",
+                        "surface-container-high": "#e6e8ea",
+                        "inverse-surface": "#2d3133",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-container-highest": "#e0e3e5",
+                        "surface-bright": "#f7f9fb",
+                        "secondary-fixed-dim": "#47e26a",
+                        "on-tertiary": "#ffffff",
+                        "background": "#f7f9fb",
+                        "tertiary-fixed": "#ffdf94",
+                        "tertiary": "#735800",
+                        "outline-variant": "#c4c5d8",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "secondary": "#006e28",
+                        "on-primary-container": "#fffbff",
+                        "primary-container": "#3e67f9",
+                        "on-tertiary-container": "#fffbff",
+                        "on-secondary-fixed-variant": "#00531c",
+                        "inverse-primary": "#b8c4ff",
+                        "primary-fixed-dim": "#b8c4ff",
+                        "error": "#ba1a1a",
+                        "surface-variant": "#e0e3e5",
+                        "error-rose": "#EF4444",
+                        "surface-tint": "#1e4ee2",
+                        "on-secondary-fixed": "#002107",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "secondary-fixed": "#6bff84",
+                        "warning-gold": "#FBBF24",
+                        "success-emerald": "#10B981",
+                        "primary": "#194bdf",
+                        "tertiary-fixed-dim": "#f3c020",
+                        "on-surface-variant": "#434655"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "margin-desktop": "48px",
+                        "base": "8px",
+                        "gutter": "24px",
+                        "margin-mobile": "16px",
+                        "container-max": "1200px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Hanken Grotesk"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Hanken Grotesk"],
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "label-md": ["Inter"],
+                        "caption": ["Inter"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg-mobile": ["28px", {"lineHeight": "36px", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "fontWeight": "700"}]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .tibeb-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c4c5d8' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md min-h-screen flex antialiased">
+<!-- SideNavBar (Hidden on Mobile) -->
+<nav class="fixed left-0 top-0 h-full w-64 z-40 hidden md:flex flex-col bg-surface-container-low dark:bg-inverse-surface border-r border-outline-variant/30 dark:border-outline/20 shadow-sm pt-20 pb-8 px-4">
+<div class="mb-8 px-4 flex flex-col gap-1">
+<div class="font-display-lg text-headline-md text-primary tracking-tight">EthioPrep AI</div>
+<div class="flex items-center gap-3 mt-4">
+<img alt="Grade 12 Natural Science" class="w-10 h-10 rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQNzbBDqBiA-Dxvx-XKmvqNsLVrKjZ_JswSbYEVlbGvBuAXdoyu557Hp1qPssBKkVDwh_0YISwr4wXFJAu0h3yiuQrYhOJnGYYYX-cRFfOBaK2iuwv4Mh4xBG1MlYSZ6wpplmNC4UqEmxmA8qWxrXA2Ipiq2vZP37Krwq0x9rQk9aZKngc_Z3WbX9Fj4YS70NTlM2NC6uU3fcIxwGm5lPclLy_95C1QWRS-IzSkCtp2Kb9vdjudjpTgFJ8bhkPiRLK5YO5il51wL4"/>
+<div>
+<div class="font-label-md text-label-md text-on-surface">Grade 12</div>
+<div class="font-caption text-caption text-on-surface-variant">Natural Science Stream</div>
+</div>
+</div>
+</div>
+<div class="flex-1 space-y-1">
+<a class="bg-primary-container/20 text-on-primary-fixed-variant font-bold border-r-4 border-primary dark:bg-primary-fixed/10 flex items-center px-4 py-3 gap-3 rounded-l-lg transition-transform ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">home</span>
+<span class="font-label-md text-label-md">Home</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant flex items-center px-4 py-3 gap-3 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-150 rounded-lg hover:translate-x-1 ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<span class="font-label-md text-label-md">Curriculum</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant flex items-center px-4 py-3 gap-3 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-150 rounded-lg hover:translate-x-1 ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined">psychology</span>
+<span class="font-label-md text-label-md">Socratic Tutor</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant flex items-center px-4 py-3 gap-3 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-150 rounded-lg hover:translate-x-1 ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined">leaderboard</span>
+<span class="font-label-md text-label-md">Performance</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant flex items-center px-4 py-3 gap-3 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-150 rounded-lg hover:translate-x-1 ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined">local_library</span>
+<span class="font-label-md text-label-md">Library</span>
+</a>
+</div>
+<div class="mt-auto space-y-1">
+<button class="w-full bg-warning-gold/20 text-on-tertiary-fixed-variant font-label-md text-label-md py-2 rounded-lg mb-4 hover:bg-warning-gold/30 transition-colors">
+                Upgrade to Premium
+            </button>
+<a class="text-on-surface-variant dark:text-surface-variant flex items-center px-4 py-3 gap-3 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-150 rounded-lg hover:translate-x-1 ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+<a class="text-on-surface-variant dark:text-surface-variant flex items-center px-4 py-3 gap-3 hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors duration-150 rounded-lg hover:translate-x-1 ease-out cursor-pointer" href="#">
+<span class="material-symbols-outlined">help_outline</span>
+<span class="font-label-md text-label-md">Support</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Wrapper -->
+<div class="flex-1 flex flex-col md:ml-64 relative min-h-screen">
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-surface-glass/80 backdrop-blur-xl dark:bg-inverse-surface/90 border-b border-outline-variant/20 dark:border-outline/10 shadow-sm dark:shadow-none flex justify-between items-center h-16 px-margin-desktop mx-auto md:pl-72 transition-all">
+<div class="flex items-center gap-8 flex-1">
+<div class="md:hidden font-display-lg text-headline-md font-extrabold text-primary dark:text-primary-fixed tracking-tight">EthioPrep AI</div>
+<!-- Desktop Nav Links -->
+<nav class="hidden md:flex items-center gap-6">
+<a class="text-primary dark:text-primary-fixed border-b-2 border-primary pb-1 font-label-md text-label-md active:scale-95 transition-transform cursor-pointer" href="#">Dashboard</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary hover:bg-surface-container-highest/50 dark:hover:bg-surface-variant/20 transition-all duration-200 px-2 py-1 rounded font-label-md text-label-md active:scale-95 transition-transform cursor-pointer" href="#">Labs</a>
+<a class="text-on-surface-variant dark:text-surface-variant hover:text-primary hover:bg-surface-container-highest/50 dark:hover:bg-surface-variant/20 transition-all duration-200 px-2 py-1 rounded font-label-md text-label-md active:scale-95 transition-transform cursor-pointer" href="#">Exam Arena</a>
+</nav>
+</div>
+<!-- Search (CMD+K) -->
+<div class="hidden lg:flex items-center bg-surface-container-low border border-outline-variant/50 rounded-full px-4 py-1.5 mr-6 text-on-surface-variant cursor-text hover:bg-surface-container-high transition-colors w-64 justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline">search</span>
+<span class="font-body-md text-sm text-outline">Search concepts...</span>
+</div>
+<kbd class="font-caption text-caption text-outline bg-surface rounded px-1.5 border border-outline-variant/30">⌘K</kbd>
+</div>
+<div class="flex items-center gap-4">
+<div class="hidden sm:flex items-center gap-2 bg-success-emerald/10 text-success-emerald px-3 py-1 rounded-full font-label-md text-label-md">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+                    85% Mastery
+                </div>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-highest/50 p-2 rounded-full transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined">smart_toy</span>
+</button>
+<button class="text-primary dark:text-primary-fixed-dim hover:bg-surface-container-highest/50 p-2 rounded-full transition-all duration-200 active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<img alt="Student Avatar" class="w-8 h-8 rounded-full border border-outline-variant/30 cursor-pointer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCU00L0ozT0_VAW-xkDQUUKRnc8Na1miC3D7bbSM-fvcV5PLYaAFjW2tzfVDNS1gCRfJjxH4bEm3CT1h7TXUwV_68jsC5rCILceSempu4R6eTRbCo6I-V_ujV_YOeHdvTC6rTArBYp0cFIeA4XpDMnVZjQzmIOKF85G2zUurqM2BtUVlxwnm1v63Hz5dy3GNBuIqip3bfqINoVyk6Fxr57vBE5T_Sp6qDOrzEATPXP5PA80qc4twzcyurMogXLTQCZDEr-nBOWIsHc"/>
+</div>
+</header>
+<!-- Canvas -->
+<main class="flex-1 pt-24 pb-12 px-margin-mobile md:px-margin-desktop overflow-y-auto tibeb-pattern">
+<div class="max-w-container-max mx-auto space-y-gutter">
+<!-- Hero Section -->
+<section class="mb-10">
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-on-surface mb-2">
+                        Welcome back, Dawit.
+                    </h1>
+<p class="font-body-lg text-on-surface-variant flex items-center gap-2">
+                        You are <strong class="text-primary">3 concepts</strong> away from Mathematics Mastery. Let's close the gap.
+                    </p>
+</section>
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-gutter">
+<!-- Main Workspace: Knowledge Graph -->
+<div class="xl:col-span-8 flex flex-col gap-6">
+<!-- Knowledge Graph Container -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 overflow-hidden relative min-h-[500px] flex flex-col">
+<div class="p-4 border-b border-outline-variant/10 flex justify-between items-center bg-surface/50 backdrop-blur-sm z-10">
+<h2 class="font-headline-md text-headline-md text-on-surface">Mathematics Knowledge Graph</h2>
+<div class="flex gap-2">
+<button class="bg-surface text-on-surface-variant px-3 py-1 rounded-md text-sm border border-outline-variant/30 hover:bg-surface-container-high transition-colors">Explore</button>
+<button class="bg-primary text-on-primary px-3 py-1 rounded-md text-sm shadow-sm hover:opacity-90 transition-opacity">Progression</button>
+</div>
+</div>
+<!-- Graph Visualization Area -->
+<div class="flex-1 relative bg-inverse-surface overflow-hidden group">
+<!-- Placeholder Image serving as the Graph -->
+<img alt="Interactive Mathematics Knowledge Graph showing nodes of learning with glowing progression edges." class="absolute inset-0 w-full h-full object-cover opacity-90 mix-blend-screen group-hover:scale-105 transition-transform duration-700 ease-in-out" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ03At9ZolYc7kKrZI4nku99yBSc3LLEY2qXtoq5mnnLsjR0tXsGcZ6k1V5GfKSl7JS_zFDiTlyXR0eTwgLXJK1PwOeycncqyLyZqCBw2dcNty4coX-m1u2H5JHq8kcwVheSM1s8zywHhvyZQdacNd8EfWCspm-OHuDNLwORhj03we-KInSTKBSx8E9Am9WYb_DnZJkS4QsTh2AbLESDZvMPnGER4lVR50ICk1upAQ_mh7Bh4RJmMavhOtpBkkn_fogyb9SH9VAXc"/>
+<!-- Overlay UI Elements over the graph -->
+<div class="absolute top-4 left-4 glass-panel p-3 rounded-lg shadow-sm">
+<div class="flex items-center gap-2 text-on-surface mb-1">
+<div class="w-3 h-3 rounded-full bg-success-emerald shadow-[0_0_8px_rgba(16,185,129,0.8)]"></div>
+<span class="font-label-md text-label-md">Progression Fringe</span>
+</div>
+<p class="font-caption text-caption text-on-surface-variant">Focus areas for today</p>
+</div>
+<div class="absolute bottom-4 right-4 flex gap-2">
+<button class="glass-panel p-2 rounded-full hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+<button class="glass-panel p-2 rounded-full hover:bg-surface-container-highest transition-colors">
+<span class="material-symbols-outlined text-on-surface">remove</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Sidebar/Drawer: The Review Pulse -->
+<div class="xl:col-span-4 flex flex-col gap-6">
+<!-- Retention Hunt Widget -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-outline-variant/20 p-6">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-2 text-error-rose">
+<span class="material-symbols-outlined">battery_alert</span>
+<h3 class="font-headline-md text-headline-md text-on-surface">Retention Hunt</h3>
+</div>
+<span class="font-caption text-caption bg-error-container text-on-error-container px-2 py-1 rounded-full">Action Needed</span>
+</div>
+<p class="font-body-md text-on-surface-variant mb-4">
+                                These concepts are decaying from your memory. Review them to recharge your mastery battery.
+                            </p>
+<div class="space-y-3">
+<!-- Decaying Item 1 -->
+<div class="bg-surface-container-low rounded-lg p-3 border border-outline-variant/30 flex items-center justify-between hover:border-primary/50 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-error-container/50 flex items-center justify-center text-error-rose">
+<span class="material-symbols-outlined">functions</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-surface">Integrals</div>
+<div class="font-caption text-caption text-on-surface-variant">Calculus II</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="font-label-md text-label-md text-error-rose">20%</div>
+<div class="w-16 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-error-rose w-1/5 rounded-full"></div>
+</div>
+</div>
+</div>
+<!-- Decaying Item 2 -->
+<div class="bg-surface-container-low rounded-lg p-3 border border-outline-variant/30 flex items-center justify-between hover:border-primary/50 transition-colors cursor-pointer">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-warning-gold/20 flex items-center justify-center text-warning-gold">
+<span class="material-symbols-outlined">change_history</span>
+</div>
+<div>
+<div class="font-label-md text-label-md text-on-surface">Trigonometric Identities</div>
+<div class="font-caption text-caption text-on-surface-variant">Pre-Calculus</div>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1">
+<div class="font-label-md text-label-md text-warning-gold">45%</div>
+<div class="w-16 h-2 bg-surface-container-high rounded-full overflow-hidden">
+<div class="h-full bg-warning-gold w-[45%] rounded-full"></div>
+</div>
+</div>
+</div>
+</div>
+<button class="w-full mt-6 bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg border-b-4 border-on-primary-fixed-variant active:border-b-0 active:translate-y-[4px] transition-all">
+                                Start Review Session
+                            </button>
+</div>
+<!-- Mini Daily Goal Card -->
+<div class="bg-gradient-to-br from-primary-container/30 to-surface-container-lowest rounded-xl shadow-sm border border-primary/20 p-6 relative overflow-hidden">
+<div class="absolute -right-4 -top-4 w-24 h-24 bg-primary/10 rounded-full blur-xl"></div>
+<h3 class="font-label-md text-label-md text-primary mb-1 uppercase tracking-wider">Daily Streak</h3>
+<div class="flex items-end gap-2 mb-4">
+<span class="font-display-lg text-display-lg text-on-surface leading-none">12</span>
+<span class="font-body-md text-on-surface-variant pb-1">Days</span>
+</div>
+<div class="w-full bg-surface-container-high rounded-full h-2 mb-2">
+<div class="bg-success-emerald h-2 rounded-full" style="width: 80%"></div>
+</div>
+<p class="font-caption text-caption text-on-surface-variant">Complete 1 more lab to maintain streak</p>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

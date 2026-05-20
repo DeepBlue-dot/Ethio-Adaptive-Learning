@@ -22,11 +22,13 @@ export function CmsForm({
   item,
   referenceOptions,
   returnTo,
+  userRole,
 }: {
   definition: CmsSerializableContentType
   item: CmsEntity | null
   referenceOptions: CmsReferenceOptions
   returnTo: string
+  userRole: string
 }) {
   const [state, formAction, isPending] = useActionState(saveCmsItem, initialCmsActionState)
   const [embeddedLists, setEmbeddedLists] = useState<EmbeddedLists>(() => {
@@ -88,6 +90,7 @@ export function CmsForm({
                       errors={state.fieldErrors}
                       field={field}
                       referenceOptions={referenceOptions}
+                      userRole={userRole}
                       value={item?.data[field.name] ?? definition.defaultValues?.[field.name]}
                     />
                   )

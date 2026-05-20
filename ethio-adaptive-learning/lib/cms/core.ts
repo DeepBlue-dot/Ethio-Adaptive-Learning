@@ -7,6 +7,7 @@ import {
   toSerializableContentType,
 } from "@/lib/cms/registry"
 import { getCmsRevalidationPaths } from "@/lib/cms/validation"
+import { logCmsActivity } from "@/lib/cms/activity"
 import type {
   CmsContentType,
   CmsContentTypeKey,
@@ -36,6 +37,7 @@ export function normalizeContentTypeKey(value: string) {
 export async function createItem(
   type: string,
   data: unknown,
+  userId: string | null = null,
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
@@ -46,6 +48,16 @@ export async function createItem(
     id: entity.id,
     result: entity,
   })
+
+  if (userId) {
+    await logCmsActivity({
+      userId,
+      action: "CREATE",
+      contentType: definition.key,
+      entityId: entity.id,
+      entityTitle: entity.title,
+    })
+  }
 
   return {
     entity,
@@ -59,6 +71,7 @@ export async function updateItem(
   id: string,
   data: unknown,
   lastUpdatedAt?: number,
+  userId: string | null = null,
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
@@ -69,6 +82,16 @@ export async function updateItem(
     id: entity.id,
     result: entity,
   })
+
+  if (userId) {
+    await logCmsActivity({
+      userId,
+      action: "UPDATE",
+      contentType: definition.key,
+      entityId: entity.id,
+      entityTitle: entity.title,
+    })
+  }
 
   return {
     entity,
@@ -99,6 +122,14 @@ export async function saveDraftItem(
     action: id ? "update" : "create",
     id: entity.id,
     result: entity,
+  })
+
+  await logCmsActivity({
+    userId,
+    action: "DRAFT_SAVE",
+    contentType: definition.key,
+    entityId: entity.id,
+    entityTitle: entity.title,
   })
 
   return {
@@ -132,6 +163,14 @@ export async function publishItem(
     result: entity,
   })
 
+  await logCmsActivity({
+    userId,
+    action: "PUBLISH",
+    contentType: definition.key,
+    entityId: entity.id,
+    entityTitle: entity.title,
+  })
+
   return {
     entity,
     message: `${definition.label} published.`,
@@ -159,6 +198,14 @@ export async function unpublishItem(
     result: entity,
   })
 
+  await logCmsActivity({
+    userId,
+    action: "UNPUBLISH",
+    contentType: definition.key,
+    entityId: entity.id,
+    entityTitle: entity.title,
+  })
+
   return {
     entity,
     message: `${definition.label} unpublished.`,
@@ -169,6 +216,7 @@ export async function unpublishItem(
 export async function deleteItem(
   type: string,
   id: string,
+  userId: string | null = null,
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
@@ -179,6 +227,16 @@ export async function deleteItem(
     id: entity.id,
     result: entity,
   })
+
+  if (userId) {
+    await logCmsActivity({
+      userId,
+      action: "DELETE",
+      contentType: definition.key,
+      entityId: entity.id,
+      entityTitle: entity.title,
+    })
+  }
 
   return {
     entity,
@@ -239,6 +297,87 @@ export async function getContentTypeCounts(repository: CmsRepository = prismaCms
   )
 
   return Object.fromEntries(entries) as Record<CmsContentTypeKey, number>
+}
+
+export async function bulkPublishItems(
+  type: string,
+  ids: string[],
+  userId: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<{ count: number; revalidationPaths: string[] }> {
+  const definition = getCmsContentType(type)
+  const allRevalidationPaths = new Set<string>()
+  let count = 0
+
+  for (const id of ids) {
+    try {
+      const item = await repository.getItem(definition.key, id)
+      if (!item) continue
+
+      const result = await publishItem(definition.key, id, item.data, userId, undefined, repository)
+      result.revalidationPaths.forEach((p) => allRevalidationPaths.add(p))
+      count++
+    } catch (error) {
+      console.error(`Failed to bulk publish ${type} ${id}:`, error)
+    }
+  }
+
+  return {
+    count,
+    revalidationPaths: [...allRevalidationPaths],
+  }
+}
+
+export async function bulkUnpublishItems(
+  type: string,
+  ids: string[],
+  userId: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<{ count: number; revalidationPaths: string[] }> {
+  const definition = getCmsContentType(type)
+  const allRevalidationPaths = new Set<string>()
+  let count = 0
+
+  for (const id of ids) {
+    try {
+      const result = await unpublishItem(definition.key, id, userId, repository)
+      result.revalidationPaths.forEach((p) => allRevalidationPaths.add(p))
+      count++
+    } catch (error) {
+      console.error(`Failed to bulk unpublish ${type} ${id}:`, error)
+    }
+  }
+
+  return {
+    count,
+    revalidationPaths: [...allRevalidationPaths],
+  }
+}
+
+export async function bulkDeleteItems(
+  type: string,
+  ids: string[],
+  userId: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<{ count: number; revalidationPaths: string[] }> {
+  const definition = getCmsContentType(type)
+  const allRevalidationPaths = new Set<string>()
+  let count = 0
+
+  for (const id of ids) {
+    try {
+      const result = await deleteItem(definition.key, id, userId, repository)
+      result.revalidationPaths.forEach((p) => allRevalidationPaths.add(p))
+      count++
+    } catch (error) {
+      console.error(`Failed to bulk delete ${type} ${id}:`, error)
+    }
+  }
+
+  return {
+    count,
+    revalidationPaths: [...allRevalidationPaths],
+  }
 }
 
 function decorateEntity(definition: CmsContentType, entity: CmsEntity): CmsEntity {
