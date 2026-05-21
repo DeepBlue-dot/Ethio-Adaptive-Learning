@@ -17,6 +17,7 @@ export {
   unpublishItem,
   updateItem,
 } from "@/lib/cms/core"
+export { prismaCmsRepository } from "@/lib/cms/repository/prisma"
 export {
   getCmsContentType,
   listCmsContentTypes,

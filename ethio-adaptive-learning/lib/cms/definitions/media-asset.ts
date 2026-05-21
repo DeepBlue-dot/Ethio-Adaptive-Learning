@@ -184,8 +184,8 @@ export const mediaAssetDefinition = {
   },
   getRevalidationPaths: ({ id }) => [
     "/admin/dashboard",
-    "/admin/cms",
-    "/admin/cms/media-asset",
-    ...(id ? [`/admin/cms/media-asset/${id}`] : []),
+    "/admin/studio",
+    "/admin/studio/media-asset",
+    ...(id ? [`/admin/studio/media-asset/${id}`] : []),
   ],
 } satisfies CmsContentType<MediaAssetCmsInput>

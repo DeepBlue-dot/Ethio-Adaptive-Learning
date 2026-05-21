@@ -93,5 +93,5 @@ export const courseDefinition = {
 
     return entity.lifecycle?.status ?? null
   },
-  getRevalidationPaths: () => ["/admin/dashboard", "/admin/cms", "/admin/cms/course", "/concepts"],
+  getRevalidationPaths: () => ["/admin/dashboard", "/admin/studio", "/admin/studio/course", "/concepts"],
 } satisfies CmsContentType<CourseCmsInput>

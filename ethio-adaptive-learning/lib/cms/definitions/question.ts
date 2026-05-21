@@ -145,10 +145,10 @@ export const questionDefinition = {
   },
   getRevalidationPaths: ({ id, result }) => [
     "/admin/dashboard",
-    "/admin/cms",
-    "/admin/cms/question",
+    "/admin/studio",
+    "/admin/studio/question",
     "/concepts",
-    ...(id ? [`/admin/cms/question/${id}`] : []),
+    ...(id ? [`/admin/studio/question/${id}`] : []),
     ...(typeof result?.data.conceptId === "string" ? [`/learn/${result.data.conceptId}`] : []),
   ],
 } satisfies CmsContentType<QuestionCmsInput>

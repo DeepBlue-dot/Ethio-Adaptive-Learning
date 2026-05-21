@@ -163,11 +163,11 @@ export const conceptDefinition = {
   },
   getRevalidationPaths: ({ id }) => [
     "/admin/dashboard",
-    "/admin/cms",
-    "/admin/cms/concept",
-    "/admin/cms/question",
+    "/admin/studio",
+    "/admin/studio/concept",
+    "/admin/studio/question",
     "/concepts",
-    ...(id ? [`/admin/cms/concept/${id}`, `/learn/${id}`] : []),
+    ...(id ? [`/admin/studio/concept/${id}`, `/learn/${id}`] : []),
   ],
 } satisfies CmsContentType<ConceptCmsInput>
 

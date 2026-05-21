@@ -71,8 +71,8 @@ export function parseCmsFormData<TInput>(
 export function getCmsRevalidationPaths(definition: CmsContentType, context: CmsInvalidationContext) {
   const paths = definition.getRevalidationPaths?.(context) ?? [
     "/admin/dashboard",
-    "/admin/cms",
-    `/admin/cms/${definition.key}`,
+    "/admin/studio",
+    `/admin/studio/${definition.key}`,
   ]
 
   return [...new Set(paths)]

@@ -97,9 +97,9 @@ export const workedExampleDefinition = {
   },
   getRevalidationPaths: ({ id }) => [
     "/admin/dashboard",
-    "/admin/cms",
-    "/admin/cms/worked-example",
-    "/admin/cms/concept",
-    ...(id ? [`/admin/cms/worked-example/${id}`] : []),
+    "/admin/studio",
+    "/admin/studio/worked-example",
+    "/admin/studio/concept",
+    ...(id ? [`/admin/studio/worked-example/${id}`] : []),
   ],
 } satisfies CmsContentType<WorkedExampleCmsInput>

@@ -82,5 +82,5 @@ export const unitDefinition = {
 
     return entity.lifecycle?.status ?? null
   },
-  getRevalidationPaths: () => ["/admin/dashboard", "/admin/cms", "/admin/cms/unit", "/admin/cms/concept", "/concepts"],
+  getRevalidationPaths: () => ["/admin/dashboard", "/admin/studio", "/admin/studio/unit", "/admin/studio/concept", "/concepts"],
 } satisfies CmsContentType<UnitCmsInput>

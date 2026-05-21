@@ -5,7 +5,7 @@ import Link from "next/link"
 import { CheckSquare, ExternalLink, Eye, ImageUp, PencilLine, Play, PlusCircle, Search, Square, Trash2, UploadCloud, Video, XCircle } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
-import { uploadCmsImageAsset, saveCmsItem, unpublishCmsItem, bulkActionCmsItems } from "@/app/(admin)/admin/cms/actions"
+import { uploadCmsImageAsset, saveCmsItem, unpublishCmsItem, bulkActionCmsItems } from "@/app/(admin)/admin/studio/actions"
 import { Button } from "@/components/ui/button"
 import type { CmsEntity, CmsSerializableContentType } from "@/lib/cms/types"
 
@@ -39,7 +39,7 @@ export function CmsList({
         params.delete(key)
       }
     })
-    router.push(`/admin/cms/${definition.key}?${params.toString()}`)
+    router.push(`/admin/studio/${definition.key}?${params.toString()}`)
   }
 
   const toggleSelect = (id: string) => {
@@ -72,11 +72,11 @@ export function CmsList({
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => router.push(`/admin/cms/${definition.key}`)}>
+          <Button variant="outline" onClick={() => router.push(`/admin/studio/${definition.key}`)}>
             Clear Filters
           </Button>
           <Button asChild>
-            <Link href={`/admin/cms/${definition.key}/new`}>
+            <Link href={`/admin/studio/${definition.key}/new`}>
               <PlusCircle className="size-4" />
               New {definition.label.toLowerCase()}
             </Link>
@@ -225,7 +225,7 @@ export function CmsList({
                     <div className="flex-1 min-w-[280px]">
                       <div className="flex flex-wrap items-center gap-3">
                         <Link 
-                          href={`/admin/cms/${definition.key}/${item.id}`}
+                          href={`/admin/studio/${definition.key}/${item.id}`}
                           className="text-2xl font-semibold tracking-tight text-foreground hover:text-teal-700 transition"
                         >
                           {item.title}
@@ -250,13 +250,13 @@ export function CmsList({
 
                   <div className="flex items-center gap-2">
                     <Button asChild size="sm" variant="ghost">
-                      <Link href={`/admin/cms/${definition.key}/${item.id}/preview`} target="_blank">
+                      <Link href={`/admin/studio/${definition.key}/${item.id}/preview`} target="_blank">
                         <Eye className="size-4" />
                         Preview
                       </Link>
                     </Button>
                     <Button asChild size="sm" variant="outline">
-                      <Link href={`/admin/cms/${definition.key}/${item.id}`}>
+                      <Link href={`/admin/studio/${definition.key}/${item.id}`}>
                         <PencilLine className="size-4" />
                         Edit
                       </Link>
@@ -413,7 +413,7 @@ function MediaGrid({ items }: { items: CmsEntity[] }) {
           <Link
             key={item.id}
             className="group relative flex flex-col overflow-hidden rounded-[2rem] border border-border bg-white shadow-sm transition hover:border-teal-300"
-            href={`/admin/cms/media-asset/${item.id}`}
+            href={`/admin/studio/media-asset/${item.id}`}
           >
             <div className="relative aspect-video w-full overflow-hidden bg-slate-100">
               {thumbnail ? (

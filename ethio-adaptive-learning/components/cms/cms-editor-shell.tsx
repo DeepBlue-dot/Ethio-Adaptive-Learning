@@ -2,7 +2,7 @@ import type { ReactNode } from "react"
 import Link from "next/link"
 import { ArrowLeft, Eye, Monitor, Trash2, UploadCloud } from "lucide-react"
 
-import { deleteCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/cms/actions"
+import { deleteCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/studio/actions"
 import { Button } from "@/components/ui/button"
 import type { CmsEntity, CmsSerializableContentType } from "@/lib/cms/types"
 
@@ -61,7 +61,7 @@ export function CmsEditorShell({
             <div className="flex flex-wrap gap-3">
               {supportsPreview && (
                 <Button asChild type="button" variant="outline">
-                  <Link href={`/admin/cms/${definition.key}/${item.id}/preview`} target="_blank">
+                  <Link href={`/admin/studio/${definition.key}/${item.id}/preview`} target="_blank">
                     <Monitor className="size-4" />
                     Draft Preview
                   </Link>

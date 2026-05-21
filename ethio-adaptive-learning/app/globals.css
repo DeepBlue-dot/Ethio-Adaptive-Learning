@@ -347,4 +347,13 @@
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.5);
   }
+
+  .tree-line {
+    position: absolute;
+    left: 12px;
+    top: 24px;
+    bottom: 0;
+    width: 1px;
+    background-color: var(--outline-variant);
+  }
 }

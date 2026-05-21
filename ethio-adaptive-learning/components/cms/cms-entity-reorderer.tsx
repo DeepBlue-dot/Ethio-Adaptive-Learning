@@ -21,7 +21,7 @@ import {
 import { CSS } from "@dnd-kit/utilities"
 
 import { Button } from "@/components/ui/button"
-import { reorderCmsEntities } from "@/app/(admin)/admin/cms/actions"
+import { reorderCmsEntities } from "@/app/(admin)/admin/studio/actions"
 
 type ReorderableItem = {
   id: string

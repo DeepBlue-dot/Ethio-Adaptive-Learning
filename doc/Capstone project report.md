@@ -1954,7 +1954,32 @@ This modular decomposition allows each adaptive component to evolve independentl
 
 #### **4.3.3. Database Design**
 
+The system utilizes a relational schema managed by Prisma ORM. The core entities are designed to support a complex curriculum graph and per-user mastery tracking.
+
+**Database Entities and Descriptions**
+
+*   **User & Profile:** Manages authentication and student metadata (XP, Level, Streaks).
+*   **Curriculum (Course, Unit, Concept):** A hierarchical structure where Courses contain Units, and Units contain Concepts.
+*   **ConceptPrerequisite:** An explicit join table representing the Directed Acyclic Graph (DAG) of dependencies between concepts.
+*   **Question:** Assessment items mapped to specific concepts, categorized by difficulty (Easy, Medium, Hard) and usage type (Practice, Checkpoint, Exam).
+*   **UserMastery:** The central table for adaptivity. It stores the probability of mastery ($P(L)$), the timestamp of the last interaction, and the derived status (Locked, Fringe, In-Progress, Mastered, Review).
+*   **Attempts & Logs:** Persistent records of every practice session and exam, enabling granular learning analytics and BKT (Bayesian Knowledge Tracing) updates.
+
 # **Chapter Five: System Implementation** {#chapter-five:-system-implementation}
+
+The platform is implemented as a **Next.js Monolith**, leveraging the App Router for server-side rendering and improved SEO. 
+
+### **5.1. Backend and Data Access**
+The application follows a **Server-First** state management pattern. Mutations (such as submitting an exam or updating curriculum) are handled via **Server Actions**. This removes the need for a separate API layer for internal frontend-to-backend communication. Prisma serves as the type-safe client for all PostgreSQL operations, using transactions to ensure data integrity during complex flows like unlocking downstream concepts.
+
+### **5.2. Adaptive Engine Implementation**
+The adaptive logic is isolated into pure, testable utility modules:
+*   **BKT Engine:** Implements Bayesian Knowledge Tracing to update $P(L)$ based on exam pass/fail results.
+*   **Retention Engine:** Calculates "Effective Mastery" by applying an exponential decay formula to the baseline mastery over time.
+*   **Difficulty Selector:** Uses a deterministic algorithm to pick the next best question for a student based on their current mastery band and previous question history.
+
+### **5.3. Global CMS**
+The platform includes an integrated CMS for administrators and course writers. It supports **Optimistic Concurrency Control** to prevent edit conflicts and features a **Draft System**, allowing authors to stage content updates without immediately affecting the live student environment.
 
 # 
 

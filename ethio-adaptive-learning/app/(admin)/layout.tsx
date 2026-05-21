@@ -1,8 +1,7 @@
-import Link from "next/link"
-
-import { AdminSidebar } from "@/components/admin/admin-sidebar"
-import { UserMenu } from "@/components/shared/user-menu"
+import { CurriculumTree } from "@/components/admin/studio/curriculum-tree"
+import { StudioShell } from "@/components/admin/studio/studio-shell"
 import { requireRole } from "@/lib/auth"
+import { getCurriculumHierarchyCmsData } from "@/lib/cms/adapters/curriculum"
 
 export default async function AdminLayout({
   children,
@@ -10,26 +9,32 @@ export default async function AdminLayout({
   children: React.ReactNode
 }>) {
   const session = await requireRole(["ADMIN", "COURSE_WRITER"])
+  const hierarchy = await getCurriculumHierarchyCmsData()
+
+  // Transform data for the tree browser
+  const treeData = hierarchy.courses.map(course => ({
+    id: course.id,
+    title: course.title,
+    slug: course.slug,
+    units: course.units.map(unit => ({
+      id: unit.id,
+      title: unit.title,
+      order: unit.order,
+      concepts: unit.concepts.map(concept => ({
+        id: concept.id,
+        title: concept.title,
+        slug: concept.slug
+      }))
+    }))
+  }))
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#f7fbfa_0%,_#eef5f2_100%)]">
-      <header className="border-b border-border/80 bg-white/85 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-6 py-4">
-          <div>
-            <Link className="text-lg font-semibold tracking-tight text-foreground" href="/admin/dashboard">
-              Ethio Adaptive Learning
-            </Link>
-            <p className="text-sm text-muted-foreground">Admin and course-writer routes</p>
-          </div>
-
-          <UserMenu username={session.user.username} role={session.user.role} />
-        </div>
-      </header>
-
-      <main className="mx-auto grid w-full max-w-7xl gap-6 px-6 py-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-        <AdminSidebar role={session.user.role} />
-        <section>{children}</section>
-      </main>
-    </div>
+    <StudioShell
+      role={session.user.role}
+      username={session.user.username}
+      contextPane={<CurriculumTree courses={treeData} />}
+    >
+      {children}
+    </StudioShell>
   )
 }

@@ -88,9 +88,9 @@ export const chunkDefinition = {
   },
   getRevalidationPaths: ({ id }) => [
     "/admin/dashboard",
-    "/admin/cms",
-    "/admin/cms/chunk",
-    "/admin/cms/concept",
-    ...(id ? [`/admin/cms/chunk/${id}`] : []),
+    "/admin/studio",
+    "/admin/studio/chunk",
+    "/admin/studio/concept",
+    ...(id ? [`/admin/studio/chunk/${id}`] : []),
   ],
 } satisfies CmsContentType<ChunkCmsInput>

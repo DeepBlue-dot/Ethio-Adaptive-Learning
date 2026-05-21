@@ -4,14 +4,12 @@ import { useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { 
-  BookMarked, 
   ChevronDown, 
   ChevronRight, 
-  Database, 
-  FileText, 
-  Network, 
-  Plus, 
-  Search 
+  Layers, 
+  Lightbulb, 
+  BookOpen,
+  Network,
 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
@@ -20,6 +18,7 @@ interface ConceptNode {
   id: string
   title: string
   slug: string
+  status?: string
 }
 
 interface UnitNode {
@@ -27,6 +26,7 @@ interface UnitNode {
   title: string
   order: number
   concepts: ConceptNode[]
+  status?: string
 }
 
 interface CourseNode {
@@ -34,7 +34,10 @@ interface CourseNode {
   title: string
   slug: string
   units: UnitNode[]
+  status?: string
 }
+
+type TreeTab = "courses" | "units" | "concepts"
 
 export function CurriculumTree({ 
   courses 
@@ -42,7 +45,7 @@ export function CurriculumTree({
   courses: CourseNode[] 
 }) {
   const pathname = usePathname()
-  const [searchQuery, setSearchQuery] = useState("")
+  const [activeTab, setActiveTab] = useState<TreeTab>("courses")
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set(courses.map(c => c.id)))
 
   const toggleNode = (id: string) => {
@@ -52,53 +55,72 @@ export function CurriculumTree({
     setExpandedNodes(next)
   }
 
-  const filteredCourses = courses.filter(course => 
-    course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    course.units.some(unit => 
-      unit.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      unit.concepts.some(concept => concept.title.toLowerCase().includes(searchQuery.toLowerCase()))
-    )
-  )
-
   return (
-    <div className="flex h-full flex-col">
-      <div className="p-4 border-b border-border">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">
-          Curriculum Navigator
-        </h3>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 size-3.5 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Quick search..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-lg border border-border bg-white pl-9 pr-3 py-2 text-xs outline-none transition focus:border-teal-600/30"
+    <div className="flex h-full flex-col bg-surface-container overflow-hidden">
+      {/* Header */}
+      <div className="p-4 border-b border-outline-variant bg-surface-container-highest shrink-0">
+        <h2 className="text-[11px] font-bold text-on-surface uppercase tracking-wider mb-1">
+          Curriculum Tree
+        </h2>
+        <p className="text-on-surface-variant text-xs">Browser</p>
+        
+        {/* Context Tabs */}
+        <div className="flex gap-1 mt-4 overflow-x-auto custom-scrollbar pb-1">
+          <TabButton 
+            active={activeTab === "courses"} 
+            onClick={() => setActiveTab("courses")}
+            icon={<Network className="size-[16px]" />}
+            label="Courses"
+          />
+          <TabButton 
+            active={activeTab === "units"} 
+            onClick={() => setActiveTab("units")}
+            icon={<Layers className="size-[16px]" />}
+            label="Units"
+          />
+          <TabButton 
+            active={activeTab === "concepts"} 
+            onClick={() => setActiveTab("concepts")}
+            icon={<Lightbulb className="size-[16px]" />}
+            label="Concepts"
           />
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-2">
+      {/* Tree View */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
         <div className="space-y-1">
-          {filteredCourses.map((course) => (
+          {courses.map((course) => (
             <CourseItem 
               key={course.id} 
               course={course} 
               expanded={expandedNodes.has(course.id)}
               onToggle={() => toggleNode(course.id)}
-              activeId={pathname}
+              activePath={pathname}
               expandedNodes={expandedNodes}
               toggleNode={toggleNode}
             />
           ))}
-          
-          <button className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium text-teal-700 hover:bg-teal-50 transition-colors mt-4">
-            <Plus className="size-3" />
-            Add new Course
-          </button>
         </div>
       </div>
     </div>
+  )
+}
+
+function TabButton({ active, onClick, icon, label }: { active: boolean, onClick: () => void, icon: React.ReactNode, label: string }) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "px-3 py-1.5 text-xs font-bold rounded-lg transition-colors cursor-pointer shrink-0 flex items-center gap-1",
+        active 
+          ? "text-on-surface bg-surface-variant" 
+          : "text-on-surface-variant hover:bg-surface-container-high"
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   )
 }
 
@@ -106,55 +128,53 @@ function CourseItem({
   course, 
   expanded, 
   onToggle, 
-  activeId,
+  activePath,
   expandedNodes,
   toggleNode
 }: { 
   course: CourseNode
   expanded: boolean
   onToggle: () => void
-  activeId: string
+  activePath: string
   expandedNodes: Set<string>
   toggleNode: (id: string) => void
 }) {
-  const isActive = activeId === `/admin/cms/course/${course.id}`
+  const isActive = activePath === `/admin/studio/course/${course.id}`
 
   return (
     <div className="space-y-1">
-      <div className="group flex items-center gap-1">
-        <button
-          onClick={onToggle}
-          className="p-1 rounded hover:bg-slate-200 text-slate-400 transition-colors"
-        >
-          {expanded ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
-        </button>
-        <Link
-          href={`/admin/cms/course/${course.id}`}
-          className={cn(
-            "flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-semibold transition-colors",
-            isActive ? "bg-teal-600 text-white shadow-sm" : "text-slate-700 hover:bg-slate-100"
-          )}
-        >
-          <BookMarked className={cn("size-3.5", isActive ? "text-teal-100" : "text-teal-600")} />
-          <span className="truncate">{course.title}</span>
+      <div 
+        className={cn(
+          "flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-sm cursor-pointer text-on-surface font-medium",
+          isActive && "bg-surface-variant border-l-2 border-primary -ml-[2px]"
+        )}
+        onClick={onToggle}
+      >
+        <span className="text-secondary">
+          {expanded ? <ChevronDown className="size-[18px]" /> : <ChevronRight className="size-[18px]" />}
+        </span>
+        <span className="text-primary">
+          <BookOpen className="size-[18px]" />
+        </span>
+        <Link href={`/admin/studio/course/${course.id}`} className="truncate" onClick={(e) => e.stopPropagation()}>
+          {course.title}
         </Link>
       </div>
 
       {expanded && (
-        <div className="ml-4 border-l border-border pl-2 space-y-1">
+        <div className="pl-6 relative space-y-1">
+          {/* Tree Line */}
+          <div className="tree-line" />
+          
           {course.units.map((unit) => (
             <UnitItem 
               key={unit.id} 
               unit={unit} 
-              activeId={activeId}
+              activePath={activePath}
               expanded={expandedNodes.has(unit.id)}
               onToggle={() => toggleNode(unit.id)}
             />
           ))}
-          <button className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 hover:text-teal-600 transition-colors">
-            <Plus className="size-3" />
-            Unit
-          </button>
         </div>
       )}
     </div>
@@ -163,54 +183,62 @@ function CourseItem({
 
 function UnitItem({ 
   unit, 
-  activeId,
+  activePath,
   expanded,
   onToggle
 }: { 
   unit: UnitNode
-  activeId: string
+  activePath: string
   expanded: boolean
   onToggle: () => void
 }) {
-  const isActive = activeId === `/admin/cms/unit/${unit.id}`
+  const isActive = activePath === `/admin/studio/unit/${unit.id}`
 
   return (
     <div className="space-y-1">
-      <div className="flex items-center gap-1">
-        <button
-          onClick={onToggle}
-          className="p-1 rounded hover:bg-slate-200 text-slate-300 transition-colors"
-        >
-          {expanded ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
-        </button>
-        <Link
-          href={`/admin/cms/unit/${unit.id}`}
-          className={cn(
-            "flex flex-1 items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium transition-colors",
-            isActive ? "bg-slate-800 text-white" : "text-slate-600 hover:bg-slate-100"
-          )}
-        >
-          <Database className={cn("size-3.5", isActive ? "text-slate-400" : "text-slate-400")} />
-          <span className="truncate">Unit {unit.order}: {unit.title}</span>
+      <div 
+        className={cn(
+          "flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-sm cursor-pointer text-on-surface font-medium",
+          isActive && "bg-surface-variant border-l-2 border-primary -ml-[2px]"
+        )}
+        onClick={onToggle}
+      >
+        <span className="text-secondary">
+          {expanded ? <ChevronDown className="size-[18px]" /> : <ChevronRight className="size-[18px]" />}
+        </span>
+        <span className="text-primary">
+          <Layers className="size-[18px]" />
+        </span>
+        <Link href={`/admin/studio/unit/${unit.id}`} className="truncate" onClick={(e) => e.stopPropagation()}>
+          Unit {unit.order}: {unit.title}
         </Link>
       </div>
 
       {expanded && (
-        <div className="ml-4 border-l border-border pl-2 space-y-0.5">
+        <div className="pl-6 relative space-y-1">
+          {/* Tree Line */}
+          <div className="tree-line" />
+          
           {unit.concepts.map((concept) => {
-            const isConceptActive = activeId === `/admin/cms/concept/${concept.id}`
+            const isConceptActive = activePath === `/admin/studio/concept/${concept.id}`
             return (
-              <Link
+              <div 
                 key={concept.id}
-                href={`/admin/cms/concept/${concept.id}`}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs transition-colors",
-                  isConceptActive ? "bg-slate-100 text-teal-700 font-bold" : "text-slate-500 hover:text-slate-900"
+                  "flex items-center gap-2 p-1.5 hover:bg-surface-container-high rounded-sm cursor-pointer text-on-surface-variant",
+                  isConceptActive && "bg-surface-variant text-on-surface font-medium border-l-2 border-primary -ml-[2px]"
                 )}
               >
-                <div className={cn("size-1 rounded-full", isConceptActive ? "bg-teal-500" : "bg-slate-300")} />
-                <span className="truncate">{concept.title}</span>
-              </Link>
+                <span className="opacity-0">
+                  <ChevronRight className="size-[18px]" />
+                </span>
+                <span className="text-tertiary-container">
+                  <Lightbulb className="size-[18px]" />
+                </span>
+                <Link href={`/admin/studio/concept/${concept.id}`} className="truncate flex-1">
+                  {concept.title}
+                </Link>
+              </div>
             )
           })}
         </div>

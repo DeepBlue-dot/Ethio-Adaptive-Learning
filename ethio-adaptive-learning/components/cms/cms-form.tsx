@@ -2,7 +2,7 @@
 
 import { useActionState, useState } from "react"
 
-import { saveCmsItem } from "@/app/(admin)/admin/cms/actions"
+import { saveCmsItem } from "@/app/(admin)/admin/studio/actions"
 import { CmsFeedback } from "@/components/cms/cms-feedback"
 import { CmsFieldInput } from "@/components/cms/cms-field"
 import { CmsRelationManager } from "@/components/cms/cms-relation-manager"

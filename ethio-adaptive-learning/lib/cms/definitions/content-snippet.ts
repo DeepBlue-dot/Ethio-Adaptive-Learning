@@ -79,10 +79,10 @@ export const contentSnippetDefinition = {
   },
   getRevalidationPaths: ({ id }) => [
     "/admin/dashboard",
-    "/admin/cms",
-    "/admin/cms/content-snippet",
-    "/admin/cms/concept",
+    "/admin/studio",
+    "/admin/studio/content-snippet",
+    "/admin/studio/concept",
     "/concepts",
-    ...(id ? [`/admin/cms/content-snippet/${id}`] : []),
+    ...(id ? [`/admin/studio/content-snippet/${id}`] : []),
   ],
 } satisfies CmsContentType<ContentSnippetCmsInput>

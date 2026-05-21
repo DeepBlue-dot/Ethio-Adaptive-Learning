@@ -284,7 +284,7 @@ export async function getEditorModel(
     definition: toSerializableContentType(definition),
     item: item ? decorateEntity(definition, item) : null,
     referenceOptions,
-    returnTo: returnTo ?? `/admin/cms/${definition.key}`,
+    returnTo: returnTo ?? `/admin/studio/${definition.key}`,
   }
 }
 
