@@ -9,6 +9,8 @@ interface StudioLayoutContextType {
   setIsNexusCollapsed: (collapsed: boolean) => void
   isContextPaneExpanded: boolean
   setIsContextPaneExpanded: (expanded: boolean) => void
+  isContextMobileOpen: boolean
+  setIsContextMobileOpen: (open: boolean) => void
 }
 
 const StudioLayoutContext = createContext<StudioLayoutContextType | undefined>(undefined)
@@ -17,6 +19,7 @@ export function StudioLayoutProvider({ children }: { children: React.ReactNode }
   const [isMobileNexusOpen, setIsMobileNexusOpen] = useState(false)
   const [isNexusCollapsed, setIsNexusCollapsed] = useState(false)
   const [isContextPaneExpanded, setIsContextPaneExpanded] = useState(true)
+  const [isContextMobileOpen, setIsContextMobileOpen] = useState(false)
 
   return (
     <StudioLayoutContext.Provider 
@@ -26,7 +29,9 @@ export function StudioLayoutProvider({ children }: { children: React.ReactNode }
         isNexusCollapsed,
         setIsNexusCollapsed,
         isContextPaneExpanded,
-        setIsContextPaneExpanded
+        setIsContextPaneExpanded,
+        isContextMobileOpen,
+        setIsContextMobileOpen
       }}
     >
       {children}

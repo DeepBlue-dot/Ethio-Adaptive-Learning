@@ -12,9 +12,10 @@ export default async function PlatformLayout({
   return (
     <WorkspaceShell>
       <WorkspaceHeader 
-        title="Platform Management" 
+        title="Platform" 
         username={session.user.username} 
-        role={session.user.role} 
+        role={session.user.role}
+        breadcrumbs={[{ label: "User Management" }]}
       />
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
         {children}

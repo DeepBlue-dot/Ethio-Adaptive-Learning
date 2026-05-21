@@ -12,9 +12,10 @@ export default async function DashboardLayout({
   return (
     <WorkspaceShell>
       <WorkspaceHeader 
-        title="Intelligence Dashboard" 
+        title="Intelligence" 
         username={session.user.username} 
-        role={session.user.role} 
+        role={session.user.role}
+        breadcrumbs={[{ label: "Global Pulse" }]}
       />
       <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
         {children}
