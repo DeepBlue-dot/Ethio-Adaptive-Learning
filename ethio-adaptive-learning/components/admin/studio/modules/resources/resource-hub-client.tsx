@@ -331,7 +331,11 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
 
       <UploadResourceModal 
         isOpen={isUploadModalOpen}
-        onClose={() => setIsUploadModalOpen(false)}
+        onClose={() => {
+          const params = new URLSearchParams(searchParams.toString())
+          params.delete("upload")
+          router.push(`${pathname}?${params.toString()}`)
+        }}
       />
 
       {/* Bulk Actions Bar */}
