@@ -271,6 +271,17 @@
   --sidebar-accent-foreground: #eff1f3;
   --sidebar-border: rgb(255 255 255 / 10%);
   --sidebar-ring: #747687;
+  --on-surface: #eff1f3;
+  --on-surface-variant: #c4c5d8;
+  --surface-container: #2d3133;
+  --surface-container-high: #383b3e;
+  --surface-container-highest: #434655;
+  --surface-container-low: #1d2123;
+  --surface-container-lowest: #0e1113;
+  --outline: #8e9199;
+  --outline-variant: #434655;
+  --inverse-surface: #e1e2e4;
+  --inverse-on-surface: #2d3133;
 }
 
 @layer base {

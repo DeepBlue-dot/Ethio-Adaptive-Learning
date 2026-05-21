@@ -2,7 +2,7 @@ import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-head
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
 import { requireRole } from "@/lib/auth"
 
-export default async function PlatformLayout({
+export default async function SettingLayout({
   children,
 }: {
   children: React.ReactNode
@@ -12,7 +12,7 @@ export default async function PlatformLayout({
   return (
     <WorkspaceShell>
       <WorkspaceHeader 
-        title="Platform Management" 
+        title="Studio Settings" 
         username={session.user.username} 
         role={session.user.role} 
       />

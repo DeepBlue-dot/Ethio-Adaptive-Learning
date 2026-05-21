@@ -1,15 +1,24 @@
-import React from 'react';
+import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-header"
+import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
+import { requireRole } from "@/lib/auth"
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
+export default async function GovernanceLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  const session = await requireRole(["ADMIN", "COURSE_WRITER"])
 
-export default function Layout({ children }: LayoutProps) {
   return (
-    <div>
-        <main>
-          {children}
-        </main>
-    </div>
-  );
+    <WorkspaceShell>
+      <WorkspaceHeader 
+        title="Governance & Audit" 
+        username={session.user.username} 
+        role={session.user.role} 
+      />
+      <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
+        {children}
+      </div>
+    </WorkspaceShell>
+  )
 }
