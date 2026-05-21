@@ -33,18 +33,19 @@ export function AssetsSidebar() {
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1 bg-surface-container/50">
         {ASSET_NODES.map((node) => {
           const isActive = pathname === node.href && node.id === "all"
-          
+
           return (
             <Link
               key={node.id}
               href={node.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-xl",
+                "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-lg",
                 isActive 
-                  ? "bg-surface-variant text-on-surface border-l-2 border-primary shadow-sm" 
+                  ? "bg-primary/10 text-primary border-l-2 border-primary shadow-sm font-bold" 
                   : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               )}
             >
+
               <node.icon className={cn("size-4", isActive ? "text-primary" : "text-primary/50")} />
               <span className="truncate">{node.label}</span>
             </Link>

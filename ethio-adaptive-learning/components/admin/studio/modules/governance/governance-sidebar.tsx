@@ -23,7 +23,7 @@ export function GovernanceSidebar() {
   return (
     <div className="flex h-full flex-col bg-surface-container overflow-hidden">
       <div className="p-4 border-b border-outline-variant bg-surface-container-highest shrink-0">
-        <h2 className="text-[11px] font-bold text-on-surface uppercase tracking-wider mb-1">
+        <h2 className="text-[10px] font-bold text-on-surface uppercase tracking-wider mb-1">
           Governance
         </h2>
         <p className="text-on-surface-variant text-xs font-medium">Compliance & Audit</p>
@@ -38,9 +38,9 @@ export function GovernanceSidebar() {
               key={node.id}
               href={node.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-xl",
+                "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-lg",
                 isActive 
-                  ? "bg-surface-variant text-on-surface border-l-2 border-primary shadow-sm" 
+                  ? "bg-primary/10 text-primary border-l-2 border-primary shadow-sm font-bold" 
                   : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               )}
             >

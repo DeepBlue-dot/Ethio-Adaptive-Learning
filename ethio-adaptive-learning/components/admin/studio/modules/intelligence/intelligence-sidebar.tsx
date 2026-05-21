@@ -42,10 +42,11 @@ export function IntelligenceSidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-xl",
                 isActive 
-                  ? "bg-surface-variant text-on-surface border-l-2 border-primary shadow-sm" 
+                  ? "bg-primary/10 text-primary border-l-2 border-primary shadow-sm font-bold" 
                   : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               )}
             >
+
               <node.icon className={cn("size-4", isActive ? "text-primary" : "text-primary/50")} />
               <span className="truncate">{node.label}</span>
             </Link>
@@ -70,7 +71,9 @@ function AlertItem({ label, type }: { label: string, type: 'warning' | 'critical
     <div className="flex items-center gap-2 text-[11px] font-semibold group cursor-pointer">
        <div className={cn(
          "size-1.5 rounded-full animate-pulse",
-         type === 'critical' ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]" : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"
+         type === 'critical' 
+           ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" 
+           : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
        )} />
        <span className="text-on-surface-variant group-hover:text-on-surface transition-colors">{label}</span>
     </div>

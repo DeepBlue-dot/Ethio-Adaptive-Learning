@@ -98,16 +98,23 @@ export function NexusSidebar({ role }: { role: string }) {
           )}>
             <Link 
               href="/admin" 
-              className="flex items-center gap-3 overflow-hidden group"
+              className={cn(
+                "flex items-center gap-3 group",
+                // when collapsed, center and allow overflow so the icon isn't clipped
+                isNexusCollapsed ? "overflow-visible justify-center" : "overflow-hidden"
+              )}
               onClick={() => setIsMobileNexusOpen(false)}
             >
-              <div className="size-10 rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform text-white">
+              <div className={cn(
+                "rounded-2xl bg-primary flex items-center justify-center shrink-0 shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform text-white",
+                isNexusCollapsed ? "size-8" : "size-10"
+              )}>
                 <ShieldCheck className="size-6" />
               </div>
               <div className={cn(
                 "animate-in fade-in slide-in-from-left-2 duration-300",
-                isNexusCollapsed ? "hidden" : "block",
-                contextContent && "lg:block hidden"
+                // Always hide title when collapsed; otherwise follow context visibility
+                isNexusCollapsed ? "hidden" : (contextContent ? "lg:block hidden" : "block")
               )}>
                 <h1 className="font-display text-lg font-black text-on-surface tracking-tight leading-none group-hover:text-primary transition-colors">EthioPrep</h1>
                 <p className="text-on-surface-variant opacity-60 text-[10px] uppercase font-bold tracking-widest mt-1">Studio Admin</p>

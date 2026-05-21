@@ -116,7 +116,7 @@ function TabButton({ active, onClick, icon, label }: { active: boolean, onClick:
       className={cn(
         "px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer shrink-0 flex items-center gap-1.5",
         active 
-          ? "text-on-surface bg-surface-variant shadow-sm" 
+          ? "text-primary bg-primary/10 ring-1 ring-primary/20 shadow-sm" 
           : "text-on-surface-variant hover:bg-surface-container-high"
       )}
     >
@@ -148,7 +148,7 @@ function CourseItem({
       <div 
         className={cn(
           "flex items-center gap-2 p-1.5 pr-3 hover:bg-surface-container-high rounded-xl cursor-pointer text-on-surface transition-all group",
-          isActive && "bg-surface-variant text-on-surface font-semibold ring-1 ring-primary/20 shadow-sm"
+          isActive && "bg-primary/5 text-primary font-bold border-l-2 border-primary shadow-sm"
         )}
         onClick={onToggle}
       >
@@ -201,7 +201,7 @@ function UnitItem({
       <div 
         className={cn(
           "flex items-center gap-2 p-1.5 pr-3 hover:bg-surface-container-high rounded-xl cursor-pointer text-on-surface transition-all group",
-          isActive && "bg-surface-variant text-on-surface font-semibold ring-1 ring-primary/20 shadow-sm"
+          isActive && "bg-primary/5 text-primary font-bold border-l-2 border-primary shadow-sm"
         )}
         onClick={onToggle}
       >
@@ -228,7 +228,7 @@ function UnitItem({
                 key={concept.id}
                 className={cn(
                   "flex items-center gap-2 p-1.5 pr-3 hover:bg-surface-container-high rounded-lg cursor-pointer text-on-surface-variant transition-all group",
-                  isConceptActive && "bg-white dark:bg-slate-900 text-primary font-bold shadow-sm ring-1 ring-primary/10"
+                  isConceptActive && "bg-primary/10 text-primary font-bold shadow-sm ring-1 ring-primary/20"
                 )}
               >
                 <span className="opacity-0 shrink-0">
