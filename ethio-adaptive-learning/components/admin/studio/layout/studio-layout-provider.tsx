@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState } from "react"
 
+export type MobileSidebarView = "nexus" | "context"
+
 interface StudioLayoutContextType {
   isMobileNexusOpen: boolean
   setIsMobileNexusOpen: (open: boolean) => void
@@ -9,8 +11,10 @@ interface StudioLayoutContextType {
   setIsNexusCollapsed: (collapsed: boolean) => void
   isContextPaneExpanded: boolean
   setIsContextPaneExpanded: (expanded: boolean) => void
-  isContextMobileOpen: boolean
-  setIsContextMobileOpen: (open: boolean) => void
+  mobileSidebarView: MobileSidebarView
+  setMobileSidebarView: (view: MobileSidebarView) => void
+  contextContent: React.ReactNode | null
+  setContextContent: (content: React.ReactNode | null) => void
 }
 
 const StudioLayoutContext = createContext<StudioLayoutContextType | undefined>(undefined)
@@ -19,7 +23,8 @@ export function StudioLayoutProvider({ children }: { children: React.ReactNode }
   const [isMobileNexusOpen, setIsMobileNexusOpen] = useState(false)
   const [isNexusCollapsed, setIsNexusCollapsed] = useState(false)
   const [isContextPaneExpanded, setIsContextPaneExpanded] = useState(true)
-  const [isContextMobileOpen, setIsContextMobileOpen] = useState(false)
+  const [mobileSidebarView, setMobileSidebarView] = useState<MobileSidebarView>("nexus")
+  const [contextContent, setContextContent] = useState<React.ReactNode | null>(null)
 
   return (
     <StudioLayoutContext.Provider 
@@ -30,8 +35,10 @@ export function StudioLayoutProvider({ children }: { children: React.ReactNode }
         setIsNexusCollapsed,
         isContextPaneExpanded,
         setIsContextPaneExpanded,
-        isContextMobileOpen,
-        setIsContextMobileOpen
+        mobileSidebarView,
+        setMobileSidebarView,
+        contextContent,
+        setContextContent
       }}
     >
       {children}

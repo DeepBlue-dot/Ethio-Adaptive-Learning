@@ -1,3 +1,5 @@
+import { AssetsSidebar } from "@/components/admin/studio/modules/assets/assets-sidebar"
+import { ContextSidebar } from "@/components/admin/studio/layout/context-sidebar"
 import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-header"
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
 import { requireRole } from "@/lib/auth"
@@ -10,16 +12,22 @@ export default async function AssetsLayout({
   const session = await requireRole(["ADMIN", "COURSE_WRITER"])
 
   return (
-    <WorkspaceShell>
-      <WorkspaceHeader 
-        title="Assets" 
-        username={session.user.username} 
-        role={session.user.role}
-        breadcrumbs={[{ label: "Media Library" }]}
-      />
-      <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
-        {children}
-      </div>
-    </WorkspaceShell>
+    <>
+      <ContextSidebar>
+        <AssetsSidebar />
+      </ContextSidebar>
+      
+      <WorkspaceShell hasContextSidebar>
+        <WorkspaceHeader 
+          title="Assets" 
+          username={session.user.username} 
+          role={session.user.role}
+          breadcrumbs={[{ label: "Media Library" }]}
+        />
+        <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
+          {children}
+        </div>
+      </WorkspaceShell>
+    </>
   )
 }

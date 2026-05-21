@@ -3,7 +3,7 @@ import { notFound } from "next/navigation"
 import { CmsEditorShell } from "@/components/cms/cms-editor-shell"
 import { CmsForm } from "@/components/cms/cms-form"
 import {
-  getNewItemModel,
+  getEditorModel,
   requireCmsAccess,
   resolveCmsContentType,
 } from "@/lib/cms"
@@ -28,7 +28,7 @@ export default async function StudioNewItemPage({ params, searchParams }: Studio
 
   const query = (await searchParams) ?? {}
   const returnTo = sanitizeAdminPath(getSingleValue(query.returnTo), `/admin/studio/${definition.key}`)
-  const model = await getNewItemModel(definition.key, returnTo)
+  const model = await getEditorModel(definition.key, undefined, returnTo)
 
   return (
     <div className="max-w-5xl mx-auto">
