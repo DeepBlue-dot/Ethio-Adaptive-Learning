@@ -8,6 +8,7 @@ import {
 } from "@/lib/cms/registry"
 import { getCmsRevalidationPaths } from "@/lib/cms/validation"
 import { logCmsActivity } from "@/lib/cms/activity"
+import { syncUsage } from "@/lib/studio/usage-sync"
 import type {
   CmsContentType,
   CmsContentTypeKey,
@@ -34,6 +35,8 @@ export function normalizeContentTypeKey(value: string) {
   return normalizeCmsContentTypeKey(value)
 }
 
+const RESOURCE_CONSUMERS = ["concept", "question", "content-snippet"]
+
 export async function createItem(
   type: string,
   data: unknown,
@@ -42,6 +45,13 @@ export async function createItem(
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
   const entity = decorateEntity(definition, await repository.createItem(definition.key, data))
+  
+  // Sync resource usage if applicable
+  if (RESOURCE_CONSUMERS.includes(definition.key)) {
+    const consumerType = definition.key.toUpperCase().replace("-", "_") as "CONCEPT" | "QUESTION" | "CONTENT_SNIPPET"
+    await syncUsage(consumerType, entity.id, data)
+  }
+
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: "create",
@@ -76,6 +86,13 @@ export async function updateItem(
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
   const entity = decorateEntity(definition, await repository.updateItem(definition.key, id, data, lastUpdatedAt))
+  
+  // Sync resource usage if applicable
+  if (RESOURCE_CONSUMERS.includes(definition.key)) {
+    const consumerType = definition.key.toUpperCase().replace("-", "_") as "CONCEPT" | "QUESTION" | "CONTENT_SNIPPET"
+    await syncUsage(consumerType, entity.id, data)
+  }
+
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: "update",
@@ -117,6 +134,13 @@ export async function saveDraftItem(
         ? await repository.updateItem(definition.key, id, data, lastUpdatedAt)
         : await repository.createItem(definition.key, data)
   )
+
+  // Sync resource usage if applicable
+  if (RESOURCE_CONSUMERS.includes(definition.key)) {
+    const consumerType = definition.key.toUpperCase().replace("-", "_") as "CONCEPT" | "QUESTION" | "CONTENT_SNIPPET"
+    await syncUsage(consumerType, entity.id, data)
+  }
+
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: id ? "update" : "create",
@@ -156,6 +180,13 @@ export async function publishItem(
         ? await repository.updateItem(definition.key, id, data, lastUpdatedAt)
         : await repository.createItem(definition.key, data)
   )
+
+  // Sync resource usage if applicable
+  if (RESOURCE_CONSUMERS.includes(definition.key)) {
+    const consumerType = definition.key.toUpperCase().replace("-", "_") as "CONCEPT" | "QUESTION" | "CONTENT_SNIPPET"
+    await syncUsage(consumerType, entity.id, data)
+  }
+
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: id ? "update" : "create",
@@ -366,7 +397,22 @@ export async function bulkDeleteItems(
 
   for (const id of ids) {
     try {
-      const result = await deleteItem(definition.key, id, userId, repository)
+      let result
+      try {
+        result = await deleteItem(definition.key, id, userId, repository)
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          error.message.includes("Published content must be unpublished before it can be deleted.")
+        ) {
+          const unpublishResult = await unpublishItem(definition.key, id, userId, repository)
+          unpublishResult.revalidationPaths.forEach((p) => allRevalidationPaths.add(p))
+          result = await deleteItem(definition.key, id, userId, repository)
+        } else {
+          throw error
+        }
+      }
+
       result.revalidationPaths.forEach((p) => allRevalidationPaths.add(p))
       count++
     } catch (error) {

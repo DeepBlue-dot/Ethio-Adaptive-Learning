@@ -385,8 +385,11 @@ model MediaAsset {
   unpublishedAt   DateTime?
   unpublishedById String?
 
+  usageLinks   ResourceUsage[] @relation("MediaAssetUsage")
+
   @@index([kind])
   @@index([status])
+  @@index([title])
 }
 
 model ContentSnippet {
@@ -404,7 +407,34 @@ model ContentSnippet {
   unpublishedAt   DateTime?
   unpublishedById String?
 
+  usageLinks    ResourceUsage[] @relation("ContentSnippetUsage")
+
   @@index([status])
+  @@index([title])
+}
+
+model ResourceUsage {
+  id           String @id @default(cuid())
+  
+  // The resource being used
+  mediaAssetId   String?
+  mediaAsset     MediaAsset? @relation("MediaAssetUsage", fields: [mediaAssetId], references: [id], onDelete: Cascade)
+  contentSnippetId String?
+  contentSnippet   ContentSnippet? @relation("ContentSnippetUsage", fields: [contentSnippetId], references: [id], onDelete: Cascade)
+  
+  // The consumer of the resource
+  consumerType String // "CONCEPT", "QUESTION", "CONTENT_SNIPPET"
+  consumerId   String
+  
+  // Metadata
+  context      String? // e.g. "contentBlocks[0]"
+  createdAt    DateTime @default(now())
+
+  @@index([mediaAssetId])
+  @@index([contentSnippetId])
+  @@index([consumerId])
+  @@unique([mediaAssetId, consumerId, context])
+  @@unique([contentSnippetId, consumerId, context])
 }
 
 model PracticeAttempt {

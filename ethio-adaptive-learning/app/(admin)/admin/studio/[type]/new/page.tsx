@@ -17,7 +17,7 @@ type StudioNewItemPageProps = {
 }
 
 export default async function StudioNewItemPage({ params, searchParams }: StudioNewItemPageProps) {
-  await requireCmsAccess()
+  const session = await requireCmsAccess()
 
   const { type } = await params
   const definition = resolveCmsContentType(type)
@@ -42,6 +42,7 @@ export default async function StudioNewItemPage({ params, searchParams }: Studio
           item={model.item}
           referenceOptions={model.referenceOptions}
           returnTo={model.returnTo}
+          userRole={session.user.role}
         />
       </CmsEditorShell>
     </div>

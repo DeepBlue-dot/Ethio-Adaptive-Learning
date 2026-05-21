@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import type { CmsContentTypeKey } from "@/lib/cms/types"
+import type { Prisma } from "@prisma/client"
 
 export type CmsActivityAction = "CREATE" | "UPDATE" | "DELETE" | "PUBLISH" | "UNPUBLISH" | "DRAFT_SAVE"
 
@@ -16,7 +17,7 @@ export async function logCmsActivity({
   contentType: CmsContentTypeKey
   entityId: string
   entityTitle?: string | null
-  details?: Record<string, unknown>
+  details?: Record<string, unknown> | Prisma.InputJsonValue
 }) {
   try {
     await prisma.activityLog.create({
@@ -26,7 +27,7 @@ export async function logCmsActivity({
         contentType,
         entityId,
         entityTitle,
-        details: details as Record<string, unknown>,
+        details: (details || {}) as Prisma.InputJsonValue,
       },
     })
   } catch (error) {

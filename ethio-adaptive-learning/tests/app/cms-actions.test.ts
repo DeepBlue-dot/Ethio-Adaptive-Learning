@@ -37,7 +37,7 @@ vi.mock("@/lib/cms", async () => {
   }
 })
 
-import { deleteCmsItem, saveCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/cms/actions"
+import { deleteCmsItem, saveCmsItem, unpublishCmsItem } from "@/app/(admin)/admin/studio/actions"
 
 describe("generic CMS actions", () => {
   beforeEach(() => {

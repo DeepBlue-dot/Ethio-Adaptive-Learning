@@ -111,7 +111,7 @@ export default async function AdminPortalPage() {
                    description="Author a new adaptive question node." 
                  />
                  <ActionLink 
-                   href="/admin/assets" 
+                   href="/admin/resources" 
                    title="Upload Media" 
                    description="Add images or video embeds." 
                  />

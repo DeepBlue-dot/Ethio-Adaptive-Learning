@@ -3,10 +3,12 @@ import type { CloudinaryUploadOptions, CloudinaryUploadResult } from "@/lib/clou
 
 export async function uploadImage(
   source: string | Buffer,
-  options?: CloudinaryUploadOptions
+  options?: CloudinaryUploadOptions & { resource_type?: "image" | "video" | "raw" | "auto" }
 ): Promise<CloudinaryUploadResult> {
+  const { resource_type = "image", ...uploadOptions } = options || {}
+  
   return getCloudinary().uploader.upload(source as string, {
-    resource_type: "image",
-    ...options,
+    resource_type,
+    ...uploadOptions,
   })
 }

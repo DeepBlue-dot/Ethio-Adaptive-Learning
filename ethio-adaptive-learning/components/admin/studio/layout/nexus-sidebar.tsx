@@ -21,7 +21,7 @@ import {
 import { useStudioLayout } from "./studio-layout-provider"
 import { cn } from "@/lib/utils"
 
-export type StudioModule = "dashboard" | "studio" | "assets" | "intelligence" | "governance" | "platform" | "portal"
+export type StudioModule = "dashboard" | "studio" | "resources" | "intelligence" | "governance" | "platform" | "portal"
 
 interface NexusItem {
   id: StudioModule
@@ -34,7 +34,7 @@ interface NexusItem {
 const NEXUS_ITEMS: NexusItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard, href: "/admin/dashboard" },
   { id: "studio", label: "Studio", icon: Database, href: "/admin/studio" },
-  { id: "assets", label: "Assets", icon: Library, href: "/admin/assets" },
+  { id: "resources", label: "Resources", icon: Library, href: "/admin/resources" },
   { id: "intelligence", label: "Intelligence", icon: BarChart3, href: "/admin/dashboard" },
   { id: "governance", label: "Governance", icon: Gavel, href: "/admin/governance" },
   { id: "portal", label: "Home", icon: Home, href: "/admin" },
@@ -54,7 +54,7 @@ export function NexusSidebar({ role }: { role: string }) {
   const getActiveModule = (): StudioModule => {
     if (pathname === "/admin") return "portal"
     if (pathname.includes("/admin/dashboard")) return "dashboard"
-    if (pathname.includes("/admin/assets")) return "assets"
+    if (pathname.includes("/admin/resources")) return "resources"
     if (pathname.includes("/admin/governance")) return "governance"
     if (pathname.includes("/admin/studio")) return "studio"
     if (pathname.includes("/admin/platform")) return "platform"
