@@ -36,6 +36,7 @@ export function Inspector() {
   const [activeTab, setActiveTab] = useState<"general" | "authoring" | "technical">("general")
   
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle")
+  const item = model?.item
 
   useEffect(() => {
     let isMounted = true
@@ -71,7 +72,7 @@ export function Inspector() {
   }, [activeNodeId])
 
   const handleFieldChange = async (fieldName: string, value: unknown) => {
-    if (!model || !activeNodeId) return
+    if (!model || !activeNodeId || !model.item) return
 
     setSaveStatus("saving")
     
@@ -82,7 +83,7 @@ export function Inspector() {
         ...model.item,
         data: {
           ...model.item.data,
-          [fieldName]: value
+          [fieldName]: value,
         }
       }
     }
@@ -116,7 +117,7 @@ export function Inspector() {
           </div>
           <div>
             <h3 className="text-sm font-black text-on-surface uppercase tracking-tight leading-none">
-              {isLoading ? "Loading..." : (model?.item.title || "Properties")}
+              {isLoading ? "Loading..." : (model?.item?.title || "Properties")}
             </h3>
             <div className="flex items-center gap-2 mt-1.5">
                {saveStatus === "saving" ? (
@@ -157,7 +158,7 @@ export function Inspector() {
               <Loader2 className="size-10 animate-spin" />
               <p className="text-[10px] font-black uppercase tracking-[0.2em]">Retreiving Schema</p>
            </div>
-        ) : model ? (
+        ) : model?.item ? (
           <>
             {activeTab === "general" && (
               <div className="space-y-6 animate-in fade-in duration-300">
@@ -197,12 +198,12 @@ export function Inspector() {
                     <div className="space-y-4">
                        <SimpleInput 
                          label="Title" 
-                         value={(model.item.data.title as string) || ""} 
+                         value={(item?.data.title as string) || ""} 
                          onChange={(val) => handleFieldChange("title", val)}
                        />
                        <SimpleInput 
                          label="Slug" 
-                         value={(model.item.data.slug as string) || ""} 
+                         value={(item?.data.slug as string) || ""} 
                          onChange={(val) => handleFieldChange("slug", val)}
                        />
                     </div>
@@ -213,9 +214,9 @@ export function Inspector() {
                        <div className="flex items-center gap-3">
                           <div className={cn(
                             "size-2.5 rounded-full",
-                            model.item.lifecycle?.status === "PUBLISHED" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
+                            item?.lifecycle?.status === "PUBLISHED" ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]" : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]"
                           )} />
-                          <span className="text-xs font-black uppercase tracking-tight text-on-surface">{model.item.lifecycle?.status}</span>
+                          <span className="text-xs font-black uppercase tracking-tight text-on-surface">{item?.lifecycle?.status}</span>
                        </div>
                        <Button size="sm" className="h-8 rounded-lg text-[9px] font-black uppercase tracking-widest">
                          Manage
@@ -235,7 +236,7 @@ export function Inspector() {
                              <label className="text-[9px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40 ml-1">{field.label}</label>
                              <CmsFieldInput 
                                 field={field}
-                                value={model.item.data[field.name]}
+                                value={item?.data[field.name]}
                                 referenceOptions={model.referenceOptions}
                                 userRole="ADMIN" 
                                 onChange={(val: unknown) => handleFieldChange(field.name, val)}
@@ -253,7 +254,7 @@ export function Inspector() {
                     <div className="space-y-4">
                        <div className="p-3 rounded-xl bg-surface-container-highest/50 border border-outline-variant font-mono text-[10px] text-on-surface-variant break-all">
                           <span className="opacity-40 uppercase block mb-1">Entity ID</span>
-                          {model.item.id}
+                          {item?.id}
                        </div>
                     </div>
                  </InspectorFieldGroup>

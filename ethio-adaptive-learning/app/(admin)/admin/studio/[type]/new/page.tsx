@@ -6,6 +6,7 @@ import {
   getEditorModel,
   requireCmsAccess,
   resolveCmsContentType,
+  type CmsEntity,
 } from "@/lib/cms"
 import { sanitizeAdminPath } from "@/lib/cms/forms"
 
@@ -30,16 +31,31 @@ export default async function StudioNewItemPage({ params, searchParams }: Studio
   const returnTo = sanitizeAdminPath(getSingleValue(query.returnTo), `/admin/studio/${definition.key}`)
   const model = await getEditorModel(definition.key, undefined, returnTo)
 
+  // Pre-fill item data from query parameters
+  const initialData: Record<string, unknown> = {}
+  Object.entries(query).forEach(([key, value]) => {
+    if (key !== "returnTo" && typeof value === "string") {
+      initialData[key] = value
+    }
+  })
+
+  const item: CmsEntity = (model.item as CmsEntity) || {
+    id: "",
+    type: definition.key,
+    title: "",
+    data: initialData
+  }
+
   return (
     <div className="max-w-5xl mx-auto">
       <CmsEditorShell
         definition={model.definition}
-        item={model.item}
+        item={item.id ? item : null} // Keep item as null for shell if it's brand new
         returnTo={returnTo}
       >
         <CmsForm
           definition={model.definition}
-          item={model.item}
+          item={item}
           referenceOptions={model.referenceOptions}
           returnTo={model.returnTo}
           userRole={session.user.role}

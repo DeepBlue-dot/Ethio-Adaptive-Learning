@@ -7,7 +7,7 @@ import {
   Rocket,
   Zap
 } from "lucide-react"
-import { motion } from "framer-motion"
+import { motion, type Variants } from "framer-motion"
 import { ProjectCard } from "./project-card"
 import { type ProjectStats } from "@/lib/studio/builder-data"
 import { type StudioIntelligence } from "@/lib/studio/intelligence"
@@ -24,7 +24,7 @@ const containerVariants = {
   }
 }
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { y: 20, opacity: 0 },
   visible: {
     y: 0,
@@ -32,9 +32,9 @@ const itemVariants = {
     transition: {
       type: "spring",
       stiffness: 100,
-      damping: 15
-    }
-  }
+      damping: 15,
+    },
+  },
 }
 
 export function HubContainer({ 

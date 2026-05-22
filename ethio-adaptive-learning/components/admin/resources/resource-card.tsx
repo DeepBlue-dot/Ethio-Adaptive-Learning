@@ -270,12 +270,7 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
             </p>
           )}
 
-          {/* Snippet Preview */}
-          {isSnippet && resource.preview && (
-            <p className="text-[9px] text-on-surface-variant opacity-60 line-clamp-2">
-              {resource.preview}
-            </p>
-          )}
+
         </div>
 
         <div className="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/30">

@@ -12,7 +12,7 @@ export default async function StudioOverviewPage() {
   ])
 
   return (
-    <div className="px-6 py-8 lg:px-10 lg:py-10 h-full overflow-y-auto custom-scrollbar">
+    <div className="px-6 py-8 lg:px-10 lg:py-10">
       <HubContainer 
         intelligence={intelligence} 
         projects={hubData.projects} 

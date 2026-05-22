@@ -26,19 +26,19 @@ export default function RootLayout({
         <link 
           rel="stylesheet" 
           href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" 
-          integrity="sha384-nAn79qSI9QR8pD3G60/U4B9uW63h7ivO55XN5yS/e+7T0j9h9A8vW9f1d0K8t9hB" 
+          integrity="sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+" 
           crossOrigin="anonymous" 
         />
         <script 
           defer 
           src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" 
-          integrity="sha384-297+E6U3uS/pS6x17i0V0/0k8R4uV4l5D6s7v8uV7s7v8uV7s7v8uV7s7v8uV7s" 
+          integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" 
           crossOrigin="anonymous"
         ></script>
         <script 
           defer 
           src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" 
-          integrity="sha384-43gLqv66zH7tiLsI66uzVE6xjv7v8uV7s7v8uV7s7v8uV7s7v8uV7s" 
+          integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" 
           crossOrigin="anonymous"
         ></script>
       </head>

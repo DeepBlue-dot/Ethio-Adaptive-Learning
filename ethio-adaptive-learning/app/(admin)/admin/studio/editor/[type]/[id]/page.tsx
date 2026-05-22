@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation"
-import { ArrowLeft } from "lucide-react"
+import { ArrowLeft, Monitor, Eye } from "lucide-react"
 import Link from "next/link"
 
 import { CmsForm } from "@/components/cms/cms-form"
@@ -7,9 +7,11 @@ import {
   getEditorModel,
   requireCmsAccess,
   resolveCmsContentType,
+  type CmsEntity,
 } from "@/lib/cms"
 import { sanitizeAdminPath } from "@/lib/cms/forms"
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
+import { Button } from "@/components/ui/button"
 
 type FocusModeEditorPageProps = {
   params: Promise<{
@@ -31,11 +33,34 @@ export default async function FocusModeEditorPage({ params, searchParams }: Focu
 
   const query = (await searchParams) ?? {}
   const returnTo = sanitizeAdminPath(getSingleValue(query.returnTo), `/admin/studio`)
-  const model = await loadEditorModel(definition.key, id, returnTo)
+  
+  const isNew = id === "new"
+  const model = await loadEditorModel(definition.key, isNew ? undefined : id, returnTo)
 
   if (!model) {
     notFound()
   }
+
+  // Pre-fill item data from query parameters if new
+  const initialData: Record<string, unknown> = { ...definition.defaultValues }
+  if (isNew) {
+    Object.entries(query).forEach(([key, value]) => {
+      if (key !== "returnTo" && typeof value === "string") {
+        initialData[key] = value
+      }
+    })
+  }
+
+  const item = model.item || {
+    id: "",
+    type: definition.key,
+    title: "",
+    data: initialData,
+    lifecycle: { status: "DRAFT", hasDraft: false }
+  }
+
+  const supportsPreview = ["concept", "question", "course"].includes(definition.key)
+  const isPublished = item.lifecycle?.status === "PUBLISHED"
 
   return (
     <WorkspaceShell fullBleed>
@@ -55,7 +80,7 @@ export default async function FocusModeEditorPage({ params, searchParams }: Focu
             <div className="h-4 w-px bg-outline-variant" />
             <div>
               <h1 className="text-sm font-black text-on-surface uppercase tracking-tight truncate max-w-[300px]">
-                {model.item.title || `New ${definition.label}`}
+                {item.id ? item.title : `Create New ${definition.label}`}
               </h1>
               <p className="text-[10px] font-black text-primary uppercase tracking-[0.2em] mt-0.5 opacity-60">
                 Deep Editor &bull; {definition.label}
@@ -64,11 +89,29 @@ export default async function FocusModeEditorPage({ params, searchParams }: Focu
           </div>
 
           <div className="flex items-center gap-4">
+             {item.id && supportsPreview && (
+                <Button asChild variant="outline" size="sm" className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
+                   <Link href={`/admin/studio/${definition.key}/${item.id}/preview`} target="_blank">
+                      <Monitor className="size-3.5" />
+                      Draft Preview
+                   </Link>
+                </Button>
+             )}
+
+             {item.id && definition.key === "concept" && isPublished && (
+                <Button asChild variant="ghost" size="sm" className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
+                   <Link href={`/learn/${item.id}`} target="_blank">
+                      <Eye className="size-3.5" />
+                      View Live
+                   </Link>
+                </Button>
+             )}
+
              {/* Status Badge */}
-             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant">
-                <div className={`size-2 rounded-full ${model.item.lifecycle?.status === 'PUBLISHED' ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high border border-outline-variant ml-2">
+                <div className={`size-2 rounded-full ${isPublished ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'}`} />
                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
-                  {model.item.lifecycle?.status || 'Draft'}
+                  {item.lifecycle?.status || 'Draft'}
                 </span>
              </div>
           </div>
@@ -79,7 +122,7 @@ export default async function FocusModeEditorPage({ params, searchParams }: Focu
           <div className="max-w-4xl mx-auto py-12 px-8">
             <CmsForm
               definition={model.definition}
-              item={model.item}
+              item={item as CmsEntity}
               referenceOptions={model.referenceOptions}
               returnTo={model.returnTo}
               userRole={session.user.role}
@@ -91,7 +134,7 @@ export default async function FocusModeEditorPage({ params, searchParams }: Focu
   )
 }
 
-async function loadEditorModel(type: string, id: string, returnTo: string) {
+async function loadEditorModel(type: string, id: string | undefined, returnTo: string) {
   try {
     return await getEditorModel(type, id, returnTo)
   } catch {

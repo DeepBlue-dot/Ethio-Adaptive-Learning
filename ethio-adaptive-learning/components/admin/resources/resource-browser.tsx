@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { 
   LayoutGrid, 
   List, 
@@ -23,6 +23,9 @@ import {
 
 interface ResourceBrowserProps {
   initialItems: ResourceItem[]
+  filterType?: string
+  filterQuery?: string
+  filterCollection?: string
   onSelect?: (id: string) => void
   selectedIds?: Set<string>
   onToggleSelect?: (id: string) => void
@@ -32,6 +35,9 @@ interface ResourceBrowserProps {
 
 export function ResourceBrowser({ 
   initialItems, 
+  filterType = "all",
+  filterQuery = "",
+  filterCollection = "",
   onSelect, 
   selectedIds,
   onToggleSelect,
@@ -39,8 +45,8 @@ export function ResourceBrowser({
   compact = false 
 }: ResourceBrowserProps) {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [currentType, setCurrentType] = useState("all")
+  const [searchQuery, setSearchQuery] = useState(filterQuery)
+  const [currentType, setCurrentType] = useState(filterType)
   const [currentSort, setCurrentSort] = useState("recent")
 
   // Filter and Sort items
@@ -58,6 +64,9 @@ export function ResourceBrowser({
         
         if (!text.includes(query)) return false
       }
+
+      // Collection
+      if (filterCollection === "drafts" && item.status !== "DRAFT") return false
       
       // Type
       if (currentType === "image" && item.kind !== "IMAGE") return false
@@ -90,6 +99,20 @@ export function ResourceBrowser({
     name: "A-Z",
     type: "Type"
   }
+
+  useEffect(() => {
+    setSearchQuery(filterQuery)
+  }, [filterQuery])
+
+  useEffect(() => {
+    setCurrentType(filterType)
+  }, [filterType])
+
+  useEffect(() => {
+    if (filterCollection === "recent") {
+      setCurrentSort("recent")
+    }
+  }, [filterCollection])
 
   return (
     <div className="flex flex-col h-full space-y-6">

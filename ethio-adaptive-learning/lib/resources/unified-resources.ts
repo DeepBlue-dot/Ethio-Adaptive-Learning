@@ -6,6 +6,7 @@ import {
   resolveCmsContentType,
 } from "@/lib/cms"
 import { type CmsEntity } from "@/lib/cms/types"
+import { type CmsContentBlock, normalizeContentBlocks } from "@/lib/cms/content-blocks"
 
 // ============================================================================
 // YouTube Specialization Handler
@@ -65,6 +66,12 @@ async function fetchYouTubeMetadata(videoId: string, url: string) {
 // Snippet Validation Handler
 // ============================================================================
 
+type SnippetDebugBlock = {
+  type: string
+  text?: string
+  title?: string | null
+}
+
 interface SnippetValidation {
   isValid: boolean
   errors: string[]
@@ -72,7 +79,7 @@ interface SnippetValidation {
   validationStatus: "valid" | "invalid" | "warning"
 }
 
-function validateSnippet(blocks: Array<{ type: string; text?: string; title?: string }>): SnippetValidation {
+function validateSnippet(blocks: SnippetDebugBlock[]): SnippetValidation {
   const errors: string[] = []
   let isValid = true
 
@@ -129,7 +136,7 @@ function validateSnippet(blocks: Array<{ type: string; text?: string; title?: st
 // Snippet Preview Renderer (with basic syntax highlighting support)
 // ============================================================================
 
-function renderSnippetPreview(blocks: Array<{ type: string; text?: string; title?: string }>, title?: string): string {
+function renderSnippetPreview(blocks: SnippetDebugBlock[], title?: string): string {
   if (blocks.length === 0) {
     return title ? `Snippet: ${title}` : "Snippet preview unavailable"
   }
@@ -186,11 +193,7 @@ export async function getUnifiedResources(): Promise<ResourceItem[]> {
   }>
 
   type ContentSnippetEntity = CmsEntity<{
-    contentBlocks?: Array<{
-      type: "paragraph"
-      text: string
-      title?: string
-    }>
+    contentBlocks?: CmsContentBlock[]
   }>
 
   const [mediaAssets, contentSnippets] = await Promise.all([
@@ -253,15 +256,21 @@ export async function getUnifiedResources(): Promise<ResourceItem[]> {
   })
 
   const snippetItems = contentSnippets.map((snippet) => {
-    const blocks = snippet.data.contentBlocks ?? []
-    const searchableContent = blocks
+    const blocks = normalizeContentBlocks(snippet.data.contentBlocks ?? [])
+    const debugBlocks = blocks.map((block) => ({
+      type: block.type,
+      text: "text" in block ? block.text : undefined,
+      title: "title" in block ? block.title : undefined,
+    }))
+
+    const searchableContent = debugBlocks
       .map((b) => b.text || b.title || "")
       .filter(Boolean)
       .join(" ")
 
     // Validate snippet
-    const validation = validateSnippet(blocks)
-    const preview = renderSnippetPreview(blocks, snippet.title)
+    const validation = validateSnippet(debugBlocks)
+    const preview = renderSnippetPreview(debugBlocks, snippet.title)
 
     return {
       id: snippet.id,

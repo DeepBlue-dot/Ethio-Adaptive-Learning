@@ -50,6 +50,9 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
   }, [])
 
   const selectedResourceId = searchParams.get("selected")
+  const filterType = searchParams.get("type") || "all"
+  const filterQuery = searchParams.get("query") || ""
+  const filterCollection = searchParams.get("collection") || ""
 
   const handleSelectResource = (id: string) => {
     const params = new URLSearchParams(searchParams.toString())
@@ -102,6 +105,9 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <ResourceBrowser 
             initialItems={initialItems}
+            filterType={filterType}
+            filterQuery={filterQuery}
+            filterCollection={filterCollection}
             onSelect={handleSelectResource}
             selectedId={selectedResourceId}
             selectedIds={selectedIds}

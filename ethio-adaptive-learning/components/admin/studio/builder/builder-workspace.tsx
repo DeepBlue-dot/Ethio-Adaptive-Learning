@@ -17,7 +17,8 @@ import { BuilderShell } from "@/components/admin/studio/layout/builder-shell"
 import { BuilderCanvas } from "@/components/admin/studio/builder/builder-canvas"
 import { Inspector } from "@/components/admin/studio/builder/inspector"
 import { StudioResourceShelf } from "./studio-resource-shelf"
-import { type BuilderUnit, type ResourceItem } from "@/lib/studio/builder-data"
+import { type BuilderUnit } from "@/lib/studio/builder-data"
+import { type ResourceItem } from "@/components/admin/resources/resource-card"
 
 export function BuilderWorkspace({ 
   courseData, 

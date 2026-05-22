@@ -16,6 +16,7 @@ import type {
   CmsEditorModel,
   CmsListFilter,
   CmsMutationResult,
+  CmsReferenceOptions,
   CmsRepository,
 } from "@/lib/cms/types"
 

@@ -201,7 +201,37 @@ export async function updateResourceMetadata(id: string, type: "media-asset" | "
   const userId = session.user.id
 
   try {
-    const result = await updateItem(type, id, data, undefined, userId)
+    let updateData: unknown = data
+
+    if (type === "media-asset") {
+      const existingAsset = await prisma.mediaAsset.findUnique({
+        where: { id },
+        select: {
+          kind: true,
+          title: true,
+          alt: true,
+          caption: true,
+          publicId: true,
+          url: true,
+          width: true,
+          height: true,
+          bytes: true,
+          videoId: true,
+          thumbnailUrl: true,
+        },
+      })
+
+      if (!existingAsset) {
+        return { ok: false, error: "Resource not found." }
+      }
+
+      updateData = {
+        ...existingAsset,
+        ...data,
+      }
+    }
+
+    const result = await updateItem(type, id, updateData, undefined, userId)
     
     await logCmsActivity({
       userId,
