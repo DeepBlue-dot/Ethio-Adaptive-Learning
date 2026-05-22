@@ -46,7 +46,7 @@ export default async function StudioLayout({
             { label: "Grade 12 Mathematics" }
           ]}
         />
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
+        <div className="flex-1 overflow-y-auto p-0 custom-scrollbar bg-surface/30 text-on-surface">
           {children}
         </div>
       </WorkspaceShell>

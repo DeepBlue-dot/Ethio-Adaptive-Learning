@@ -20,6 +20,7 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { MediaAssetKind } from "@prisma/client"
 import { type CmsContentBlock } from "@/lib/cms/content-blocks"
+import { useDraggable } from "@dnd-kit/core"
 
 export interface ResourceItem {
   id: string
@@ -61,6 +62,15 @@ interface ResourceCardProps {
 }
 
 export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick }: ResourceCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: resource.id,
+    data: resource
+  })
+
+  const style = transform ? {
+    transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
+  } : undefined
+
   const [imageError, setImageError] = React.useState(false)
   const isImage = resource.kind === "IMAGE"
   const isVideo = resource.kind === "YOUTUBE_EMBED"
@@ -79,6 +89,10 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
 
   return (
     <div 
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
       onClick={onClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
@@ -91,7 +105,8 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
           ? "border-primary ring-2 ring-primary/20 shadow-xl scale-[1.02] z-10" 
           : isSelected 
             ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/10"
-            : "border-outline-variant hover:border-primary/50 hover:shadow-lg"
+            : "border-outline-variant hover:border-primary/50 hover:shadow-lg",
+        isDragging && "opacity-40 grayscale cursor-grabbing pointer-events-none"
       )}
     >
       {/* Media Preview */}
@@ -157,8 +172,16 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
              </div>
           </div>
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-surface-container-lowest tibeb-pattern opacity-10">
-            {isSnippet ? <FileText className="size-8 text-primary" /> : <ImageIcon className="size-8 text-primary" />}
+          <div className="w-full h-full flex flex-col items-center justify-center gap-3 px-4 text-center bg-surface-container-lowest tibeb-pattern opacity-90">
+            <div className="flex items-center justify-center rounded-full bg-surface-container-highest/80 p-3 shadow-inner">
+              {isSnippet ? <FileText className="size-8 text-primary" /> : <ImageIcon className="size-8 text-primary" />}
+            </div>
+            <div className="space-y-1">
+              <p className="text-xs font-black text-on-surface leading-tight line-clamp-2">{resource.title}</p>
+              <p className="text-[10px] text-on-surface-variant opacity-80 line-clamp-2">
+                {resource.caption || resource.preview || (isSnippet ? "Text snippet" : "No preview available")}
+              </p>
+            </div>
           </div>
         )}
 

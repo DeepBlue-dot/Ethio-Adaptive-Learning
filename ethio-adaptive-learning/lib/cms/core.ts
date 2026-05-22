@@ -319,6 +319,15 @@ export async function getEditorModel(
   }
 }
 
+export async function getReferenceOptions(
+  type: string,
+  id?: string,
+  repository: CmsRepository = prismaCmsRepository
+): Promise<CmsReferenceOptions> {
+  const definition = getCmsContentType(type)
+  return repository.getReferenceOptions(definition.key, id)
+}
+
 export async function getContentTypeCounts(repository: CmsRepository = prismaCmsRepository) {
   const entries = await Promise.all(
     listCmsContentTypes().map(async (definition) => {

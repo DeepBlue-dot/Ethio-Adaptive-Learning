@@ -11,17 +11,19 @@ const textareaClassName = `${inputClassName} min-h-28 resize-y`
 const selectClassName = inputClassName
 
 export function CmsFieldInput({
-  errors,
+  errors = {},
   field,
   referenceOptions,
   userRole,
   value,
+  onChange,
 }: {
-  errors: Record<string, string[]>
+  errors?: Record<string, string[]>
   field: CmsField
   referenceOptions: CmsReferenceOptions
   userRole: string
   value: unknown
+  onChange?: (value: unknown) => void
 }) {
   if (field.type === "hidden" || field.formHidden || field.type === "embedded-list") {
     return null
@@ -56,7 +58,7 @@ export function CmsFieldInput({
           <input type="hidden" name={field.name} value={toInputValue(value)} />
         </div>
       ) : (
-        renderFieldControl(field, value, referenceOptions)
+        renderFieldControl(field, value, referenceOptions, onChange)
       )}
       {field.description ? <span className="mt-2 block text-xs text-muted-foreground">{field.description}</span> : null}
       <CmsFieldErrors errors={errors} path={field.name} />
@@ -64,12 +66,19 @@ export function CmsFieldInput({
   )
 }
 
-function renderFieldControl(field: CmsField, value: unknown, referenceOptions: CmsReferenceOptions) {
+function renderFieldControl(
+  field: CmsField, 
+  value: unknown, 
+  referenceOptions: CmsReferenceOptions,
+  onChange?: (value: unknown) => void
+) {
   if (field.type === "textarea" || field.type === "markdown") {
     return (
       <textarea
         className={textareaClassName}
-        defaultValue={toInputValue(value)}
+        defaultValue={onChange ? undefined : toInputValue(value)}
+        value={onChange ? toInputValue(value) : undefined}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
         name={field.name}
         placeholder={field.placeholder}
         rows={field.type === "markdown" ? 8 : 4}
@@ -82,7 +91,12 @@ function renderFieldControl(field: CmsField, value: unknown, referenceOptions: C
     return (
       <input
         className={inputClassName}
-        defaultValue={toInputValue(value)}
+        defaultValue={onChange ? undefined : toInputValue(value)}
+        value={onChange ? toInputValue(value) : undefined}
+        onChange={onChange ? (e) => {
+          const val = e.target.value === "" ? null : Number(e.target.value)
+          onChange(val)
+        } : undefined}
         max={field.max ?? (isProb ? 1 : undefined)}
         min={field.min ?? (isProb ? 0 : 1)}
         name={field.name}
@@ -95,7 +109,13 @@ function renderFieldControl(field: CmsField, value: unknown, referenceOptions: C
 
   if (field.type === "select") {
     return (
-      <select className={selectClassName} defaultValue={toInputValue(value)} name={field.name}>
+      <select 
+        className={selectClassName} 
+        defaultValue={onChange ? undefined : toInputValue(value)}
+        value={onChange ? toInputValue(value) : undefined}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        name={field.name}
+      >
         {field.options?.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -108,7 +128,9 @@ function renderFieldControl(field: CmsField, value: unknown, referenceOptions: C
   if (field.type === "reference") {
     return (
       <CmsReferencePicker
-        defaultValue={toInputValue(value)}
+        defaultValue={onChange ? undefined : toInputValue(value)}
+        value={onChange ? (toInputValue(value) as string) : undefined}
+        onChange={onChange ? (val) => onChange(val) : undefined}
         name={field.name}
         options={referenceOptions[field.name] ?? []}
       />
@@ -118,7 +140,9 @@ function renderFieldControl(field: CmsField, value: unknown, referenceOptions: C
   if (field.type === "multi-reference") {
     return (
       <CmsReferencePicker
-        defaultValue={Array.isArray(value) ? value.map(String) : []}
+        defaultValue={onChange ? undefined : (Array.isArray(value) ? value.map(String) : [])}
+        value={onChange ? (Array.isArray(value) ? value.map(String) : []) : undefined}
+        onChange={onChange ? (val) => onChange(val) : undefined}
         multiple
         name={field.name}
         options={referenceOptions[field.name] ?? []}
@@ -129,7 +153,9 @@ function renderFieldControl(field: CmsField, value: unknown, referenceOptions: C
   return (
     <input
       className={inputClassName}
-      defaultValue={toInputValue(value)}
+      defaultValue={onChange ? undefined : toInputValue(value)}
+      value={onChange ? toInputValue(value) : undefined}
+      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
       name={field.name}
       placeholder={field.placeholder}
     />

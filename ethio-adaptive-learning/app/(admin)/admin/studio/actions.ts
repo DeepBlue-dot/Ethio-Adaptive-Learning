@@ -4,6 +4,7 @@ import type { CmsActionState } from "@/lib/cms/types"
 import * as resourceActions from "./actions/resource-actions"
 import * as cmsActions from "./actions/cms-actions"
 import * as helpers from "./actions/helpers"
+import * as inspectorActions from "./actions/inspector-actions"
 
 // Resource Actions
 export async function createYouTubeResource(url: string, title?: string) {
@@ -51,6 +52,19 @@ export async function updateResourceMetadata(
 
 export async function getResourceMetricsAction() {
   return resourceActions.getResourceMetricsAction()
+}
+
+// Inspector Actions
+export async function getInspectorModel(type: string, id: string) {
+  return inspectorActions.getInspectorModel(type, id)
+}
+
+export async function updateInspectorMetadata(
+  type: string,
+  id: string,
+  data: Record<string, unknown>
+) {
+  return inspectorActions.updateInspectorMetadata(type, id, data)
 }
 
 // CMS Actions

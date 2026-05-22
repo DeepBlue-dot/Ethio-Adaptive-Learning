@@ -10,16 +10,29 @@ export function CmsReferencePicker({
   multiple = false,
   name,
   options,
+  value,
+  onChange,
 }: {
   defaultValue?: string | string[]
   multiple?: boolean
   name: string
   options: CmsReferenceOption[]
+  value?: string | string[]
+  onChange?: (value: string | string[]) => void
 }) {
   return (
     <select
       className={`${selectClassName} ${multiple ? "min-h-44" : ""}`}
       defaultValue={defaultValue}
+      value={value}
+      onChange={(e) => {
+        if (multiple) {
+          const selectedOptions = Array.from(e.target.selectedOptions, (option) => option.value)
+          onChange?.(selectedOptions)
+        } else {
+          onChange?.(e.target.value)
+        }
+      }}
       multiple={multiple}
       name={name}
     >

@@ -1,11 +1,22 @@
 import { requireRole } from "@/lib/auth"
 import { getStudioIntelligence } from "@/lib/studio/intelligence"
-import { StudioIntelligenceDashboard } from "@/components/admin/studio/modules/intelligence/studio-intelligence-dashboard"
+import { getStudioHubData } from "@/lib/studio/builder-data"
+import { HubContainer } from "@/components/admin/studio/hub/hub-container"
 
 export default async function StudioOverviewPage() {
   await requireRole(["ADMIN", "COURSE_WRITER"])
   
-  const data = await getStudioIntelligence()
+  const [intelligence, hubData] = await Promise.all([
+    getStudioIntelligence(),
+    getStudioHubData()
+  ])
 
-  return <StudioIntelligenceDashboard data={data} />
+  return (
+    <div className="px-6 py-8 lg:px-10 lg:py-10 h-full overflow-y-auto custom-scrollbar">
+      <HubContainer 
+        intelligence={intelligence} 
+        projects={hubData.projects} 
+      />
+    </div>
+  )
 }

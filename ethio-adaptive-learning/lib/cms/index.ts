@@ -9,6 +9,7 @@ export {
   getContentTypes,
   getEditorModel,
   getItem,
+  getReferenceOptions,
   listItems,
   normalizeContentTypeKey,
   publishItem,
