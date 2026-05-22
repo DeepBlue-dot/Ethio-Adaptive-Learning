@@ -95,7 +95,7 @@ export function NexusSidebar({ user }: NexusSidebarProps) {
         // Mobile positioning: Fixed Drawer
         "fixed left-0 shadow-2xl lg:shadow-none",
         isMobileNexusOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
-        contextContent ? "w-[360px]" : "w-[260px]"
+        contextContent ? "w-full sm:w-[360px]" : "w-[260px]"
       )}>
         
         {/* Pane 1: Global Nexus (Icon Strip on Mobile with context) */}

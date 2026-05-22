@@ -39,6 +39,8 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
   const [activeTab, setActiveTab] = useState<Tab>("files")
   const [files, setFiles] = useState<QueuedFile[]>([])
   const [isUploading, setIsUploading] = useState(false)
+  
+  // YouTube State
   const [youtubeUrl, setYoutubeUrl] = useState("")
   const [isSubmittingYoutube, setIsSubmittingYoutube] = useState(false)
   const [youtubeError, setYoutubeYoutubeError] = useState<string | null>(null)
@@ -56,54 +58,52 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
 
   const addFiles = (newFiles: FileList | null) => {
     if (!newFiles) return
-    
-    const queuedFiles: QueuedFile[] = Array.from(newFiles).map(file => ({
-      id: Math.random().toString(36).slice(2),
-      file,
-      status: "idle",
-      progress: 0
-    }))
-    
-    setFiles(prev => [...prev, ...queuedFiles])
+    const next = [...files]
+    for (let i = 0; i < newFiles.length; i++) {
+      const file = newFiles[i]
+      next.push({
+        id: Math.random().toString(36).slice(2, 9),
+        file,
+        status: "idle",
+        progress: 0
+      })
+    }
+    setFiles(next)
   }
 
   const removeFile = (id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id))
+    setFiles(files.filter(f => f.id !== id))
   }
 
   const handleUpload = async () => {
     if (files.length === 0 || isUploading) return
     
     setIsUploading(true)
-    const updatedFiles = [...files]
-    
-    const uploadFile = async (index: number) => {
-      if (updatedFiles[index].status === "success") return
-      
-      updatedFiles[index].status = "uploading"
-      setFiles([...updatedFiles])
-      
-      const formData = new FormData()
-      formData.append("files", updatedFiles[index].file)
-      
-      try {
-        const result = await uploadResourceFile(formData)
-        if (result.ok) {
-          updatedFiles[index].status = "success"
-        } else {
-          updatedFiles[index].status = "error"
-          updatedFiles[index].error = result.error || "Upload failed."
-        }
-      } catch (error) {
-        updatedFiles[index].status = "error"
-        updatedFiles[index].error = "Network error."
+    const formData = new FormData()
+    files.forEach(f => {
+      if (f.status === "idle" || f.status === "error") {
+        formData.append("files", f.file)
       }
-      
-      setFiles([...updatedFiles])
-    }
+    })
 
-    await Promise.all(updatedFiles.map((_, i) => uploadFile(i)))
-    setIsUploading(false)
+    try {
+      const result = await uploadResourceFile(formData)
+      if (result.ok) {
+        // Success
+        setFiles(files.map(f => ({ ...f, status: "success", progress: 100 })))
+        setTimeout(() => {
+          onClose()
+          reset()
+        }, 1500)
+      } else {
+        // Handle error
+        setFiles(files.map(f => ({ ...f, status: "error", error: result.message })))
+      }
+    } catch (e) {
+      setFiles(files.map(f => ({ ...f, status: "error", error: "Upload failed" })))
+    } finally {
+      setIsUploading(false)
+    }
   }
 
   const handleYoutubeSubmit = async (e: React.FormEvent) => {
@@ -176,52 +176,54 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
     return File
   }
 
-  const totalFiles = files.length
   const successCount = files.filter(f => f.status === "success").length
-  const errorCount = files.filter(f => f.status === "error").length
+  const totalFiles = files.length
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={(!isUploading && !isSubmittingYoutube) ? onClose : undefined} />
+    <div className="fixed inset-0 z-[100] flex items-center justify-center sm:p-4 lg:p-8">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-background/80 backdrop-blur-md hidden sm:block"
+        onClick={onClose}
+      />
       
-      <div className="relative w-full max-w-2xl bg-surface border border-outline-variant rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh] animate-in zoom-in-95 duration-200">
+      {/* Modal */}
+      <div className="relative w-full h-full sm:h-auto sm:max-w-2xl bg-surface-container sm:border border-outline-variant sm:rounded-[2.5rem] shadow-2xl flex flex-col overflow-hidden animate-in sm:zoom-in-95 duration-300">
         {/* Header */}
-        <div className="p-6 border-b border-outline-variant flex items-center justify-between bg-surface/50 backdrop-blur-md">
-          <div className="flex items-center gap-4">
-             <div className="size-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
-                <PlusCircle className="size-6" />
+        <div className="p-4 sm:p-6 border-b border-outline-variant flex items-center justify-between bg-surface-container-highest/30">
+          <div className="flex items-center gap-3">
+             <div className="size-8 sm:size-10 rounded-xl sm:rounded-2xl bg-primary flex items-center justify-center text-primary-foreground shadow-lg shadow-primary/20">
+                <UploadCloud className="size-4 sm:size-5" />
              </div>
              <div>
-                <h2 className="text-xl font-black text-on-surface uppercase tracking-tight leading-none">Add Resource</h2>
-                <p className="text-[10px] text-on-surface-variant font-bold uppercase tracking-widest mt-1 opacity-60">Media & Snippets</p>
+                <h2 className="text-lg sm:text-xl font-black text-on-surface uppercase tracking-tight">Ingest Assets</h2>
+                <p className="text-[9px] sm:text-[10px] text-on-surface-variant font-black uppercase tracking-widest mt-0.5 sm:mt-1 opacity-40">Resource Pipeline</p>
              </div>
           </div>
-          {(!isUploading && !isSubmittingYoutube) && (
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-surface-container-high rounded-full transition-colors text-on-surface-variant hover:text-on-surface"
-            >
-              <X className="size-5" />
-            </button>
-          )}
+          <button 
+            onClick={onClose}
+            className="p-2 hover:bg-surface-container-high rounded-xl transition-all text-on-surface-variant hover:text-on-surface active:scale-95"
+          >
+            <X className="size-5 sm:size-6" />
+          </button>
         </div>
 
         {/* Tabs */}
-        <div className="flex border-b border-outline-variant bg-surface-container-low/50">
+        <div className="flex border-b border-outline-variant bg-surface-container-low/50 overflow-x-auto no-scrollbar">
            <TabButton 
-              label="Images & Snippets" 
+              label="Files" 
               isActive={activeTab === "files"} 
               onClick={() => setActiveTab("files")} 
               icon={UploadCloud}
            />
            <TabButton 
-              label="YouTube Embed" 
+              label="YouTube" 
               isActive={activeTab === "youtube"} 
               onClick={() => setActiveTab("youtube")} 
               icon={Youtube}
            />
            <TabButton 
-              label="PhET Sim" 
+              label="PhET" 
               isActive={activeTab === "phet"} 
               onClick={() => setActiveTab("phet")} 
               icon={Gamepad2}
@@ -229,7 +231,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar">
           {activeTab === "files" ? (
             <div className="space-y-6">
               {files.length === 0 ? (
@@ -237,12 +239,12 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                   onClick={() => fileInputRef.current?.click()}
                   className="group border-2 border-dashed border-outline-variant rounded-3xl p-12 flex flex-col items-center justify-center gap-4 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer bg-surface-container-low/30"
                 >
-                  <div className="size-16 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all shadow-inner">
+                  <div className="size-16 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all shadow-inner">
                     <UploadCloud className="size-8" />
                   </div>
                   <div className="text-center">
                     <h3 className="text-sm font-black text-on-surface uppercase tracking-widest">Click to upload or drag & drop</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">Images (10MB) or Text snippets (.txt, .md)</p>
+                    <p className="text-xs text-on-surface-variant mt-1 font-medium opacity-60">Images (10MB) or Text snippets (.txt, .md)</p>
                   </div>
                   <input 
                     type="file" 
@@ -262,7 +264,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                       {!isUploading && (
                         <button 
                           onClick={reset}
-                          className="text-[10px] font-black uppercase tracking-widest text-rose-600 hover:text-rose-700"
+                          className="text-[10px] font-black uppercase tracking-widest text-error-rose hover:opacity-80"
                         >
                           Clear Queue
                         </button>
@@ -275,14 +277,14 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                       return (
                         <div key={item.id} className={cn(
                           "group flex items-center gap-4 p-3 rounded-2xl border transition-all",
-                          item.status === "success" ? "bg-teal-50/50 border-teal-200" : 
-                          item.status === "error" ? "bg-rose-50/50 border-rose-200" :
+                          item.status === "success" ? "bg-emerald-500/5 border-emerald-500/20" : 
+                          item.status === "error" ? "bg-error-rose/5 border-error-rose-200" :
                           "bg-surface-container-low border-outline-variant"
                         )}>
                             <div className={cn(
                               "size-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
-                              item.status === "success" ? "bg-teal-500 text-white" : 
-                              item.status === "error" ? "bg-rose-500 text-white" :
+                              item.status === "success" ? "bg-emerald-500 text-primary-foreground" : 
+                              item.status === "error" ? "bg-error-rose text-primary-foreground" :
                               "bg-surface-container-high text-on-surface-variant"
                             )}>
                               <Icon className="size-5" />
@@ -304,12 +306,12 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                                     <Loader2 className="size-3 text-primary animate-spin" />
                                   </div>
                               ) : item.status === "error" ? (
-                                  <p className="text-[10px] font-bold text-rose-600 flex items-center gap-1">
+                                  <p className="text-[10px] font-bold text-error-rose flex items-center gap-1">
                                     <AlertCircle className="size-3" />
                                     {item.error}
                                   </p>
                               ) : item.status === "success" ? (
-                                  <p className="text-[10px] font-bold text-teal-600 flex items-center gap-1">
+                                  <p className="text-[10px] font-bold text-emerald-600 flex items-center gap-1">
                                     <CheckCircle2 className="size-3" />
                                     Uploaded successfully
                                   </p>
@@ -321,7 +323,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                             {!isUploading && item.status !== "success" && (
                               <button 
                                 onClick={() => removeFile(item.id)}
-                                className="p-2 opacity-0 group-hover:opacity-100 hover:bg-rose-100 rounded-lg text-rose-600 transition-all"
+                                className="p-2 opacity-0 group-hover:opacity-100 hover:bg-error-rose/10 rounded-lg text-error-rose transition-all"
                               >
                                 <Trash2 className="size-4" />
                               </button>
@@ -346,12 +348,12 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
           ) : activeTab === "youtube" ? (
             <div className="py-8 px-4 space-y-8">
                <div className="flex flex-col items-center text-center space-y-3">
-                  <div className="size-16 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100 shadow-sm">
+                  <div className="size-16 rounded-full bg-rose-500/10 flex items-center justify-center text-rose-500 border border-rose-500/20 shadow-sm">
                     <Youtube className="size-8" />
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-on-surface uppercase tracking-tight">Add YouTube Video</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">Videos are stored as embeds to optimize platform performance.</p>
+                    <p className="text-xs text-on-surface-variant mt-1 font-medium opacity-60">Videos are stored as embeds to optimize platform performance.</p>
                   </div>
                </div>
 
@@ -366,20 +368,20 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                           value={youtubeUrl}
                           onChange={(e) => setYoutubeUrl(e.target.value)}
                           placeholder="https://www.youtube.com/watch?v=..."
-                          className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                          className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface"
                         />
                      </div>
                   </div>
 
                   {youtubeError && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-error-rose/5 text-error-rose border border-error-rose/20 animate-in slide-in-from-top-2 duration-200">
                        <AlertCircle className="size-4" />
                        <p className="text-xs font-bold">{youtubeError}</p>
                     </div>
                   )}
 
                   {youtubeSuccess && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/5 text-emerald-600 border border-emerald-500/20 animate-in slide-in-from-top-2 duration-200">
                        <CheckCircle2 className="size-4" />
                        <p className="text-xs font-bold">YouTube video added to resources!</p>
                     </div>
@@ -388,7 +390,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                   <Button 
                     type="submit" 
                     disabled={!youtubeUrl || isSubmittingYoutube}
-                    className="w-full h-14 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest"
+                    className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest"
                   >
                     {isSubmittingYoutube ? (
                       <Loader2 className="size-5 animate-spin" />
@@ -417,7 +419,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                   </div>
                   <div>
                     <h3 className="text-lg font-black text-on-surface uppercase tracking-tight">Add PhET Simulation</h3>
-                    <p className="text-xs text-on-surface-variant mt-1">Interactive HTML5 simulations from the University of Colorado Boulder.</p>
+                    <p className="text-xs text-on-surface-variant mt-1 font-medium opacity-60">Interactive HTML5 simulations from the University of Colorado Boulder.</p>
                   </div>
                </div>
 
@@ -432,20 +434,20 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                           value={phetUrl}
                           onChange={(e) => setPhetUrl(e.target.value)}
                           placeholder="https://phet.colorado.edu/sims/html/..."
-                          className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                          className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-on-surface"
                         />
                      </div>
                   </div>
 
                   {phetError && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-error-rose/5 text-error-rose border border-error-rose/20 animate-in slide-in-from-top-2 duration-200">
                        <AlertCircle className="size-4" />
                        <p className="text-xs font-bold">{phetError}</p>
                     </div>
                   )}
 
                   {phetSuccess && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/5 text-emerald-600 border border-emerald-500/20 animate-in slide-in-from-top-2 duration-200">
                        <CheckCircle2 className="size-4" />
                        <p className="text-xs font-bold">PhET simulation added to resources!</p>
                     </div>
@@ -454,7 +456,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                   <Button 
                     type="submit" 
                     disabled={!phetUrl || isSubmittingPhet}
-                    className="w-full h-14 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest"
+                    className="w-full h-14 bg-primary hover:bg-primary/90 text-primary-foreground shadow-xl shadow-primary/20 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest"
                   >
                     {isSubmittingPhet ? (
                       <Loader2 className="size-5 animate-spin" />
@@ -480,52 +482,32 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
 
         {/* Footer (Files tab only) */}
         {activeTab === "files" && (
-          <div className="p-6 border-t border-outline-variant bg-surface/50 backdrop-blur-md flex items-center justify-between">
-            <div className="flex items-center gap-4">
-                {successCount > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-700 text-[10px] font-black uppercase tracking-widest">
-                    <CheckCircle2 className="size-3" />
-                    {successCount} Success
-                  </div>
+          <div className="p-4 sm:p-6 border-t border-outline-variant bg-surface-container-highest/10 flex flex-col sm:flex-row justify-end gap-3 shrink-0">
+             <Button 
+              variant="outline" 
+              onClick={onClose}
+              disabled={isUploading}
+              className="rounded-xl px-6 border-outline-variant order-2 sm:order-1"
+             >
+                Cancel
+             </Button>
+             <Button 
+              onClick={handleUpload}
+              disabled={files.length === 0 || isUploading}
+              className="rounded-xl px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20 h-12 sm:h-10 order-1 sm:order-2"
+             >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin mr-2" />
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <UploadCloud className="size-3.5 mr-2" />
+                    Start Upload
+                  </>
                 )}
-                {errorCount > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-700 text-[10px] font-black uppercase tracking-widest">
-                    <AlertCircle className="size-3" />
-                    {errorCount} Failed
-                  </div>
-                )}
-            </div>
-            
-            <div className="flex gap-3">
-                <Button 
-                  variant="outline" 
-                  onClick={onClose} 
-                  disabled={isUploading}
-                  className="rounded-xl px-6"
-                >
-                  {successCount > 0 && successCount === totalFiles ? "Done" : "Cancel"}
-                </Button>
-                
-                {files.length > 0 && successCount < totalFiles && (
-                  <Button 
-                    onClick={handleUpload} 
-                    disabled={isUploading}
-                    className="bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 rounded-xl px-8 gap-2"
-                  >
-                    {isUploading ? (
-                      <>
-                        <Loader2 className="size-4 animate-spin" />
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <UploadCloud className="size-4" />
-                        Upload {totalFiles - successCount} Files
-                      </>
-                    )}
-                  </Button>
-                )}
-            </div>
+             </Button>
           </div>
         )}
       </div>
@@ -543,13 +525,13 @@ function TabButton({ label, isActive, onClick, icon: Icon }: {
     <button
       onClick={onClick}
       className={cn(
-        "flex-1 py-4 flex items-center justify-center gap-3 transition-all relative",
+        "flex-1 flex items-center justify-center gap-2 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 transition-all relative group",
         isActive 
-          ? "bg-surface text-primary font-black shadow-[inset_0_-2px_0_var(--primary)]" 
-          : "text-on-surface-variant opacity-60 hover:opacity-100 hover:bg-surface-container-high"
+          ? "border-primary text-primary bg-primary/5" 
+          : "border-transparent text-on-surface-variant opacity-40 hover:opacity-100 hover:bg-surface-container-high"
       )}
     >
-      <Icon className={cn("size-4", isActive ? "text-primary" : "text-on-surface-variant")} />
+      <Icon className={cn("size-3.5 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />
       <span className="text-[11px] uppercase tracking-widest">{label}</span>
       {isActive && (
         <div className="absolute inset-0 bg-primary/5 pointer-events-none" />

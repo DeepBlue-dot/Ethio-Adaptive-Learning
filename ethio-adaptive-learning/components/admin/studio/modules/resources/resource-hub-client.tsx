@@ -17,7 +17,8 @@ import {
   SortAsc,
   Type,
   Clock,
-  LucideIcon
+  LucideIcon,
+  Check
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ResourceCard, type ResourceItem } from "./resource-card"
@@ -174,6 +175,11 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
     router.push(`${pathname}?${params.toString()}`)
   }
 
+  const selectAll = () => {
+    const allIds = filteredItems.map(item => item.id)
+    setSelectedIds(new Set(allIds))
+  }
+
   const clearFilters = () => {
     router.push(pathname)
   }
@@ -186,18 +192,18 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-surface-container-lowest/50">
+    <div className="flex h-full w-full overflow-hidden bg-background/50">
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Toolbar */}
-        <div className="p-4 border-b border-outline-variant flex items-center justify-between bg-white/50 backdrop-blur-md shrink-0">
-          <div className="flex items-center gap-4">
+        <div className="p-4 border-b border-outline-variant flex flex-col sm:flex-row items-center justify-between bg-surface-container/50 backdrop-blur-md shrink-0 gap-4">
+          <div className="flex items-center justify-between w-full sm:w-auto gap-4">
             <div className="flex bg-surface-container-high p-1 rounded-xl border border-outline-variant shadow-inner">
                <button 
                 onClick={() => setViewMode("grid")}
                 className={cn(
                   "p-1.5 rounded-lg transition-all",
-                  viewMode === "grid" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+                  viewMode === "grid" ? "bg-surface-container text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
                 )}
                >
                  <LayoutGrid className="size-4" />
@@ -206,7 +212,7 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
                 onClick={() => setViewMode("table")}
                 className={cn(
                   "p-1.5 rounded-lg transition-all",
-                  viewMode === "table" ? "bg-white text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
+                  viewMode === "table" ? "bg-surface-container text-primary shadow-sm" : "text-on-surface-variant hover:text-on-surface"
                 )}
                >
                  <List className="size-4" />
@@ -214,31 +220,41 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
             </div>
 
             <div className="h-6 w-px bg-outline-variant" />
+
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={selectAll}
+              className="gap-2 px-3 rounded-xl text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:text-primary active:scale-95"
+            >
+              <Check className="size-3.5 stroke-[3px]" />
+              <span className="hidden xs:inline">Select All</span>
+            </Button>
             
             <p className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60">
-              Showing {filteredItems.length} resources
+              {filteredItems.length} <span className="hidden xs:inline">Items</span>
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto overflow-x-auto no-scrollbar pb-1 sm:pb-0">
              <Button 
               onClick={() => setIsUploadModalOpen(true)}
               variant="outline" 
               size="sm" 
-              className="gap-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/5 border-primary/20 text-primary hover:bg-primary hover:text-white transition-all"
+              className="gap-2 rounded-xl text-[10px] font-black uppercase tracking-widest bg-primary/5 border-primary/20 text-primary hover:bg-primary hover:text-primary-foreground transition-all shrink-0"
              >
                 <UploadCloud className="size-3.5" />
-                Upload
+                <span className="hidden xs:inline">Upload</span>
              </Button>
              
              <DropdownMenu>
                <DropdownMenuTrigger asChild>
-                 <Button variant="outline" size="sm" className="gap-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
+                 <Button variant="outline" size="sm" className="gap-2 rounded-xl text-[10px] font-black uppercase tracking-widest border-outline-variant hover:bg-surface-container shrink-0">
                     <ArrowUpDown className="size-3.5" />
-                    Sort: {sortLabels[currentSort]}
+                    Sort<span className="hidden xs:inline">: {sortLabels[currentSort]}</span>
                  </Button>
                </DropdownMenuTrigger>
-               <DropdownMenuContent align="end" className="rounded-xl border-outline-variant">
+               <DropdownMenuContent align="end" className="rounded-xl border-outline-variant bg-surface-container backdrop-blur-md">
                  <DropdownMenuItem onClick={() => updateSort("recent")} className="text-[10px] font-black uppercase tracking-widest gap-2">
                    <Clock className="size-3.5" /> Recent
                  </DropdownMenuItem>
@@ -259,7 +275,7 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
                 variant="ghost" 
                 size="sm" 
                 onClick={clearFilters}
-                className="gap-2 text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl text-[10px] font-black uppercase tracking-widest"
+                className="gap-2 text-rose-600 hover:text-rose-700 hover:bg-rose-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest shrink-0"
                >
                   <FilterX className="size-3.5" />
                   Clear
@@ -269,12 +285,15 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
         </div>
 
         {/* Scrollable Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+        <div className={cn(
+          "flex-1 overflow-y-auto custom-scrollbar p-4 sm:p-6 lg:p-8",
+          selectedIds.size > 0 && "pb-24 sm:pb-12"
+        )}>
           {filteredItems.length > 0 ? (
             <div className={cn(
-              "grid gap-6",
+              "grid gap-4 sm:gap-6",
               viewMode === "grid" 
-                ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" 
+                ? "grid-cols-1 xs:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5" 
                 : "grid-cols-1"
             )}>
               {filteredItems.map(item => (
@@ -293,7 +312,7 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
                 onClick={openUploadModal}
                 className="group border-2 border-dashed border-outline-variant rounded-2xl aspect-video flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-primary/5 transition-all cursor-pointer"
               >
-                <div className="size-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:scale-110 group-hover:bg-primary group-hover:text-white transition-all">
+                <div className="size-10 rounded-full bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:scale-110 group-hover:bg-primary group-hover:text-primary-foreground transition-all">
                   <Plus className="size-5" />
                 </div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant group-hover:text-primary transition-colors">
@@ -312,7 +331,7 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
                   Try adjusting your filters or search query to find what you&apos;re looking for.
                 </p>
               </div>
-              <Button onClick={clearFilters} variant="outline" className="rounded-xl">
+              <Button onClick={clearFilters} variant="outline" className="rounded-xl border-outline-variant">
                 Clear all filters
               </Button>
             </div>
@@ -332,25 +351,20 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
 
       <UploadResourceModal 
         isOpen={isUploadModalOpen}
-        onClose={() => {
-          const params = new URLSearchParams(searchParams.toString())
-          params.delete("upload")
-          router.push(`${pathname}?${params.toString()}`)
-        }}
+        onClose={() => setIsUploadModalOpen(false)}
       />
 
       {/* Bulk Actions Bar */}
       {selectedIds.size > 0 && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[90] animate-in slide-in-from-bottom-8 duration-300">
-          <div className="bg-surface border border-outline-variant shadow-2xl rounded-2xl p-2 flex items-center gap-2 pl-4 pr-3 glass-panel border-primary/20">
-             <div className="flex items-center gap-3 pr-4 border-r border-outline-variant">
-                <div className="size-6 rounded-lg bg-primary flex items-center justify-center text-white text-xs font-black">
+        <div className="fixed bottom-4 sm:bottom-8 left-0 right-0 sm:left-1/2 sm:-translate-x-1/2 z-[90] px-4 sm:px-0 animate-in slide-in-from-bottom-8 duration-500">
+          <div className="bg-surface-container/95 border border-outline-variant shadow-2xl rounded-[1.5rem] sm:rounded-2xl p-2 flex items-center justify-between sm:justify-start gap-2 sm:gap-4 pl-4 sm:pl-4 pr-2 sm:pr-3 glass-panel border-primary/20 w-full max-w-lg mx-auto sm:w-auto overflow-hidden">
+             <div className="flex items-center gap-2 sm:gap-3 pr-2 sm:pr-4 border-r border-outline-variant shrink-0">
+                <div className="size-8 sm:size-6 rounded-xl sm:rounded-lg bg-primary flex items-center justify-center text-primary-foreground text-xs sm:text-[10px] font-black shadow-lg shadow-primary/20">
                    {selectedIds.size}
                 </div>
-                <span className="text-xs font-black text-on-surface uppercase tracking-tight">Resources Selected</span>
              </div>
              
-             <div className="flex items-center gap-1">
+             <div className="flex items-center gap-1 overflow-x-auto no-scrollbar py-1 flex-1 sm:flex-none justify-center">
                 <BulkButton 
                   label="Publish" 
                   icon={Globe} 
@@ -372,19 +386,20 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
                 />
              </div>
              
-             <div className="w-px h-6 bg-outline-variant mx-1" />
+             <div className="w-px h-6 bg-outline-variant mx-1 hidden sm:block shrink-0" />
              
              <button 
               onClick={() => setSelectedIds(new Set())}
               disabled={isBulkOperating}
-              className="p-2 hover:bg-surface-container-high rounded-xl text-on-surface-variant transition-colors"
+              className="p-2.5 sm:p-2 hover:bg-surface-container-high rounded-xl text-on-surface-variant transition-colors shrink-0 active:scale-90"
+              title="Clear Selection"
              >
-                <XIcon className="size-5" />
+                <XIcon className="size-5 sm:size-5" />
              </button>
              
              {isBulkOperating && (
-               <div className="absolute inset-0 bg-white/50 backdrop-blur-[1px] rounded-2xl flex items-center justify-center">
-                  <Loader2 className="size-5 text-primary animate-spin" />
+               <div className="absolute inset-0 bg-surface-container/50 backdrop-blur-[1px] rounded-2xl flex items-center justify-center z-10">
+                  <Loader2 className="size-6 text-primary animate-spin" />
                </div>
              )}
           </div>
@@ -405,15 +420,16 @@ function BulkButton({ label, icon: Icon, onClick, disabled, variant = "default" 
     <button
       onClick={onClick}
       disabled={disabled}
+      title={label}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+        "flex items-center gap-2 px-2.5 sm:px-3 py-2.5 sm:py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 shrink-0",
         variant === "danger" 
-          ? "text-rose-600 hover:bg-rose-50 disabled:opacity-50" 
+          ? "text-rose-600 hover:bg-rose-500/10 disabled:opacity-50" 
           : "text-primary hover:bg-primary/5 disabled:opacity-50"
       )}
     >
-      <Icon className="size-3.5" />
-      {label}
+      <Icon className="size-4 sm:size-3.5" />
+      <span className="hidden sm:inline">{label}</span>
     </button>
   )
 }

@@ -56,6 +56,7 @@
   --color-on-secondary-fixed: var(--on-secondary-fixed);
   --color-tertiary: var(--tertiary);
   --color-on-surface: var(--on-surface);
+  --color-surface: var(--surface-container);
   --color-surface-container-highest: var(--surface-container-highest);
   --color-error-rose: var(--error-rose);
   --color-surface-container-lowest: var(--surface-container-lowest);
@@ -282,6 +283,7 @@
   --outline-variant: #434655;
   --inverse-surface: #e1e2e4;
   --inverse-on-surface: #2d3133;
+  --surface-glass: rgba(0, 0, 0, 0.4);
 }
 
 @layer base {
@@ -302,11 +304,7 @@
   }
 
   .glass-card {
-    background: rgba(255, 255, 255, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    @apply bg-surface-glass backdrop-blur-[12px] border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.2)];
   }
 
   .floating-element {
@@ -353,10 +351,7 @@
   }
 
   .glass-panel {
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    @apply bg-surface-glass backdrop-blur-[20px] border border-white/5;
   }
 
   .tree-line {

@@ -36,28 +36,34 @@ export function WorkspaceHeader({
           </button>
         </div>
 
-        <div className="flex items-center gap-4 min-w-0">
-          <h1 className="font-display text-sm lg:text-lg font-bold text-on-surface truncate hidden sm:block tracking-tight">
+        <div className="flex items-center gap-2 lg:gap-4 min-w-0">
+          <h1 className="font-display text-xs lg:text-lg font-bold text-on-surface truncate hidden xs:block tracking-tight">
             {title}
           </h1>
           
           {breadcrumbs.length > 0 && (
             <>
-              <div className="h-4 w-px bg-outline-variant hidden md:block opacity-40" />
-              <nav className="flex items-center gap-2 text-xs font-medium min-w-0 overflow-hidden">
-                {breadcrumbs.map((crumb, i) => (
-                  <React.Fragment key={i}>
-                    {i > 0 && <ChevronRight className="size-3 text-outline-variant shrink-0" />}
-                    <span className={cn(
-                      "truncate py-1 px-2 rounded-lg transition-colors",
-                      i === breadcrumbs.length - 1 
-                        ? "text-on-surface bg-surface-container-high/50 font-bold" 
-                        : "text-on-surface-variant opacity-60 hover:text-primary hover:bg-primary/5 cursor-pointer"
-                    )}>
-                      {crumb.label}
-                    </span>
-                  </React.Fragment>
-                ))}
+              <div className="h-4 w-px bg-outline-variant hidden sm:block opacity-40" />
+              <nav className="flex items-center gap-1 text-[10px] lg:text-xs font-medium min-w-0 overflow-hidden">
+                {breadcrumbs.map((crumb, i) => {
+                  // On very small screens, only show the last 2 breadcrumbs
+                  const isHiddenOnMobile = breadcrumbs.length > 2 && i < breadcrumbs.length - 2
+                  
+                  return (
+                    <React.Fragment key={i}>
+                      {i > 0 && <ChevronRight className={cn("size-2.5 lg:size-3 text-outline-variant shrink-0", isHiddenOnMobile && "hidden sm:block")} />}
+                      <span className={cn(
+                        "truncate py-1 px-1.5 lg:px-2 rounded-lg transition-colors",
+                        isHiddenOnMobile && "hidden sm:block",
+                        i === breadcrumbs.length - 1 
+                          ? "text-on-surface bg-surface-container-high/50 font-bold" 
+                          : "text-on-surface-variant opacity-60 hover:text-primary hover:bg-primary/5 cursor-pointer"
+                      )}>
+                        {crumb.label}
+                      </span>
+                    </React.Fragment>
+                  )
+                })}
               </nav>
             </>
           )}

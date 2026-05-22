@@ -58,18 +58,31 @@ export async function createPhetResource(url: string, title?: string) {
     // Try to extract a clean title from the URL slug if not provided
     // Example: .../number-pairs/latest/number-pairs_en.html -> number-pairs
     let inferredTitle = title
-    if (!inferredTitle) {
-      const parts = phetUrl.pathname.split("/")
-      const slug = parts.find(p => p && p !== "sims" && p !== "html" && p !== "latest")
-      inferredTitle = slug ? `PhET: ${slug.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}` : "PhET Simulation"
+    let slug = ""
+    
+    const parts = phetUrl.pathname.split("/")
+    const extractedSlug = parts.find(p => p && p !== "sims" && p !== "html" && p !== "latest")
+    
+    if (extractedSlug) {
+      slug = extractedSlug
+      if (!inferredTitle) {
+        inferredTitle = `PhET: ${slug.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}`
+      }
+    } else if (!inferredTitle) {
+      inferredTitle = "PhET Simulation"
     }
+
+    // Attempt to generate a high-quality PhET thumbnail
+    // Standard pattern: https://phet.colorado.edu/sims/html/{slug}/latest/{slug}-600.png
+    const thumbnailUrl = slug 
+      ? `https://phet.colorado.edu/sims/html/${slug}/latest/${slug}-600.png`
+      : "https://phet.colorado.edu/images/phet-logo-sim-page.png"
 
     const result = await createItem("media-asset", {
       kind: "PHET_SIMULATION" as MediaAssetKind,
       title: inferredTitle,
       url: url,
-      // We can use a standard PhET icon/image for thumbnails for now
-      thumbnailUrl: "https://phet.colorado.edu/images/phet-logo-sim-page.png",
+      thumbnailUrl: thumbnailUrl,
       createdById: userId,
     }, userId)
 

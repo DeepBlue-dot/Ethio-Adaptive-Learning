@@ -79,7 +79,7 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
   return (
     <div className="flex h-full flex-col bg-surface-container overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-outline-variant bg-surface-container-highest shrink-0">
+      <div className="p-4 border-b border-outline-variant bg-surface-container-highest/30 shrink-0">
         <div className="flex items-center justify-between mb-3">
           <div>
             <h2 className="text-[10px] font-black text-on-surface uppercase tracking-widest leading-none">
@@ -103,7 +103,7 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
                 updateFilters({ query: localSearchQuery || null })
               }
             }}
-            className="w-full bg-surface-container-low border border-outline-variant rounded-xl py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
+            className="w-full bg-surface-container-low border border-outline-variant rounded-xl py-2 pl-9 pr-3 text-xs focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-on-surface placeholder:text-on-surface-variant/40"
           />
           {localSearchQuery && (
             <button 
@@ -243,10 +243,10 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
       </div>
 
       {/* Footer Action */}
-      <div className="p-4 border-t border-outline-variant bg-surface-container-highest/30 shrink-0">
+      <div className="p-4 border-t border-outline-variant bg-surface-container-highest/10 shrink-0">
         <button 
           onClick={() => updateFilters({ upload: "true" })}
-          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-white bg-primary hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+          className="flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2.5 text-[10px] font-black uppercase tracking-widest text-primary-foreground bg-primary hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
         >
           <PlusCircle className="size-3.5" />
           Upload New

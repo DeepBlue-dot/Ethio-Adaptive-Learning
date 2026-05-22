@@ -9,7 +9,11 @@ import {
   ExternalLink, 
   Info,
   Check,
-  Gamepad2
+  Gamepad2,
+  Globe,
+  Lock,
+  HardDrive,
+  Clock
 } from "lucide-react"
 
 import Image from "next/image"
@@ -57,6 +61,7 @@ interface ResourceCardProps {
 }
 
 export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick }: ResourceCardProps) {
+  const [imageError, setImageError] = React.useState(false)
   const isImage = resource.kind === "IMAGE"
   const isVideo = resource.kind === "YOUTUBE_EMBED"
   const isPhet = resource.kind === "PHET_SIMULATION"
@@ -81,30 +86,35 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
       aria-pressed={isActive}
       aria-label={`${resource.title} (${resource.kind || resource.type})`}
       className={cn(
-        "group relative flex flex-col bg-surface border rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary",
+        "group relative flex flex-col bg-surface-container border rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-primary",
         isActive 
           ? "border-primary ring-2 ring-primary/20 shadow-xl scale-[1.02] z-10" 
           : isSelected 
-            ? "border-primary bg-primary/5 shadow-md"
+            ? "border-primary bg-primary/5 shadow-lg ring-2 ring-primary/10"
             : "border-outline-variant hover:border-primary/50 hover:shadow-lg"
       )}
     >
       {/* Media Preview */}
       <div className="aspect-video relative bg-surface-container-low overflow-hidden">
-        {/* Checkbox Overlay */}
+        {/* Checkbox Overlay (Enlarged for Touch) */}
         <div 
           onClick={(e) => {
             e.stopPropagation()
             onSelect?.(e)
           }}
           className={cn(
-            "absolute top-2 right-2 z-20 size-5 rounded-lg border-2 flex items-center justify-center transition-all",
-            isSelected 
-              ? "bg-primary border-primary text-white" 
-              : "bg-black/20 border-white/40 opacity-0 group-hover:opacity-100 hover:border-white"
+            "absolute top-1 right-1 z-20 p-2 group/check transition-all",
+            isSelected ? "opacity-100" : "opacity-0 lg:group-hover:opacity-100"
           )}
         >
-          {isSelected && <Check className="size-3.5 stroke-[4px]" />}
+          <div className={cn(
+            "size-7 sm:size-6 rounded-xl border-2 flex items-center justify-center transition-all shadow-lg",
+            isSelected 
+              ? "bg-primary border-primary text-primary-foreground scale-110" 
+              : "bg-black/20 border-white/40 hover:border-white"
+          )}>
+            {isSelected && <Check className="size-4 sm:size-3.5 stroke-[4px] animate-in zoom-in-50 duration-300" />}
+          </div>
         </div>
 
         {isImage && resource.url ? (
@@ -133,9 +143,10 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
         ) : isPhet ? (
           <div className="relative w-full h-full bg-primary/5">
              <Image 
-                src={resource.thumbnailUrl || "https://phet.colorado.edu/images/phet-logo-sim-page.png"} 
+                src={(imageError || !resource.thumbnailUrl) ? "https://phet.colorado.edu/images/phet-logo-sim-page.png" : resource.thumbnailUrl} 
                 alt={resource.title}
                 fill
+                onError={() => setImageError(true)}
                 className="object-contain p-4 opacity-40 group-hover:opacity-60 transition-opacity"
                 unoptimized
              />
@@ -153,41 +164,48 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
 
         {/* Badges */}
         <div className="absolute top-2 left-2 flex gap-1.5">
-          <span className={cn(
-            "px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest backdrop-blur-md border",
+          <div className={cn(
+            "size-5 rounded-full backdrop-blur-md border flex items-center justify-center shadow-lg transition-transform hover:scale-110",
             resource.status === "PUBLISHED" 
-              ? "bg-teal-500/10 text-teal-700 border-teal-500/20" 
-              : "bg-amber-500/10 text-amber-700 border-amber-500/20"
-          )}>
-            {resource.status}
-          </span>
+              ? "bg-emerald-500/20 text-emerald-700 border-emerald-500/30 dark:text-emerald-400" 
+              : "bg-amber-500/20 text-amber-700 border-amber-500/30 dark:text-amber-400"
+          )} title={resource.status}>
+            {resource.status === "PUBLISHED" ? <Globe className="size-2.5" /> : <Lock className="size-2.5" />}
+          </div>
           {isSnippet && (
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 border border-blue-500/20 backdrop-blur-md">
-              Snippet
-            </span>
+            <div className="size-5 rounded-full bg-blue-500/20 text-blue-700 border border-blue-500/30 backdrop-blur-md flex items-center justify-center shadow-lg dark:text-blue-400" title="Snippet">
+              <FileText className="size-2.5" />
+            </div>
           )}
           {isPhet && (
-            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 backdrop-blur-md">
-              Interactive
-            </span>
+            <div className="size-5 rounded-full bg-primary/20 text-primary border border-primary/30 backdrop-blur-md flex items-center justify-center shadow-lg dark:text-primary-fixed" title="Interactive Simulation">
+              <Gamepad2 className="size-2.5" />
+            </div>
           )}
         </div>
 
         {/* Quick Actions Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 lg:group-hover:opacity-100 transition-opacity flex flex-col justify-end p-3">
           <div className="flex justify-between items-center text-white">
             <div className="flex gap-2">
-              <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10">
+              <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10 active:scale-95">
                 <ExternalLink className="size-3.5" />
               </button>
-              <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10">
+              <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10 active:scale-95">
                 <Info className="size-3.5" />
               </button>
             </div>
-            <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10">
+            <button className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 backdrop-blur-md transition-colors border border-white/10 active:scale-95">
               <MoreVertical className="size-3.5" />
             </button>
           </div>
+        </div>
+
+        {/* Mobile Quick Actions Indicator (Visible when not hovering/active) */}
+        <div className="absolute bottom-2 right-2 flex lg:hidden group-hover:opacity-0 transition-opacity">
+           <div className="p-1.5 rounded-lg bg-black/20 backdrop-blur-sm border border-white/10 text-white shadow-lg">
+              <MoreVertical className="size-3" />
+           </div>
         </div>
       </div>
 
@@ -212,10 +230,10 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
               <span className={cn(
                 "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
                 resource.validationStatus === "valid" 
-                  ? "bg-green-500/20 text-green-700" 
+                  ? "bg-emerald-500/20 text-emerald-700 dark:text-emerald-400" 
                   : resource.validationStatus === "warning"
-                    ? "bg-yellow-500/20 text-yellow-700"
-                    : "bg-red-500/20 text-red-700"
+                    ? "bg-warning-gold/20 text-warning-gold dark:text-amber-400"
+                    : "bg-error-rose/20 text-error-rose dark:text-rose-400"
               )}>
                 {resource.validationStatus.toUpperCase()}
               </span>
@@ -224,7 +242,7 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
 
           {/* Error Count Badge */}
           {isSnippet && resource.errors && resource.errors.length > 0 && (
-            <p className="text-[9px] text-red-600 font-medium">
+            <p className="text-[9px] text-error-rose font-medium">
               {resource.errors.length} validation issue(s)
             </p>
           )}
@@ -238,14 +256,55 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
         </div>
 
         <div className="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/30">
-          <p className="text-[10px] text-on-surface-variant font-medium opacity-60">
-            {isImage ? `${resource.width}x${resource.height}` : isVideo ? "YouTube" : isPhet ? "PhET Simulation" : "Text Snippet"}
-          </p>
-          <p className="text-[9px] text-on-surface-variant italic">
-            {new Date(resource.updatedAt).toLocaleDateString()}
-          </p>
+          <div className="flex items-center gap-4">
+            {isImage ? (
+              <div className="flex items-center gap-1.5" title="Dimensions">
+                <ImageIcon className="size-3 text-primary/40" />
+                <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-tighter">{resource.width}×{resource.height}</span>
+              </div>
+            ) : isVideo ? (
+              <div className="flex items-center gap-1.5" title="YouTube Video">
+                <Video className="size-3 text-rose-500/50" />
+                <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-tighter">HD 1080p</span>
+              </div>
+            ) : isPhet ? (
+              <div className="flex items-center gap-1.5" title="Interactive Simulation">
+                <Gamepad2 className="size-3 text-primary/50" />
+                <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-tighter">HTML5</span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5" title="Content Snippet">
+                <FileText className="size-3 text-blue-500/50" />
+                <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-tighter">{resource.contentBlocks?.length || 1} Blocks</span>
+              </div>
+            )}
+
+            {resource.bytes && (
+              <div className="flex items-center gap-1.5 border-l border-outline-variant/30 pl-3" title="File Size">
+                 <HardDrive className="size-2.5 text-on-surface-variant opacity-30" />
+                 <span className="text-[9px] text-on-surface-variant font-black uppercase tracking-tighter">
+                   {formatBytes(resource.bytes)}
+                 </span>
+              </div>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-1.5 opacity-30 italic group-hover:opacity-60 transition-opacity" title="Last Updated">
+             <Clock className="size-2.5" />
+             <p className="text-[9px] text-on-surface-variant font-medium">
+               {new Date(resource.updatedAt).toLocaleDateString()}
+             </p>
+          </div>
         </div>
       </div>
     </div>
   )
+}
+
+function formatBytes(bytes: number) {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + sizes[i]
 }

@@ -1,4 +1,8 @@
+"use client"
+
+import React, { useEffect, useRef } from "react"
 import Image from "next/image"
+import { FileText } from "lucide-react"
 
 import type { CmsContentBlock } from "@/lib/cms/content-blocks"
 import { getYouTubeEmbedUrl, normalizeYouTubeUrl } from "@/lib/cms/youtube"
@@ -33,21 +37,38 @@ export function ContentBlocksRenderer({
   snippets = {},
 }: {
   assets?: Record<string, RenderableMediaAsset>
-  blocks: CmsContentBlock[]
+  blocks: CmsContentBlock[] | string | null | undefined
   questions?: Record<string, RenderableQuestion>
   snippets?: Record<string, RenderableSnippet>
 }) {
-  if (!blocks.length) {
+  const normalizedBlocks = React.useMemo(() => {
+    if (!blocks) return []
+    if (Array.isArray(blocks)) return blocks
+    if (typeof blocks === "string") {
+      try {
+        return JSON.parse(blocks) as CmsContentBlock[]
+      } catch (e) {
+        console.error("Failed to parse content blocks:", e)
+        return []
+      }
+    }
+    return []
+  }, [blocks])
+
+  if (!normalizedBlocks.length) {
     return (
-      <div className="rounded-3xl bg-slate-50 p-6 text-sm leading-7 text-muted-foreground">
-        This concept does not have authored lesson content yet. The assessment flow is still available.
+      <div className="rounded-3xl bg-slate-50 p-6 text-sm leading-7 text-muted-foreground border-2 border-dashed border-border flex flex-col items-center justify-center gap-3">
+        <div className="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-300">
+           <FileText className="size-5" />
+        </div>
+        <p className="text-center font-medium opacity-60">No lesson content available for this block.</p>
       </div>
     )
   }
 
   return (
     <div className="space-y-5">
-      {blocks.map((block, index) => (
+      {normalizedBlocks.map((block, index) => (
         <ContentBlock
           key={block.id || `block-${index}`}
           assets={assets}
@@ -150,7 +171,9 @@ function ContentBlock({
     return (
       <section className="rounded-3xl border border-teal-100 bg-teal-50 p-5">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-teal-700">Quiz</p>
-        <p className="mt-3 text-sm leading-7 text-foreground">{question.content}</p>
+        <div className="mt-3 text-sm leading-7 text-foreground">
+          <MathRenderer content={question.content} />
+        </div>
       </section>
     )
   }
@@ -214,9 +237,43 @@ function ContentBlock({
   return (
     <article className="rounded-3xl bg-slate-50 p-6">
       {block.title ? <h3 className="text-xl font-semibold tracking-tight text-foreground">{block.title}</h3> : null}
-      <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground">{block.text}</div>
+      <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground">
+        <MathRenderer content={block.text} />
+      </div>
     </article>
   )
+}
+
+/**
+ * Renders text content and triggers KaTeX auto-render on mount.
+ * Supports $...$ for inline math and $$...$$ for display math.
+ */
+function MathRenderer({ content }: { content: string }) {
+  const containerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const win = window as unknown as { 
+      renderMathInElement: (el: HTMLElement, options: { 
+        delimiters: Array<{ left: string, right: string, display: boolean }>,
+        throwOnError: boolean 
+      }) => void 
+    }
+    if (containerRef.current && win.renderMathInElement) {
+      try {
+        win.renderMathInElement(containerRef.current, {
+          delimiters: [
+            { left: "$$", right: "$$", display: true },
+            { left: "$", right: "$", display: false },
+          ],
+          throwOnError: false,
+        })
+      } catch (e) {
+        console.error("KaTeX auto-render failed:", e)
+      }
+    }
+  }, [content])
+
+  return <div ref={containerRef} className="math-container">{content}</div>
 }
 
 function getVideoId(url: string) {
