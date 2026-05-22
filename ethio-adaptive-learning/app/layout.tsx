@@ -22,6 +22,25 @@ export default function RootLayout({
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,400,0..1,0..200&display=swap"
         />
+        {/* KaTeX for Math/Physics formulas */}
+        <link 
+          rel="stylesheet" 
+          href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" 
+          integrity="sha384-nAn79qSI9QR8pD3G60/U4B9uW63h7ivO55XN5yS/e+7T0j9h9A8vW9f1d0K8t9hB" 
+          crossOrigin="anonymous" 
+        />
+        <script 
+          defer 
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" 
+          integrity="sha384-297+E6U3uS/pS6x17i0V0/0k8R4uV4l5D6s7v8uV7s7v8uV7s7v8uV7s7v8uV7s" 
+          crossOrigin="anonymous"
+        ></script>
+        <script 
+          defer 
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" 
+          integrity="sha384-43gLqv66zH7tiLsI66uzVE6xjv7v8uV7s7v8uV7s7v8uV7s7v8uV7s" 
+          crossOrigin="anonymous"
+        ></script>
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>

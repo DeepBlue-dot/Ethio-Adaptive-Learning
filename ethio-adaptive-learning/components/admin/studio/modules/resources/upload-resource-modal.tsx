@@ -13,11 +13,12 @@ import {
   PlusCircle,
   Youtube,
   Send,
-  LucideIcon
+  LucideIcon,
+  Gamepad2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { uploadResourceFile, createYouTubeResource } from "@/app/(admin)/admin/studio/actions"
+import { uploadResourceFile, createYouTubeResource, createPhetResource } from "@/app/(admin)/admin/studio/actions"
 
 interface UploadResourceModalProps {
   isOpen: boolean
@@ -32,7 +33,7 @@ interface QueuedFile {
   progress: number
 }
 
-type Tab = "files" | "youtube"
+type Tab = "files" | "youtube" | "phet"
 
 export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProps) {
   const [activeTab, setActiveTab] = useState<Tab>("files")
@@ -42,6 +43,12 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
   const [isSubmittingYoutube, setIsSubmittingYoutube] = useState(false)
   const [youtubeError, setYoutubeYoutubeError] = useState<string | null>(null)
   const [youtubeSuccess, setYoutubeSuccess] = useState(false)
+  
+  // PhET State
+  const [phetUrl, setPhetUrl] = useState("")
+  const [isSubmittingPhet, setIsSubmittingPhet] = useState(false)
+  const [phetError, setPhetError] = useState<string | null>(null)
+  const [phetSuccess, setPhetSuccess] = useState(false)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -126,12 +133,41 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
     }
   }
 
+  const handlePhetSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!phetUrl || isSubmittingPhet) return
+    
+    setIsSubmittingPhet(true)
+    setPhetError(null)
+    setPhetSuccess(false)
+    
+    try {
+      const result = await createPhetResource(phetUrl)
+      if (result.ok) {
+        setPhetSuccess(true)
+        setPhetUrl("")
+        setTimeout(() => {
+          if (isOpen) setPhetSuccess(false)
+        }, 3000)
+      } else {
+        setPhetError(result.error || "Failed to add PhET simulation.")
+      }
+    } catch (error) {
+      setPhetError("Invalid URL or network error.")
+    } finally {
+      setIsSubmittingPhet(false)
+    }
+  }
+
   const reset = () => {
     setFiles([])
     setIsUploading(false)
     setYoutubeUrl("")
     setYoutubeYoutubeError(null)
     setYoutubeSuccess(false)
+    setPhetUrl("")
+    setPhetError(null)
+    setPhetSuccess(false)
     if (fileInputRef.current) fileInputRef.current.value = ""
   }
 
@@ -183,6 +219,12 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
               isActive={activeTab === "youtube"} 
               onClick={() => setActiveTab("youtube")} 
               icon={Youtube}
+           />
+           <TabButton 
+              label="PhET Sim" 
+              isActive={activeTab === "phet"} 
+              onClick={() => setActiveTab("phet")} 
+              icon={Gamepad2}
            />
         </div>
 
@@ -301,7 +343,7 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                 </div>
               )}
             </div>
-          ) : (
+          ) : activeTab === "youtube" ? (
             <div className="py-8 px-4 space-y-8">
                <div className="flex flex-col items-center text-center space-y-3">
                   <div className="size-16 rounded-full bg-rose-50 flex items-center justify-center text-rose-600 border border-rose-100 shadow-sm">
@@ -364,6 +406,72 @@ export function UploadResourceModal({ isOpen, onClose }: UploadResourceModalProp
                   <p className="text-[11px] leading-relaxed text-on-surface-variant/80 italic">
                     By providing a YouTube URL, we will automatically extract the Video ID and high-resolution thumbnail. 
                     Embedded videos ensure maximum compatibility and zero hosting costs for media delivery.
+                  </p>
+               </div>
+            </div>
+          ) : (
+            <div className="py-8 px-4 space-y-8">
+               <div className="flex flex-col items-center text-center space-y-3">
+                  <div className="size-16 rounded-full bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shadow-sm">
+                    <Gamepad2 className="size-8" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-black text-on-surface uppercase tracking-tight">Add PhET Simulation</h3>
+                    <p className="text-xs text-on-surface-variant mt-1">Interactive HTML5 simulations from the University of Colorado Boulder.</p>
+                  </div>
+               </div>
+
+               <form onSubmit={handlePhetSubmit} className="space-y-4 max-w-lg mx-auto">
+                  <div className="space-y-2">
+                     <label className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant opacity-60 ml-2">PhET URL</label>
+                     <div className="relative group">
+                        <Gamepad2 className="absolute left-4 top-1/2 -translate-y-1/2 size-5 text-on-surface-variant group-focus-within:text-primary transition-colors" />
+                        <input 
+                          type="url"
+                          required
+                          value={phetUrl}
+                          onChange={(e) => setPhetUrl(e.target.value)}
+                          placeholder="https://phet.colorado.edu/sims/html/..."
+                          className="w-full bg-surface-container-low border border-outline-variant rounded-2xl py-4 pl-12 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        />
+                     </div>
+                  </div>
+
+                  {phetError && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-50 text-rose-600 border border-rose-100 animate-in slide-in-from-top-2 duration-200">
+                       <AlertCircle className="size-4" />
+                       <p className="text-xs font-bold">{phetError}</p>
+                    </div>
+                  )}
+
+                  {phetSuccess && (
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-teal-50 text-teal-600 border border-teal-100 animate-in slide-in-from-top-2 duration-200">
+                       <CheckCircle2 className="size-4" />
+                       <p className="text-xs font-bold">PhET simulation added to resources!</p>
+                    </div>
+                  )}
+
+                  <Button 
+                    type="submit" 
+                    disabled={!phetUrl || isSubmittingPhet}
+                    className="w-full h-14 bg-primary hover:bg-primary/90 shadow-xl shadow-primary/20 rounded-2xl gap-3 text-sm font-black uppercase tracking-widest"
+                  >
+                    {isSubmittingPhet ? (
+                      <Loader2 className="size-5 animate-spin" />
+                    ) : (
+                      <>
+                        <Send className="size-5" />
+                        Ingest Simulation
+                      </>
+                    )}
+                  </Button>
+               </form>
+
+               <div className="p-4 rounded-2xl bg-surface-container-highest/30 border border-outline-variant">
+                  <h4 className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant mb-2">Simulation Tip</h4>
+                  <p className="text-[11px] leading-relaxed text-on-surface-variant/80 italic">
+                    Ensure you are using the HTML5 direct link. These simulations are highly interactive and mobile-friendly, 
+                    perfect for embedding directly into concept lessons.
                   </p>
                </div>
             </div>

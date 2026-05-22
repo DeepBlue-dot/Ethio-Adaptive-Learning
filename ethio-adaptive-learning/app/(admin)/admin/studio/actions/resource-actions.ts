@@ -8,7 +8,6 @@ import {
   bulkPublishItems,
   bulkUnpublishItems,
   createItem,
-  getItem,
   updateItem,
   requireCmsAccess,
 } from "@/lib/cms"
@@ -18,6 +17,7 @@ import {
   getUnusedResourcesCount as getUnusedCount,
 } from "@/lib/studio/usage-tracking"
 import { searchResources as runSearch } from "@/lib/studio/resource-search"
+import { prisma } from "@/lib/prisma"
 import { getResourceMetrics } from "@/lib/studio/metrics"
 import { normalizeYouTubeUrl } from "@/lib/cms/youtube"
 import { logCmsActivity } from "@/lib/cms/activity"
@@ -42,6 +42,42 @@ export async function createYouTubeResource(url: string, title?: string) {
   } catch (error) {
     console.error("Failed to create YouTube resource:", error)
     return { ok: false, error: error instanceof Error ? error.message : "Invalid YouTube URL." }
+  }
+}
+
+export async function createPhetResource(url: string, title?: string) {
+  const session = await requireCmsAccess()
+  const userId = session.user.id
+
+  try {
+    const phetUrl = new URL(url)
+    if (!phetUrl.hostname.includes("phet.colorado.edu")) {
+      throw new Error("Invalid PhET URL. Must be from phet.colorado.edu.")
+    }
+
+    // Try to extract a clean title from the URL slug if not provided
+    // Example: .../number-pairs/latest/number-pairs_en.html -> number-pairs
+    let inferredTitle = title
+    if (!inferredTitle) {
+      const parts = phetUrl.pathname.split("/")
+      const slug = parts.find(p => p && p !== "sims" && p !== "html" && p !== "latest")
+      inferredTitle = slug ? `PhET: ${slug.replace(/-/g, " ").replace(/\b\w/g, l => l.toUpperCase())}` : "PhET Simulation"
+    }
+
+    const result = await createItem("media-asset", {
+      kind: "PHET_SIMULATION" as MediaAssetKind,
+      title: inferredTitle,
+      url: url,
+      // We can use a standard PhET icon/image for thumbnails for now
+      thumbnailUrl: "https://phet.colorado.edu/images/phet-logo-sim-page.png",
+      createdById: userId,
+    }, userId)
+
+    revalidatePath("/admin/resources")
+    return { ok: true, id: result.entity.id }
+  } catch (error) {
+    console.error("Failed to create PhET resource:", error)
+    return { ok: false, error: error instanceof Error ? error.message : "Invalid PhET URL." }
   }
 }
 
@@ -70,40 +106,65 @@ export async function getResourceUsage(resourceId: string) {
 export async function getResourceById(id: string) {
   await requireCmsAccess()
 
-  let item = await getItem("media-asset", id)
-  if (item) {
+  // Try MediaAsset
+  const asset = await prisma.mediaAsset.findUnique({
+    where: { id }
+  })
+
+  if (asset) {
+    let creatorName = "System"
+    if (asset.createdById) {
+      const user = await prisma.user.findUnique({ 
+        where: { id: asset.createdById }, 
+        select: { name: true, username: true } 
+      })
+      creatorName = user?.name || user?.username || "Nexus Admin"
+    }
+
     return {
       ok: true,
       resource: {
-        id: item.id,
+        id: asset.id,
         type: "media-asset",
-        kind: item.data.kind,
-        title: item.title,
-        url: item.data.url,
-        thumbnailUrl: item.data.thumbnailUrl,
-        publicId: item.data.publicId,
-        videoId: item.data.videoId,
-        alt: item.data.alt,
-        caption: item.data.caption,
-        width: item.data.width,
-        height: item.data.height,
-        status: item.lifecycle?.status,
-        updatedAt: item.lifecycle?.updatedAt,
+        kind: asset.kind,
+        title: asset.title || "Untitled Asset",
+        url: asset.url,
+        thumbnailUrl: asset.thumbnailUrl,
+        publicId: asset.publicId,
+        videoId: asset.videoId,
+        alt: asset.alt,
+        caption: asset.caption,
+        width: asset.width,
+        height: asset.height,
+        bytes: asset.bytes,
+        status: asset.status,
+        updatedAt: asset.updatedAt,
+        createdById: asset.createdById,
+        creatorName
       },
     }
   }
 
-  item = await getItem("content-snippet", id)
-  if (item) {
+  // Try ContentSnippet
+  const snippet = await prisma.contentSnippet.findUnique({
+    where: { id },
+    include: {
+      author: { select: { name: true, username: true } }
+    }
+  })
+
+  if (snippet) {
     return {
       ok: true,
       resource: {
-        id: item.id,
+        id: snippet.id,
         type: "content-snippet",
-        title: item.title,
-        status: item.lifecycle?.status,
-        updatedAt: item.lifecycle?.updatedAt,
-        contentBlocks: item.data.contentBlocks,
+        title: snippet.title,
+        status: snippet.status,
+        updatedAt: snippet.updatedAt,
+        contentBlocks: snippet.contentBlocks,
+        authorId: snippet.authorId,
+        creatorName: snippet.author?.name || snippet.author?.username || "Content Specialist"
       },
     }
   }

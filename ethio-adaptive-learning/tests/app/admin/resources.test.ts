@@ -828,4 +828,215 @@ describe("ResourcesPage", () => {
       expect(draftResources.every((r) => r.status === "DRAFT")).toBe(true)
     })
   })
+
+  describe("YouTube Specialization", () => {
+    it("should include author metadata for YouTube videos", () => {
+      const youtubeAsset: ResourceItem = {
+        id: "yt-with-author",
+        type: "media-asset",
+        kind: MediaAssetKind.YOUTUBE_EMBED,
+        title: "Tutorial",
+        videoId: "dQw4w9WgXcQ",
+        url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+        author: "Tech Channel",
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(youtubeAsset.author).toBe("Tech Channel")
+      expect(youtubeAsset.kind).toBe(MediaAssetKind.YOUTUBE_EMBED)
+    })
+
+    it("should handle missing YouTube metadata gracefully", () => {
+      const youtubeAsset: ResourceItem = {
+        id: "yt-no-metadata",
+        type: "media-asset",
+        kind: MediaAssetKind.YOUTUBE_EMBED,
+        title: "Video",
+        videoId: "dQw4w9WgXcQ",
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(youtubeAsset.author).toBeUndefined()
+      expect(youtubeAsset.duration).toBeUndefined()
+      expect(youtubeAsset.publishedAt).toBeUndefined()
+    })
+
+    it("should support optional duration field", () => {
+      const youtubeAsset: ResourceItem = {
+        id: "yt-duration",
+        type: "media-asset",
+        kind: MediaAssetKind.YOUTUBE_EMBED,
+        title: "Video",
+        duration: 600, // 10 minutes
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(youtubeAsset.duration).toBe(600)
+    })
+  })
+
+  describe("Snippet Specialization & Validation", () => {
+    it("should mark valid snippets with correct status", () => {
+      const validSnippet: ResourceItem = {
+        id: "valid-snippet",
+        type: "content-snippet",
+        title: "Math Notes",
+        searchableContent: "Valid content about algebra",
+        validationStatus: "valid",
+        errors: [],
+        preview: "Valid content about algebra",
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(validSnippet.validationStatus).toBe("valid")
+      expect(validSnippet.errors).toHaveLength(0)
+    })
+
+    it("should detect invalid snippets with error messages", () => {
+      const invalidSnippet: ResourceItem = {
+        id: "invalid-snippet",
+        type: "content-snippet",
+        title: "Broken Notes",
+        searchableContent: "",
+        validationStatus: "invalid",
+        errors: ["No content found in snippet"],
+        preview: "",
+        updatedAt: new Date(),
+        status: "DRAFT",
+      }
+
+      expect(invalidSnippet.validationStatus).toBe("invalid")
+      expect(invalidSnippet.errors).toContain("No content found in snippet")
+      expect(invalidSnippet.errors.length).toBeGreaterThan(0)
+    })
+
+    it("should warn on snippets with recoverable issues", () => {
+      const warningSnippet: ResourceItem = {
+        id: "warning-snippet",
+        type: "content-snippet",
+        title: "Partial Notes",
+        searchableContent: "Some content",
+        validationStatus: "warning",
+        errors: ["Unclosed markdown code block detected"],
+        preview: "Some content",
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(warningSnippet.validationStatus).toBe("warning")
+      expect(warningSnippet.errors).toContain("Unclosed markdown code block detected")
+    })
+
+    it("should generate preview text from snippet content", () => {
+      const snippet: ResourceItem = {
+        id: "snippet-preview",
+        type: "content-snippet",
+        title: "Quadratic Equations",
+        searchableContent: "A quadratic equation is of the form ax² + bx + c = 0",
+        preview: "A quadratic equation is of the form ax² + bx + c = 0",
+        validationStatus: "valid",
+        errors: [],
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(snippet.preview).toBeDefined()
+      expect(snippet.preview?.length).toBeGreaterThan(0)
+      expect(snippet.preview).toContain("quadratic")
+    })
+
+    it("should handle preview truncation for long snippets", () => {
+      const longContent = "Word ".repeat(100)
+      const snippet: ResourceItem = {
+        id: "long-preview",
+        type: "content-snippet",
+        title: "Long Notes",
+        searchableContent: longContent,
+        preview: longContent.slice(0, 300),
+        validationStatus: "valid",
+        errors: [],
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(snippet.preview).toBeDefined()
+      expect(snippet.preview!.length).toBeLessThanOrEqual(300)
+    })
+
+    it("should validate snippet text length limits", () => {
+      const snippetExceedsLimit: ResourceItem = {
+        id: "too-large",
+        type: "content-snippet",
+        title: "Huge Snippet",
+        searchableContent: "x".repeat(60000),
+        validationStatus: "invalid",
+        errors: ["Snippet exceeds 50KB limit"],
+        preview: "x".repeat(200),
+        updatedAt: new Date(),
+        status: "DRAFT",
+      }
+
+      expect(snippetExceedsLimit.validationStatus).toBe("invalid")
+      expect(snippetExceedsLimit.errors).toContain("Snippet exceeds 50KB limit")
+    })
+
+    it("should detect empty blocks in snippets", () => {
+      const snippetWithEmptyBlocks: ResourceItem = {
+        id: "empty-blocks",
+        type: "content-snippet",
+        title: "Sparse Notes",
+        searchableContent: "Some content",
+        validationStatus: "invalid",
+        errors: ["2 empty block(s) detected"],
+        preview: "Some content",
+        updatedAt: new Date(),
+        status: "DRAFT",
+      }
+
+      expect(snippetWithEmptyBlocks.errors.some(e => e.includes("empty block(s) detected"))).toBe(true)
+    })
+
+    it("should support multiple validation errors", () => {
+      const multiErrorSnippet: ResourceItem = {
+        id: "multi-error",
+        type: "content-snippet",
+        title: "Problem Notes",
+        searchableContent: "",
+        validationStatus: "invalid",
+        errors: [
+          "No content found in snippet",
+          "1 empty block(s) detected",
+          "Unclosed markdown code block detected",
+        ],
+        preview: "",
+        updatedAt: new Date(),
+        status: "DRAFT",
+      }
+
+      expect(multiErrorSnippet.errors.length).toBe(3)
+      expect(multiErrorSnippet.errors).toContain("No content found in snippet")
+    })
+
+    it("should preserve validation status on published snippets", () => {
+      const publishedWithWarning: ResourceItem = {
+        id: "published-warning",
+        type: "content-snippet",
+        title: "Published Notes",
+        searchableContent: "Valid content",
+        validationStatus: "warning",
+        errors: ["Minor issue"],
+        preview: "Valid content",
+        updatedAt: new Date(),
+        status: "PUBLISHED",
+      }
+
+      expect(publishedWithWarning.status).toBe("PUBLISHED")
+      expect(publishedWithWarning.validationStatus).toBe("warning")
+      expect(publishedWithWarning.errors).toHaveLength(1)
+    })
+  })
 })

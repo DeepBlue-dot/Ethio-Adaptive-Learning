@@ -41,6 +41,7 @@ enum CmsPublicationStatus {
 enum MediaAssetKind {
   IMAGE
   YOUTUBE_EMBED
+  PHET_SIMULATION
 }
 
 model User {

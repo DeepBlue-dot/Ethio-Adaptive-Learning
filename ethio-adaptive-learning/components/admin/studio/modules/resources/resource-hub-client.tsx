@@ -101,6 +101,7 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
       // Type
       if (currentType === "image" && item.kind !== "IMAGE") return false
       if (currentType === "video" && item.kind !== "YOUTUBE_EMBED") return false
+      if (currentType === "phet" && item.kind !== "PHET_SIMULATION") return false
       if (currentType === "snippet" && item.type !== "content-snippet") return false
 
       // Collection (Mock logic for MVP)

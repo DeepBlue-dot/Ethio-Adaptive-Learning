@@ -8,16 +8,19 @@ import {
   MoreVertical, 
   ExternalLink, 
   Info,
-  Check
+  Check,
+  Gamepad2
 } from "lucide-react"
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
+import { MediaAssetKind } from "@prisma/client"
+import { type CmsContentBlock } from "@/lib/cms/content-blocks"
 
 export interface ResourceItem {
   id: string
   type: "media-asset" | "content-snippet"
-  kind?: "IMAGE" | "YOUTUBE_EMBED"
+  kind?: MediaAssetKind
   title: string
   url?: string
   thumbnailUrl?: string
@@ -27,9 +30,22 @@ export interface ResourceItem {
   caption?: string
   width?: number
   height?: number
+  bytes?: number | null
   status: string
   updatedAt: string | Date
   searchableContent?: string
+  createdById?: string | null
+  authorId?: string | null
+  creatorName?: string
+  contentBlocks?: CmsContentBlock[] // Raw content for snippets
+  // YouTube specialized metadata
+  duration?: number
+  author?: string
+  publishedAt?: string
+  // Snippet specialized metadata
+  errors?: string[]
+  preview?: string
+  validationStatus?: "valid" | "invalid" | "warning"
 }
 
 interface ResourceCardProps {
@@ -43,6 +59,7 @@ interface ResourceCardProps {
 export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick }: ResourceCardProps) {
   const isImage = resource.kind === "IMAGE"
   const isVideo = resource.kind === "YOUTUBE_EMBED"
+  const isPhet = resource.kind === "PHET_SIMULATION"
   const isSnippet = resource.type === "content-snippet"
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -113,6 +130,21 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
               </div>
             </div>
           </div>
+        ) : isPhet ? (
+          <div className="relative w-full h-full bg-primary/5">
+             <Image 
+                src={resource.thumbnailUrl || "https://phet.colorado.edu/images/phet-logo-sim-page.png"} 
+                alt={resource.title}
+                fill
+                className="object-contain p-4 opacity-40 group-hover:opacity-60 transition-opacity"
+                unoptimized
+             />
+             <div className="absolute inset-0 flex items-center justify-center">
+                <div className="size-12 rounded-2xl bg-primary/10 backdrop-blur-sm flex items-center justify-center border border-primary/20 text-primary shadow-lg group-hover:scale-110 transition-transform">
+                   <Gamepad2 className="size-6" />
+                </div>
+             </div>
+          </div>
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-surface-container-lowest tibeb-pattern opacity-10">
             {isSnippet ? <FileText className="size-8 text-primary" /> : <ImageIcon className="size-8 text-primary" />}
@@ -132,6 +164,11 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
           {isSnippet && (
             <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-blue-500/10 text-blue-700 border border-blue-500/20 backdrop-blur-md">
               Snippet
+            </span>
+          )}
+          {isPhet && (
+            <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-primary/10 text-primary border border-primary/20 backdrop-blur-md">
+              Interactive
             </span>
           )}
         </div>
@@ -159,9 +196,50 @@ export function ResourceCard({ resource, isActive, isSelected, onSelect, onClick
         <h4 className="font-bold text-xs text-on-surface truncate group-hover:text-primary transition-colors">
           {resource.title}
         </h4>
-        <div className="flex items-center justify-between mt-1">
+        
+        {/* Specialized Metadata */}
+        <div className="flex flex-col gap-1 mt-2">
+          {/* YouTube Metadata */}
+          {isVideo && resource.author && (
+            <p className="text-[10px] text-on-surface-variant opacity-70">
+              By: {resource.author}
+            </p>
+          )}
+
+          {/* Snippet Validation Status */}
+          {isSnippet && resource.validationStatus && (
+            <div className="flex items-center gap-1">
+              <span className={cn(
+                "text-[9px] font-bold px-1.5 py-0.5 rounded-full",
+                resource.validationStatus === "valid" 
+                  ? "bg-green-500/20 text-green-700" 
+                  : resource.validationStatus === "warning"
+                    ? "bg-yellow-500/20 text-yellow-700"
+                    : "bg-red-500/20 text-red-700"
+              )}>
+                {resource.validationStatus.toUpperCase()}
+              </span>
+            </div>
+          )}
+
+          {/* Error Count Badge */}
+          {isSnippet && resource.errors && resource.errors.length > 0 && (
+            <p className="text-[9px] text-red-600 font-medium">
+              {resource.errors.length} validation issue(s)
+            </p>
+          )}
+
+          {/* Snippet Preview */}
+          {isSnippet && resource.preview && (
+            <p className="text-[9px] text-on-surface-variant opacity-60 line-clamp-2">
+              {resource.preview}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between mt-2 pt-2 border-t border-outline-variant/30">
           <p className="text-[10px] text-on-surface-variant font-medium opacity-60">
-            {isImage ? `${resource.width}x${resource.height}` : isVideo ? "YouTube" : "Text Snippet"}
+            {isImage ? `${resource.width}x${resource.height}` : isVideo ? "YouTube" : isPhet ? "PhET Simulation" : "Text Snippet"}
           </p>
           <p className="text-[9px] text-on-surface-variant italic">
             {new Date(resource.updatedAt).toLocaleDateString()}

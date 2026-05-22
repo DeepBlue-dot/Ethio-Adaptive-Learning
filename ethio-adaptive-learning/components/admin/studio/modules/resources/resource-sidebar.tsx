@@ -16,7 +16,8 @@ import {
   Zap,
   Clock,
   X,
-  LucideIcon
+  LucideIcon,
+  Gamepad2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -127,28 +128,30 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
           </h3>
           <div className="space-y-1">
             <TypeItem 
-              id="all" 
               label="All Resources" 
               icon={Library} 
               isActive={currentType === "all" && !currentCollection} 
               onClick={() => updateFilters({ type: "all", collection: null })} 
             />
             <TypeItem 
-              id="image" 
               label="Images" 
               icon={ImageIcon} 
               isActive={currentType === "image"} 
               onClick={() => updateFilters({ type: "image", collection: null })} 
             />
             <TypeItem 
-              id="video" 
               label="Videos" 
               icon={Video} 
               isActive={currentType === "video"} 
               onClick={() => updateFilters({ type: "video", collection: null })} 
             />
             <TypeItem 
-              id="snippet" 
+              label="Simulations" 
+              icon={Gamepad2} 
+              isActive={currentType === "phet"} 
+              onClick={() => updateFilters({ type: "phet", collection: null })} 
+            />
+            <TypeItem 
               label="Snippets" 
               icon={FileText} 
               isActive={currentType === "snippet"} 
@@ -165,14 +168,12 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
           </h3>
           <div className="space-y-1">
             <TypeItem 
-              id="recent" 
               label="Recently Used" 
               icon={Clock} 
               isActive={currentCollection === "recent"} 
               onClick={() => updateFilters({ collection: "recent", type: null })} 
             />
             <TypeItem 
-              id="unused" 
               label="Unused Assets" 
               icon={Filter} 
               isActive={currentCollection === "unused"} 
@@ -180,7 +181,6 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
               count={unusedCount}
             />
             <TypeItem 
-              id="drafts" 
               label="Drafts" 
               icon={PlusCircle} 
               isActive={currentCollection === "drafts"} 
@@ -256,8 +256,7 @@ export function ResourceSidebar({ courses, unusedCount = 0 }: ResourceSidebarPro
   )
 }
 
-function TypeItem({ id, label, icon: Icon, isActive, onClick, count }: { 
-  id: string, 
+function TypeItem({ label, icon: Icon, isActive, onClick, count }: { 
   label: string, 
   icon: LucideIcon, 
   isActive: boolean,

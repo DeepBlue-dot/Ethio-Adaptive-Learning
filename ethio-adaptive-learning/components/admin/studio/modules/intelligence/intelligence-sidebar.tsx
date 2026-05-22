@@ -23,15 +23,18 @@ export function IntelligenceSidebar() {
   return (
     <div className="flex h-full flex-col bg-surface-container overflow-hidden">
       {/* Header */}
-      <div className="p-4 border-b border-outline-variant bg-surface-container-highest shrink-0">
-        <h2 className="text-[10px] font-bold text-on-surface uppercase tracking-[0.2em] mb-1">
-          Intelligence
-        </h2>
-        <p className="text-xs text-on-surface-variant font-medium">Performance Engine</p>
+      <div className="p-6 border-b border-outline-variant bg-surface-container-highest shrink-0 shadow-sm relative z-10">
+        <div className="flex items-center gap-2 mb-1">
+           <div className="size-1.5 rounded-full bg-primary animate-pulse" />
+           <h2 className="text-[10px] font-black text-on-surface uppercase tracking-[0.3em]">
+             Intelligence
+           </h2>
+        </div>
+        <p className="text-[11px] text-on-surface-variant font-bold uppercase tracking-widest opacity-60">Engine Diagnostics</p>
       </div>
 
       {/* Navigation View */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1 bg-surface-container/50">
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1.5 bg-surface-container/30 backdrop-blur-sm">
         {INTELLIGENCE_NODES.map((node) => {
           const isActive = pathname === node.href && node.id === "overview"
           
@@ -40,27 +43,46 @@ export function IntelligenceSidebar() {
               key={node.id}
               href={node.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-xl",
+                "flex items-center gap-3 px-4 py-3 text-[13px] font-semibold transition-all duration-300 rounded-2xl relative overflow-hidden group",
                 isActive 
-                  ? "bg-primary/10 text-primary border-l-2 border-primary shadow-sm font-bold" 
+                  ? "bg-primary text-white shadow-lg shadow-primary/20" 
                   : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               )}
             >
-
-              <node.icon className={cn("size-4", isActive ? "text-primary" : "text-primary/50")} />
-              <span className="truncate">{node.label}</span>
+              <node.icon className={cn(
+                "size-4.5 transition-all duration-300", 
+                isActive ? "text-white stroke-[2.5px]" : "text-primary/60 group-hover:text-primary group-hover:scale-110"
+              )} />
+              <span className="truncate flex-1 tracking-tight">{node.label}</span>
+              
+              {isActive && (
+                 <div className="absolute right-3 size-1.5 rounded-full bg-white animate-pulse" />
+              )}
             </Link>
           )
         })}
         
-        <div className="pt-6 px-3">
-           <div className="h-px bg-outline-variant/30 mb-4" />
-           <h3 className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/40 mb-3">Recent Alerts</h3>
-           <div className="space-y-3">
-              <AlertItem label="3 Orphan Nodes" type="warning" />
-              <AlertItem label="Low mastery in 'Limits'" type="critical" />
+        <div className="pt-8 px-2">
+           <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-40">System Alerts</h3>
+              <div className="size-4 rounded-full bg-rose-500/10 flex items-center justify-center">
+                 <div className="size-1.5 rounded-full bg-rose-500 animate-ping" />
+              </div>
+           </div>
+           
+           <div className="space-y-2.5">
+              <AlertItem label="3 Orphan Nodes Detected" type="warning" />
+              <AlertItem label="Critical Drop: Limits Mastery" type="critical" />
            </div>
         </div>
+      </div>
+      
+      {/* Footer Info */}
+      <div className="p-4 bg-surface-container-low/50 border-t border-outline-variant/30 shrink-0">
+         <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-40 italic">
+            <Activity className="size-3" />
+            Last Sync: Just Now
+         </div>
       </div>
     </div>
   )
@@ -68,14 +90,22 @@ export function IntelligenceSidebar() {
 
 function AlertItem({ label, type }: { label: string, type: 'warning' | 'critical' }) {
   return (
-    <div className="flex items-center gap-2 text-[11px] font-semibold group cursor-pointer">
+    <div className={cn(
+      "flex items-center gap-3 p-3 rounded-xl transition-all duration-300 cursor-pointer border group",
+      type === 'critical' 
+        ? "bg-rose-500/5 border-rose-500/10 hover:bg-rose-500/10 hover:border-rose-500/20" 
+        : "bg-amber-500/5 border-amber-500/10 hover:bg-amber-500/10 hover:border-amber-500/20"
+    )}>
        <div className={cn(
-         "size-1.5 rounded-full animate-pulse",
+         "size-2 rounded-full shrink-0",
          type === 'critical' 
            ? "bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.6)]" 
            : "bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.6)]"
        )} />
-       <span className="text-on-surface-variant group-hover:text-on-surface transition-colors">{label}</span>
+       <span className={cn(
+         "text-[11px] font-bold tracking-tight transition-colors",
+         type === 'critical' ? "text-rose-700 group-hover:text-rose-900" : "text-amber-700 group-hover:text-amber-900"
+       )}>{label}</span>
     </div>
   )
 }

@@ -47,9 +47,9 @@ export function ContentBlocksRenderer({
 
   return (
     <div className="space-y-5">
-      {blocks.map((block) => (
+      {blocks.map((block, index) => (
         <ContentBlock
-          key={block.id}
+          key={block.id || `block-${index}`}
           assets={assets}
           block={block}
           questions={questions}
@@ -182,6 +182,32 @@ function ContentBlock({
           />
         </div>
       </section>
+    )
+  }
+
+  if (block.type === "phet") {
+    const asset = assets[block.assetId]
+
+    if (!asset?.url) {
+      return null
+    }
+
+    return (
+      <figure className="overflow-hidden rounded-3xl border border-border bg-slate-900">
+        <div className="aspect-video w-full">
+          <iframe
+            src={asset.url}
+            className="h-full w-full border-none"
+            allowFullScreen
+            title={block.title || asset.title || "PhET Simulation"}
+          />
+        </div>
+        {(block.title || asset.title) && (
+          <figcaption className="bg-white px-5 py-3 text-[10px] font-black uppercase tracking-widest text-primary border-t border-border">
+            Simulation: {block.title || asset.title}
+          </figcaption>
+        )}
+      </figure>
     )
   }
 

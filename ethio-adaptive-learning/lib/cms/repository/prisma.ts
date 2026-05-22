@@ -6,6 +6,7 @@ import {
   getConceptEditorCmsData,
   updateCurriculumCmsItem,
 } from "@/lib/cms/adapters/curriculum"
+import { getCmsContentType } from "@/lib/cms/registry"
 import type { ContentSnippetCmsInput } from "@/lib/cms/definitions/content-snippet"
 import type { MediaAssetCmsInput } from "@/lib/cms/definitions/media-asset"
 import { normalizeContentBlocks } from "@/lib/cms/content-blocks"
@@ -163,14 +164,17 @@ async function createCanonicalItem(
     userId: string | null
   }
 ) {
+  const definition = getCmsContentType(type)
+  const validated = definition.schema.parse(data)
+
   if (CURRICULUM_TYPES.has(type)) {
-    const result = await createCurriculumCmsItem(type, data)
+    const result = await createCurriculumCmsItem(type, validated)
     await setPublicationState(type, result.id, publication.status, publication.userId)
     return result
   }
 
   if (type === "media-asset") {
-    const input = data as MediaAssetCmsInput
+    const input = validated as MediaAssetCmsInput
     const asset = await prisma.mediaAsset.create({
       data: {
         kind: input.kind,
@@ -219,8 +223,11 @@ async function updateCanonicalItem(
     userId: string | null
   }
 ) {
+  const definition = getCmsContentType(type)
+  const validated = definition.schema.parse(data)
+
   if (CURRICULUM_TYPES.has(type)) {
-    await updateCurriculumCmsItem(type, id, data)
+    await updateCurriculumCmsItem(type, id, validated)
     await setPublicationState(type, id, publication.status, publication.userId)
     return {
       id,
@@ -228,7 +235,7 @@ async function updateCanonicalItem(
   }
 
   if (type === "media-asset") {
-    const input = data as MediaAssetCmsInput
+    const input = validated as MediaAssetCmsInput
     await prisma.mediaAsset.update({
       where: {
         id,

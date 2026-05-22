@@ -54,6 +54,12 @@ const snippetBlockSchema = contentBlockBaseSchema.extend({
   snippetId: requiredTextSchema("Content snippet"),
 })
 
+const phetBlockSchema = contentBlockBaseSchema.extend({
+  type: z.literal("phet"),
+  assetId: requiredTextSchema("PhET Simulation"),
+  title: optionalTrimmedStringSchema,
+})
+
 export const contentBlockSchema = z
   .discriminatedUnion("type", [
     paragraphBlockSchema,
@@ -64,6 +70,7 @@ export const contentBlockSchema = z
     quizBlockSchema,
     codeBlockSchema,
     snippetBlockSchema,
+    phetBlockSchema,
   ])
   .transform((block) => ({
     ...block,
@@ -118,7 +125,7 @@ export function getContentBlockReferences(blocks: CmsContentBlock[]): ContentBlo
   const snippetIds = new Set<string>()
 
   for (const block of blocks) {
-    if (block.type === "image") {
+    if (block.type === "image" || block.type === "phet") {
       assetIds.add(block.assetId)
     }
 

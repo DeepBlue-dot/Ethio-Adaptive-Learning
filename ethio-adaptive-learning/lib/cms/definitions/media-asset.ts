@@ -98,7 +98,7 @@ export const mediaAssetDefinition = {
       required: true,
       section: "Media",
       options: Object.values(MediaAssetKind).map((kind) => ({
-        label: kind === "YOUTUBE_EMBED" ? "YouTube embed" : "Cloudinary image",
+        label: kind === "YOUTUBE_EMBED" ? "YouTube embed" : kind === "PHET_SIMULATION" ? "PhET simulation" : "Cloudinary image",
         value: kind,
       })),
     },

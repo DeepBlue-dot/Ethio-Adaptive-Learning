@@ -12,7 +12,7 @@ export default async function AdminLayout({
   return (
     <StudioLayoutProvider>
       <div className="flex h-screen w-full overflow-hidden bg-background text-on-surface font-body-md antialiased text-sm">
-        <NexusSidebar role={session.user.role} />
+        <NexusSidebar user={session.user} />
         <div className="flex-1 flex overflow-hidden relative">
           {children}
         </div>

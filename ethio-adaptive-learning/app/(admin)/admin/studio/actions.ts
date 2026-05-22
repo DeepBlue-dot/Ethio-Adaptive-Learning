@@ -10,6 +10,10 @@ export async function createYouTubeResource(url: string, title?: string) {
   return resourceActions.createYouTubeResource(url, title)
 }
 
+export async function createPhetResource(url: string, title?: string) {
+  return resourceActions.createPhetResource(url, title)
+}
+
 export async function searchResources(query: string) {
   return resourceActions.searchResources(query)
 }
