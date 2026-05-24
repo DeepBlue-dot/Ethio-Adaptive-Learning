@@ -35,9 +35,15 @@ function parseDate(value?: string | Date | null): Date {
 }
 
 async function fetchYouTubeMetadata(videoId: string, url: string) {
+  // Add a short timeout and explicit abort so long network waits don't break
+  const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`
+  const controller = new AbortController()
+  const timeoutMs = 5000
+  const timeout = setTimeout(() => controller.abort(), timeoutMs)
+
   try {
-    const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`
     const response = await fetch(oembedUrl, {
+      signal: controller.signal,
       next: { revalidate: 86400 },
       headers: {
         "Accept": "application/json",
@@ -49,16 +55,29 @@ async function fetchYouTubeMetadata(videoId: string, url: string) {
       return { duration: undefined, author: undefined, publishedAt: undefined }
     }
 
-    const data: YouTubeOEmbedResponse = await response.json()
-    
+    // Defensive JSON parse
+    let data: YouTubeOEmbedResponse | null = null
+    try {
+      data = await response.json()
+    } catch (err) {
+      console.warn("YouTube oEmbed returned invalid JSON", err)
+    }
+
     return {
       duration: undefined, // oEmbed doesn't provide duration, would need Data API
-      author: data.author_name || undefined,
+      author: data?.author_name || undefined,
       publishedAt: undefined, // oEmbed doesn't provide publication date
     }
-  } catch (error) {
-    console.error("Failed to fetch YouTube metadata:", error)
+  } catch (error: any) {
+    if (error && error.name === "AbortError") {
+      console.warn(`YouTube oEmbed request aborted after ${timeoutMs}ms: ${oembedUrl}`)
+    } else {
+      console.error("Failed to fetch YouTube metadata:", error)
+    }
+
     return { duration: undefined, author: undefined, publishedAt: undefined }
+  } finally {
+    clearTimeout(timeout)
   }
 }
 
