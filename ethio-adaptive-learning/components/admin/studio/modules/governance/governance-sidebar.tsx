@@ -11,10 +11,11 @@ import {
 import { cn } from "@/lib/utils"
 
 const GOVERNANCE_NODES = [
-  { id: "activity", label: "Audit Trail", icon: History, href: "/admin/governance" },
-  { id: "review", label: "Review Queue", icon: FileCheck, href: "/admin/governance" },
-  { id: "users", label: "User Access", icon: UserCircle, href: "/admin/platform" },
-  { id: "security", label: "Security Logs", icon: ShieldCheck, href: "/admin/governance" },
+  { id: "summary", label: "Overview", icon: ShieldCheck, href: "/admin/governance" },
+  { id: "activity", label: "Audit Trail", icon: History, href: "/admin/governance/activity" },
+  { id: "review", label: "Review Queue", icon: FileCheck, href: "/admin/governance/review" },
+  { id: "users", label: "User Access", icon: UserCircle, href: "/admin/governance/users" },
+  { id: "security", label: "Security Logs", icon: ShieldCheck, href: "/admin/governance/security" },
 ]
 
 export function GovernanceSidebar() {
@@ -31,7 +32,7 @@ export function GovernanceSidebar() {
 
       <div className="flex-1 overflow-y-auto custom-scrollbar p-3 space-y-1 bg-surface-container/50">
         {GOVERNANCE_NODES.map((node) => {
-          const isActive = pathname === node.href && node.id === "activity"
+          const isActive = pathname === node.href
           
           return (
             <Link
@@ -40,11 +41,11 @@ export function GovernanceSidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2 text-[13px] font-medium transition-all rounded-lg",
                 isActive 
-                  ? "bg-primary/10 text-primary border-l-2 border-primary shadow-sm font-bold" 
+                  ? "bg-primary text-white shadow-sm font-bold" 
                   : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               )}
             >
-              <node.icon className={cn("size-4", isActive ? "text-primary" : "text-primary/50")} />
+              <node.icon className={cn("size-4", isActive ? "text-white" : "text-primary/50")} />
               <span className="truncate">{node.label}</span>
             </Link>
           )

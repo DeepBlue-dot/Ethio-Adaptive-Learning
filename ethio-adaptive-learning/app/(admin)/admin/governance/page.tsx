@@ -1,19 +1,19 @@
 import { requireCmsAccess } from "@/lib/cms"
-import { StudioIntelligenceDashboard } from "@/components/admin/studio/modules/intelligence/studio-intelligence-dashboard"
-import { getStudioIntelligence } from "@/lib/studio/intelligence"
+import { getGovernanceSummary } from "@/lib/studio/governance"
+import { GovernanceSummary } from "@/components/admin/studio/modules/governance/governance-summary"
 
 export default async function GovernancePage() {
   await requireCmsAccess()
-  const data = await getStudioIntelligence()
+  const stats = await getGovernanceSummary()
 
   return (
     <div className="max-w-6xl mx-auto space-y-10">
         <div>
            <h1 className="text-3xl font-display font-black text-on-surface tracking-tight">Governance</h1>
-           <p className="text-secondary-foreground opacity-60 mt-1">Audit trails and system lifecycle management.</p>
+           <p className="text-secondary-foreground opacity-60 mt-1">System-wide oversight, compliance, and audit trails.</p>
         </div>
         
-        <StudioIntelligenceDashboard data={data} />
+        <GovernanceSummary stats={stats} />
     </div>
   )
 }
