@@ -1,104 +1,147 @@
-import { requireRole } from "@/lib/auth"
+import React from "react"
+import { 
+  Users, 
+  Shield, 
+  Key, 
+  Globe, 
+  ArrowUpRight,
+  UserCheck,
+  ShieldAlert,
+  Zap
+} from "lucide-react"
+import Link from "next/link"
 import { prisma } from "@/lib/prisma"
-import { User, Shield, GraduationCap, Mail, Search } from "lucide-react"
-import { cn } from "@/lib/utils"
 
-export default async function PlatformUsersPage() {
-  await requireRole("ADMIN")
-  const users = await prisma.user.findMany({
-    orderBy: { createdAt: 'desc' },
-    include: { profile: true }
-  })
+export default async function PlatformOverviewPage() {
+  const [userCounts, adminCount, writerCount, studentCount] = await Promise.all([
+    prisma.user.count(),
+    prisma.user.count({ where: { role: "ADMIN" } }),
+    prisma.user.count({ where: { role: "COURSE_WRITER" } }),
+    prisma.user.count({ where: { role: "STUDENT" } }),
+  ])
 
   return (
-    <div className="max-w-6xl mx-auto space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div className="max-w-6xl mx-auto space-y-12 animate-in fade-in duration-700">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-3xl font-display font-black text-on-surface tracking-tight">Platform Users</h1>
-          <p className="text-on-surface-variant mt-1.5">Manage accounts and global access permissions.</p>
-        </div>
-        
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-on-surface-variant/50" />
-          <input 
-            type="text" 
-            placeholder="Filter users..."
-            className="pl-9 pr-4 py-2 rounded-xl border border-outline-variant bg-surface text-sm focus:border-primary outline-none transition-all w-full sm:w-64"
-          />
+           <div className="flex items-center gap-2 mb-3">
+              <div className="size-2 rounded-full bg-primary animate-pulse" />
+              <span className="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Platform Core</span>
+           </div>
+           <h1 className="text-4xl font-black text-on-surface uppercase tracking-tight leading-none">Infrastructure Overview</h1>
+           <p className="text-on-surface-variant opacity-60 mt-3 max-w-xl font-medium">
+              Manage the foundational elements of the EthioPrep platform: identity, security, and regional configuration.
+           </p>
         </div>
       </div>
 
-      <div className="bg-surface border border-outline-variant rounded-[2rem] overflow-hidden shadow-sm">
-        <div className="overflow-x-auto custom-scrollbar">
-          <table className="w-full text-left border-collapse text-sm">
-            <thead>
-              <tr className="bg-surface-container-low/50 text-[10px] uppercase tracking-widest font-black text-on-surface-variant/60 border-b border-outline-variant">
-                <th className="py-4 px-6 lg:px-8">User Identity</th>
-                <th className="py-4 px-4">Role & Access</th>
-                <th className="py-4 px-4 hidden md:table-cell">Academic Context</th>
-                <th className="py-4 px-4 hidden lg:table-cell">Engagement</th>
-                <th className="py-4 px-6 lg:px-8 text-right">Joined</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-outline-variant">
-              {users.map((user) => (
-                <tr key={user.id} className="hover:bg-surface-container-low/30 transition-colors group">
-                  <td className="py-4 px-6 lg:px-8">
-                    <div className="flex items-center gap-4">
-                      <div className="size-10 rounded-full bg-primary/5 dark:bg-primary/20 flex items-center justify-center text-xs font-bold text-primary border border-primary/10">
-                        {user.username[0].toUpperCase()}
-                      </div>
-                      <div className="flex flex-col min-w-0">
-                        <span className="font-bold text-on-surface truncate">{user.username}</span>
-                        <div className="flex items-center gap-1 text-[10px] text-on-surface-variant opacity-60">
-                           <Mail className="size-3" />
-                           <span className="truncate">{user.email}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-4 px-4">
-                     <span className={cn(
-                       "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border flex items-center gap-1.5 w-fit",
-                       user.role === 'ADMIN' ? "bg-rose-50 text-rose-700 border-rose-100 dark:bg-rose-900/20 dark:text-rose-400 dark:border-rose-900/30" :
-                       user.role === 'COURSE_WRITER' ? "bg-amber-50 text-amber-700 border-amber-100 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-900/30" :
-                       "bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-900/30"
-                     )}>
-                       {user.role === 'ADMIN' ? <Shield className="size-3" /> : <User className="size-3" />}
-                       {user.role}
-                     </span>
-                  </td>
-                  <td className="py-4 px-4 hidden md:table-cell">
-                     <div className="flex items-center gap-2 text-on-surface-variant">
-                        <GraduationCap className="size-4 opacity-40" />
-                        <span className="font-medium">{user.grade || 'Staff'}</span>
-                     </div>
-                  </td>
-                  <td className="py-4 px-4 hidden lg:table-cell text-on-surface-variant opacity-70">
-                     {user.profile?.currentLevel ? `Level ${user.profile.currentLevel}` : 'N/A'}
-                  </td>
-                  <td className="py-4 px-6 lg:px-8 text-right">
-                     <div className="flex flex-col items-end gap-1">
-                        <span className="text-xs font-medium text-on-surface">{new Date(user.createdAt).toLocaleDateString()}</span>
-                        <span className="text-[10px] text-on-surface-variant opacity-40 uppercase tracking-tighter">Verified</span>
-                     </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+         <OverviewStatCard 
+            label="Total Identities" 
+            value={userCounts} 
+            icon={<Users className="size-5" />}
+            color="blue"
+         />
+         <OverviewStatCard 
+            label="Administrative Staff" 
+            value={adminCount + writerCount} 
+            icon={<Shield className="size-5" />}
+            color="rose"
+         />
+         <OverviewStatCard 
+            label="Active Students" 
+            value={studentCount} 
+            icon={<UserCheck className="size-5" />}
+            color="emerald"
+         />
+         <OverviewStatCard 
+            label="API Uptime" 
+            value="99.9%" 
+            icon={<Zap className="size-5" />}
+            color="amber"
+         />
       </div>
-      
-      <div className="p-6 bg-amber-50 border border-amber-100 dark:bg-amber-900/10 dark:border-amber-900/20 rounded-3xl flex items-center gap-4">
-         <div className="p-2 bg-white dark:bg-slate-900 rounded-xl shadow-sm border border-amber-200 dark:border-amber-900/40 text-amber-600">
-            <Shield className="size-5" />
-         </div>
-         <div className="flex-1 min-w-0">
-            <p className="text-sm font-bold text-amber-900 dark:text-amber-400">Security Notice</p>
-            <p className="text-xs text-amber-800 dark:text-amber-500 opacity-80 truncate">Role modifications for Admin users must be verified through two-factor authentication.</p>
-         </div>
+
+      {/* Navigation Matrix */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+         <PlatformModuleLink 
+            title="User Management"
+            description="Manage all platform accounts, roles, and status. Perform role escalations and audit individual access."
+            href="/admin/platform/users"
+            icon={<Users className="size-6" />}
+            stats={[`${userCounts} Accounts`, "Real-time Filtering"]}
+         />
+         <PlatformModuleLink 
+            title="Roles & Permissions"
+            description="Configure granular access control for staff. Manage the capabilities of Admins and Course Writers."
+            href="/admin/platform/roles"
+            icon={<ShieldAlert className="size-6" />}
+            stats={["RBAC Matrix", "3 Global Roles"]}
+         />
+         <PlatformModuleLink 
+            title="API Configuration"
+            description="Manage system secrets, webhook endpoints, and third-party integration toggles."
+            href="/admin/platform/api"
+            icon={<Key className="size-6" />}
+            stats={["Secret Vault", "Rate Policy"]}
+         />
+         <PlatformModuleLink 
+            title="Regional Settings"
+            description="Configure Ethiopian curriculum standards, grade level mappings, and default localization."
+            href="/admin/platform/locales"
+            icon={<Globe className="size-6" />}
+            stats={["Locale Sync", "Grade Standards"]}
+         />
       </div>
     </div>
+  )
+}
+
+function OverviewStatCard({ label, value, icon, color }: { label: string, value: string | number, icon: React.ReactNode, color: 'blue' | 'rose' | 'emerald' | 'amber' }) {
+  const colors = {
+    blue: "text-blue-600 bg-blue-50 border-blue-100",
+    rose: "text-rose-600 bg-rose-50 border-rose-100",
+    emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
+    amber: "text-amber-600 bg-amber-50 border-amber-100"
+  }
+
+  return (
+    <div className="bg-white border border-outline-variant rounded-[2rem] p-6 shadow-sm">
+       <div className="size-10 rounded-2xl flex items-center justify-center border mb-4 shadow-sm transition-transform hover:scale-110">
+          <div className={colors[color]}>{icon}</div>
+       </div>
+       <p className="text-[10px] font-black uppercase tracking-[0.2em] text-on-surface-variant opacity-60 mb-1">{label}</p>
+       <p className="text-3xl font-black text-on-surface tracking-tighter">{value}</p>
+    </div>
+  )
+}
+
+function PlatformModuleLink({ title, description, href, icon, stats }: { title: string, description: string, href: string, icon: React.ReactNode, stats: string[] }) {
+  return (
+    <Link href={href} className="group">
+       <div className="bg-white border border-outline-variant rounded-[2.5rem] p-8 shadow-sm group-hover:shadow-xl group-hover:border-primary/20 transition-all group-hover:-translate-y-1 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-6">
+             <div className="size-12 rounded-2xl bg-surface-container-high flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-white transition-all">
+                {icon}
+             </div>
+             <div className="size-10 rounded-full bg-surface-container-low flex items-center justify-center text-on-surface-variant group-hover:bg-primary group-hover:text-white transition-all">
+                <ArrowUpRight className="size-5" />
+             </div>
+          </div>
+          <h3 className="text-lg font-black text-on-surface uppercase tracking-tight group-hover:text-primary transition-colors mb-2">{title}</h3>
+          <p className="text-sm text-on-surface-variant font-medium leading-relaxed flex-1 mb-8">
+             {description}
+          </p>
+          <div className="flex flex-wrap gap-2">
+             {stats.map((s, i) => (
+                <span key={i} className="text-[9px] font-black text-on-surface-variant/40 uppercase tracking-widest bg-surface-container-low px-3 py-1.5 rounded-xl border border-outline-variant/30">
+                   {s}
+                </span>
+             ))}
+          </div>
+       </div>
+    </Link>
   )
 }

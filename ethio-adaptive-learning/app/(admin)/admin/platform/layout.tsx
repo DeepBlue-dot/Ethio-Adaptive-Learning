@@ -22,9 +22,12 @@ export default async function PlatformLayout({
           title="Platform" 
           username={session.user.username} 
           role={session.user.role}
-          breadcrumbs={[{ label: "User Management" }]}
+          breadcrumbs={[
+            { label: "Admin", href: "/admin" },
+            { label: "Platform" }
+          ]}
         />
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
+        <div className="flex-1 overflow-y-auto p-6 lg:p-10 custom-scrollbar bg-surface/30 text-on-surface">
           {children}
         </div>
       </WorkspaceShell>
