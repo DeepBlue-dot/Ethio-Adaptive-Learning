@@ -1,4 +1,4 @@
-import { IntelligenceSidebar } from "@/components/admin/studio/modules/intelligence/intelligence-sidebar"
+import { DashboardSidebar } from "@/components/admin/studio/modules/dashboard/dashboard-sidebar"
 import { ContextSidebar } from "@/components/admin/studio/layout/context-sidebar"
 import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-header"
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
@@ -14,17 +14,20 @@ export default async function DashboardLayout({
   return (
     <>
       <ContextSidebar>
-        <IntelligenceSidebar />
+        <DashboardSidebar />
       </ContextSidebar>
       
       <WorkspaceShell hasContextSidebar>
         <WorkspaceHeader 
-          title="Intelligence" 
+          title="Mission Control" 
           username={session.user.username} 
           role={session.user.role}
-          breadcrumbs={[{ label: "Global Pulse" }]}
+          breadcrumbs={[
+            { label: "Admin", href: "/admin" },
+            { label: "Operations" }
+          ]}
         />
-        <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar bg-surface/30 text-on-surface">
+        <div className="flex-1 overflow-y-auto p-6 lg:p-10 custom-scrollbar bg-surface/30 text-on-surface">
           {children}
         </div>
       </WorkspaceShell>

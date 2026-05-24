@@ -22,9 +22,8 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
   let title = "Unable to verify your email"
   let message =
     "The verification link is invalid or expired. Please request a new verification email."
-  let actionLabel = "Continue to login"
-  let actionHref = "/login"
-  let icon = <XCircle className="h-14 w-14 text-red-600" />
+  const actionLabel = "Continue to login"
+  const actionHref = "/login"
 
   if (!EMAIL_REGEX.test(email) || !token) {
     status = "error"
@@ -48,7 +47,6 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
         title = "Email verified successfully"
         message =
           "Your email address is now verified. You can sign in and continue using EthioPrep."
-        icon = <CheckCircle2 className="h-14 w-14 text-emerald-600" />
       }
     } catch (error) {
       status = "error"
@@ -59,6 +57,10 @@ export default async function VerifyEmailPage({ searchParams }: VerifyEmailPageP
           : "An unexpected error occurred while verifying your email."
     }
   }
+
+  const icon = status === "success" 
+    ? <CheckCircle2 className="h-14 w-14 text-emerald-600" />
+    : <XCircle className="h-14 w-14 text-red-600" />
 
   return (
     <main className="relative flex min-h-screen items-center justify-center px-6 py-12 overflow-hidden transition-colors duration-300 bg-gradient-to-br from-gray-50 to-white dark:from-[#0F1115] dark:to-[#0F1115]">
