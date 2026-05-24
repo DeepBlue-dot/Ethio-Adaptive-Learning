@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest"
 import { MediaAssetKind } from "@prisma/client"
-import { type ResourceItem } from "@/components/admin/studio/modules/resources/resource-card"
+import { type ResourceItem } from "@/components/admin/resources/resource-card"
 import { type CmsEntity } from "@/lib/cms/types"
 
 // Mock dependencies
@@ -911,7 +911,7 @@ describe("ResourcesPage", () => {
 
       expect(invalidSnippet.validationStatus).toBe("invalid")
       expect(invalidSnippet.errors).toContain("No content found in snippet")
-      expect(invalidSnippet.errors.length).toBeGreaterThan(0)
+      expect(invalidSnippet.errors!.length).toBeGreaterThan(0)
     })
 
     it("should warn on snippets with recoverable issues", () => {
@@ -997,7 +997,7 @@ describe("ResourcesPage", () => {
         status: "DRAFT",
       }
 
-      expect(snippetWithEmptyBlocks.errors.some(e => e.includes("empty block(s) detected"))).toBe(true)
+      expect(snippetWithEmptyBlocks.errors!.some((e: string) => e.includes("empty block(s) detected"))).toBe(true)
     })
 
     it("should support multiple validation errors", () => {
@@ -1017,7 +1017,7 @@ describe("ResourcesPage", () => {
         status: "DRAFT",
       }
 
-      expect(multiErrorSnippet.errors.length).toBe(3)
+      expect(multiErrorSnippet.errors!.length).toBe(3)
       expect(multiErrorSnippet.errors).toContain("No content found in snippet")
     })
 

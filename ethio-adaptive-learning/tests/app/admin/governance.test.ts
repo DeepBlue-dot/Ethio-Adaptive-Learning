@@ -58,7 +58,7 @@ describe("Governance Service", () => {
           user: { username: "admin", name: "Admin User", image: null, role: "ADMIN" }
         }
       ]
-      vi.mocked(prisma.activityLog.findMany).mockResolvedValue(mockLogs as any)
+      vi.mocked(prisma.activityLog.findMany).mockResolvedValue(mockLogs as unknown as never)
 
       const activity = await getDetailedActivityLog(10)
 
@@ -79,7 +79,7 @@ describe("Governance Service", () => {
       const mockDrafts = [
         { id: "d1", contentType: "course", entityId: "e1", updatedAt: new Date() }
       ]
-      vi.mocked(prisma.cmsDraft.findMany).mockResolvedValue(mockDrafts as any)
+      vi.mocked(prisma.cmsDraft.findMany).mockResolvedValue(mockDrafts as unknown as never)
 
       const queue = await getReviewQueue()
 
@@ -103,7 +103,7 @@ describe("Governance Service", () => {
           _count: { authoredCourses: 2, authoredQuestions: 15 }
         }
       ]
-      vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as any)
+      vi.mocked(prisma.user.findMany).mockResolvedValue(mockUsers as unknown as never)
 
       const users = await getGovernanceUsers()
 

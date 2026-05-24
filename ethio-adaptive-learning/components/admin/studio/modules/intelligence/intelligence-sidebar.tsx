@@ -5,16 +5,18 @@ import { usePathname } from "next/navigation"
 import { 
   Activity, 
   HeartPulse, 
-  Target, 
-  Users
+  Search,
+  FlaskConical,
+  ShieldCheck
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const INTELLIGENCE_NODES = [
-  { id: "overview", label: "Global Pulse", icon: HeartPulse, href: "/admin/dashboard" },
-  { id: "health", label: "Curriculum Health", icon: Activity, href: "/admin/dashboard" },
-  { id: "students", label: "Student Metrics", icon: Users, href: "/admin/dashboard" },
-  { id: "mastery", label: "Mastery Trends", icon: Target, href: "/admin/dashboard" },
+  { id: "overview", label: "Global Pulse", icon: HeartPulse, href: "/admin/intelligence" },
+  { id: "questions", label: "Question Analytics", icon: Search, href: "/admin/intelligence/questions" },
+  { id: "concepts", label: "Concept Health", icon: Activity, href: "/admin/intelligence/concepts" },
+  { id: "calibration", label: "Calibration Lab", icon: FlaskConical, href: "/admin/intelligence/calibration" },
+  { id: "quality", label: "Quality Governance", icon: ShieldCheck, href: "/admin/intelligence/quality" },
 ]
 
 export function IntelligenceSidebar() {
@@ -36,7 +38,7 @@ export function IntelligenceSidebar() {
       {/* Navigation View */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-1.5 bg-surface-container/30 backdrop-blur-sm">
         {INTELLIGENCE_NODES.map((node) => {
-          const isActive = pathname === node.href && node.id === "overview"
+          const isActive = pathname === node.href
           
           return (
             <Link
@@ -71,8 +73,8 @@ export function IntelligenceSidebar() {
            </div>
            
            <div className="space-y-2.5">
-              <AlertItem label="3 Orphan Nodes Detected" type="warning" />
-              <AlertItem label="Critical Drop: Limits Mastery" type="critical" />
+              <AlertItem label="Orphan Nodes Detected" type="warning" />
+              <AlertItem label="Calibration Required" type="warning" />
            </div>
         </div>
       </div>
