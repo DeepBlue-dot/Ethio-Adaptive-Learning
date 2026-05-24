@@ -5,9 +5,18 @@ test.describe('Focus Mode Editor', () => {
     // Navigate to a specific concept editor via the tree
     await page.goto('/admin/studio');
     
-    await page.getByRole('link', { name: /Grade 12 Mathematics/i }).click();
-    await page.getByText(/Unit 1/i).click();
-    await page.getByText(/Linear Functions/i).first().click();
+    // Click near the link to expand the course without navigating
+    await page.getByRole('link', { name: /Grade 12 Mathematics/i }).first().click({ position: { x: -10, y: 0 } });
+    
+    // Now Unit 1 should be visible
+    const unitItem = page.getByText(/Unit 1/i).first();
+    await expect(unitItem).toBeVisible();
+    await unitItem.click();
+    
+    // Now Concept should be visible
+    const conceptItem = page.getByText(/Linear Functions/i).first();
+    await expect(conceptItem).toBeVisible();
+    await conceptItem.click();
     
     await expect(page).toHaveURL(/\/admin\/studio\/editor\/concept\/.+/);
   });

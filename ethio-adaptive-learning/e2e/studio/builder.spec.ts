@@ -20,8 +20,8 @@ test.describe('Course Builder', () => {
     const canvas = page.locator('main');
     await canvas.getByText(/U1:/i).first().click();
     
-    // Inspector should open with details (complementary role usually maps to <aside>)
-    const inspector = page.getByRole('complementary');
+    // Inspector is an aside inside the main workspace
+    const inspector = canvas.locator('aside');
     await expect(inspector).toBeVisible();
     await expect(inspector.getByText(/Inspector/i)).toBeVisible();
   });
@@ -30,7 +30,7 @@ test.describe('Course Builder', () => {
     const canvas = page.locator('main');
     await canvas.getByText(/U1:/i).first().click();
     
-    const inspector = page.getByRole('complementary');
+    const inspector = canvas.locator('aside');
     await inspector.getByRole('link', { name: /Deep Editor/i }).click();
     
     await expect(page).toHaveURL(/\/admin\/studio\/editor\/unit\/.+/);

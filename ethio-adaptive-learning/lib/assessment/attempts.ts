@@ -8,6 +8,12 @@ import { ensureStartedMastery, syncUnlockedConceptsForCourse } from "./mastery"
 import { selectQuestionsForAttempt } from "./selection"
 import { EXAM_PASS_THRESHOLD, EXAM_QUESTION_LIMIT, questionSelect, userMasterySelect } from "./constants"
 import { isAnswerCorrect, parseStringArray, parseStringRecord, requireId, requireText } from "./utils"
+import {
+  awardXpForActivity,
+  recordDailyActivity,
+  checkAndAwardXpBadges,
+  checkAndAwardStreakBadges,
+} from "@/lib/gamification"
 import type { DbClient } from "./types"
 
 export async function startPracticeAttempt(userId: string, conceptId: string) {
@@ -63,7 +69,7 @@ export async function startPracticeAttempt(userId: string, conceptId: string) {
 }
 
 export async function submitPracticeAttempt(userId: string, attemptId: string, answer: string) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const attempt = await tx.practiceAttempt.findUnique({
       where: {
         id: requireId(attemptId, "Practice attempt"),
@@ -115,6 +121,16 @@ export async function submitPracticeAttempt(userId: string, attemptId: string, a
       isCorrect,
     }
   })
+
+  // Award XP and record streak for practice completion
+  await awardXpForActivity(userId, "PRACTICE_COMPLETE")
+  const streak = await recordDailyActivity(userId)
+  if (streak.streak >= 7) {
+    await checkAndAwardStreakBadges(userId, streak.streak)
+  }
+  await checkAndAwardXpBadges(userId)
+
+  return result
 }
 
 export async function startCheckpointAttempt(userId: string, conceptId: string) {
@@ -170,7 +186,7 @@ export async function startCheckpointAttempt(userId: string, conceptId: string) 
 }
 
 export async function submitCheckpointAttempt(userId: string, attemptId: string, answer: string) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const attempt = await tx.checkpointAttempt.findUnique({
       where: {
         id: requireId(attemptId, "Checkpoint attempt"),
@@ -225,6 +241,18 @@ export async function submitCheckpointAttempt(userId: string, attemptId: string,
       isCorrect,
     }
   })
+
+  // Award XP and record streak if checkpoint passed
+  if (result.isCorrect) {
+    await awardXpForActivity(userId, "CHECKPOINT_PASS")
+    const streak = await recordDailyActivity(userId)
+    if (streak.streak >= 7) {
+      await checkAndAwardStreakBadges(userId, streak.streak)
+    }
+    await checkAndAwardXpBadges(userId)
+  }
+
+  return result
 }
 
 export async function startExamAttempt(userId: string, conceptId: string, pathway: PathwayType) {
@@ -302,7 +330,7 @@ export async function submitExamAttempt(
   attemptId: string,
   answers: Record<string, string>
 ) {
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     const attempt = await tx.examAttempt.findUnique({
       where: {
         id: requireId(attemptId, "Exam attempt"),
@@ -464,4 +492,16 @@ export async function submitExamAttempt(
       unlockedNewConcepts: isPassed,
     }
   })
+
+  // Award XP, record streak, and check badges if exam passed
+  if (result.isPassed) {
+    await awardXpForActivity(userId, "EXAM_PASS")
+    const streak = await recordDailyActivity(userId)
+    if (streak.streak >= 7) {
+      await checkAndAwardStreakBadges(userId, streak.streak)
+    }
+    await checkAndAwardXpBadges(userId)
+  }
+
+  return result
 }
