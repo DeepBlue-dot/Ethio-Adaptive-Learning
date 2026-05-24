@@ -23,73 +23,58 @@ export async function importGrade12Math({
 
   const pack = await loadGrade12MathContentPack(contentRoot)
   validateGrade12MathContentPack(pack)
+  // Avoid holding a long-lived transaction across the whole import.
+  // Each concept is imported in its own focused transaction.
+  const course = await prisma.course.upsert({
+    where: { slug: pack.slug },
+    update: {
+      title: pack.title,
+      description: pack.description,
+      archivedAt: null,
+      ...withAuthor(authorId),
+    },
+    create: {
+      slug: pack.slug,
+      title: pack.title,
+      description: pack.description,
+      ...withAuthor(authorId),
+    },
+    select: { id: true, slug: true },
+  })
 
-  const result = await prisma.$transaction(async (tx) => {
-    const course = await tx.course.upsert({
+  const conceptIdsByReference = new Map()
+  const desiredUnitSlugs = new Set()
+  const desiredConceptSlugsByUnitId = new Map()
+
+  for (const unitPack of pack.units) {
+    desiredUnitSlugs.add(unitPack.slug)
+
+    const unit = await prisma.unit.upsert({
       where: {
-        slug: pack.slug,
-      },
-      update: {
-        title: pack.title,
-        description: pack.description,
-        archivedAt: null,
-        ...withAuthor(authorId),
-      },
-      create: {
-        slug: pack.slug,
-        title: pack.title,
-        description: pack.description,
-        ...withAuthor(authorId),
-      },
-      select: {
-        id: true,
-        slug: true,
-      },
-    })
-
-    const conceptIdsByReference = new Map()
-    const desiredUnitSlugs = new Set()
-    const desiredConceptSlugsByUnitId = new Map()
-
-    for (const unitPack of pack.units) {
-      desiredUnitSlugs.add(unitPack.slug)
-
-      const unit = await tx.unit.upsert({
-        where: {
-          courseId_slug: {
-            courseId: course.id,
-            slug: unitPack.slug,
-          },
-        },
-        update: {
-          title: unitPack.title,
-          order: unitPack.order,
-        },
-        create: {
+        courseId_slug: {
           courseId: course.id,
           slug: unitPack.slug,
-          title: unitPack.title,
-          order: unitPack.order,
         },
-        select: {
-          id: true,
-          slug: true,
-        },
-      })
+      },
+      update: { title: unitPack.title, order: unitPack.order },
+      create: {
+        courseId: course.id,
+        slug: unitPack.slug,
+        title: unitPack.title,
+        order: unitPack.order,
+      },
+      select: { id: true, slug: true },
+    })
 
-      desiredConceptSlugsByUnitId.set(
-        unit.id,
-        new Set(unitPack.concepts.map((conceptPack) => conceptPack.slug))
-      )
+    desiredConceptSlugsByUnitId.set(
+      unit.id,
+      new Set(unitPack.concepts.map((conceptPack) => conceptPack.slug))
+    )
 
-      for (const conceptPack of unitPack.concepts) {
+    for (const conceptPack of unitPack.concepts) {
+      await prisma.$transaction(async (tx) => {
         const concept = await tx.concept.upsert({
-          where: {
-            unitId_slug: {
-              unitId: unit.id,
-              slug: conceptPack.slug,
-            },
-          },
+          where: { unitId_slug: { unitId: unit.id, slug: conceptPack.slug } },
           update: {
             title: conceptPack.title,
             description: conceptPack.description,
@@ -114,10 +99,7 @@ export async function importGrade12Math({
             pS: conceptPack.pS,
             decayLambda: conceptPack.decayLambda,
           },
-          select: {
-            id: true,
-            slug: true,
-          },
+          select: { id: true, slug: true },
         })
 
         conceptIdsByReference.set(conceptPack.reference, concept.id)
@@ -125,74 +107,66 @@ export async function importGrade12Math({
         await syncConceptChunks(tx, concept.id, conceptPack.chunks, authorId)
         await syncWorkedExamples(tx, concept.id, conceptPack.workedExamples, authorId)
         await syncQuestions(tx, concept.id, conceptPack.questions, authorId)
-      }
+      })
     }
+  }
 
-    await pruneRemovedConcepts(tx, {
-      courseId: course.id,
-      desiredConceptSlugsByUnitId,
-    })
-    await pruneRemovedUnits(tx, {
-      courseId: course.id,
-      desiredUnitSlugs,
-    })
+  // Run prerequisites, pruning, and closure rebuild in smaller operations.
+  // Avoid holding a long-lived transaction across the entire import.
+  await pruneRemovedConcepts(prisma, { courseId: course.id, desiredConceptSlugsByUnitId })
+  await pruneRemovedUnits(prisma, { courseId: course.id, desiredUnitSlugs })
 
-    for (const unitPack of pack.units) {
-      for (const conceptPack of unitPack.concepts) {
-        const dependentConceptId = conceptIdsByReference.get(conceptPack.reference)
+  for (const unitPack of pack.units) {
+    for (const conceptPack of unitPack.concepts) {
+      const dependentConceptId = conceptIdsByReference.get(conceptPack.reference)
 
-        if (!dependentConceptId) {
-          throw new Error(`Import could not resolve concept id for ${conceptPack.reference}.`)
-        }
+      if (!dependentConceptId) {
+        throw new Error(`Import could not resolve concept id for ${conceptPack.reference}.`)
+      }
 
-        const prerequisiteConceptIds = [
-          ...new Set(
-            conceptPack.prerequisites.map((reference) => {
-              const prerequisiteConceptId = conceptIdsByReference.get(reference)
+      const prerequisiteConceptIds = [
+        ...new Set(
+          conceptPack.prerequisites.map((reference) => {
+            const prerequisiteConceptId = conceptIdsByReference.get(reference)
 
-              if (!prerequisiteConceptId) {
-                throw new Error(
-                  `Concept ${conceptPack.reference} references unknown prerequisite ${reference}.`
-                )
-              }
+            if (!prerequisiteConceptId) {
+              throw new Error(
+                `Concept ${conceptPack.reference} references unknown prerequisite ${reference}.`
+              )
+            }
 
-              return prerequisiteConceptId
-            })
-          ),
-        ]
-
-        await tx.conceptPrerequisite.deleteMany({
-          where: {
-            dependentConceptId,
-          },
-        })
-
-        if (prerequisiteConceptIds.length) {
-          await tx.conceptPrerequisite.createMany({
-            data: prerequisiteConceptIds.map((prerequisiteConceptId) => ({
-              prerequisiteConceptId,
-              dependentConceptId,
-            })),
+            return prerequisiteConceptId
           })
-        }
+        ),
+      ]
+
+      await prisma.conceptPrerequisite.deleteMany({ where: { dependentConceptId } })
+
+      if (prerequisiteConceptIds.length) {
+        await prisma.conceptPrerequisite.createMany({
+          data: prerequisiteConceptIds.map((prerequisiteConceptId) => ({
+            prerequisiteConceptId,
+            dependentConceptId,
+          })),
+        })
       }
     }
+  }
 
-    await rebuildConceptClosureForCourse(tx, course.id)
+  await rebuildConceptClosureForCourse(prisma, course.id)
 
-    return {
-      courseId: course.id,
-      courseSlug: course.slug,
-      unitCount: pack.units.length,
-      conceptCount: pack.units.reduce((total, unitPack) => total + unitPack.concepts.length, 0),
-      questionCount: pack.units.reduce(
-        (total, unitPack) =>
-          total + unitPack.concepts.reduce((conceptTotal, conceptPack) => conceptTotal + conceptPack.questions.length, 0),
-        0
-      ),
-      conceptIdsByReference: Object.fromEntries(conceptIdsByReference),
-    }
-  })
+  const result = {
+    courseId: course.id,
+    courseSlug: course.slug,
+    unitCount: pack.units.length,
+    conceptCount: pack.units.reduce((total, unitPack) => total + unitPack.concepts.length, 0),
+    questionCount: pack.units.reduce(
+      (total, unitPack) =>
+        total + unitPack.concepts.reduce((conceptTotal, conceptPack) => conceptTotal + conceptPack.questions.length, 0),
+      0
+    ),
+    conceptIdsByReference: Object.fromEntries(conceptIdsByReference),
+  }
 
   logger.info("Grade 12 Mathematics import complete.", result)
 

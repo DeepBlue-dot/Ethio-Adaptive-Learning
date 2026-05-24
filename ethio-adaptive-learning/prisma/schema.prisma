@@ -66,6 +66,7 @@ model User {
   practiceAttempts   PracticeAttempt[]
   checkpointAttempts CheckpointAttempt[]
   examAttempts  ExamAttempt[]
+  tutorSessions TutorSession[]
 
   // Audit Fields: Content created by this user (if they are a Course Writer)
   authoredCourses        Course[]        @relation("CourseAuthor")
@@ -195,6 +196,7 @@ model Concept {
   practiceAttempts   PracticeAttempt[]
   checkpointAttempts CheckpointAttempt[]
   examAttempts   ExamAttempt[]
+  tutorSessions  TutorSession[]
 
   @@unique([unitId, title])
   @@unique([unitId, slug])
