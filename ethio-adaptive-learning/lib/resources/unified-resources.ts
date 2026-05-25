@@ -68,8 +68,8 @@ async function fetchYouTubeMetadata(videoId: string, url: string) {
       author: data?.author_name || undefined,
       publishedAt: undefined, // oEmbed doesn't provide publication date
     }
-  } catch (error: any) {
-    if (error && error.name === "AbortError") {
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "name" in error && error.name === "AbortError") {
       console.warn(`YouTube oEmbed request aborted after ${timeoutMs}ms: ${oembedUrl}`)
     } else {
       console.error("Failed to fetch YouTube metadata:", error)

@@ -68,7 +68,12 @@ export async function startPracticeAttempt(userId: string, conceptId: string) {
   })
 }
 
-export async function submitPracticeAttempt(userId: string, attemptId: string, answer: string) {
+export async function submitPracticeAttempt(
+  userId: string,
+  attemptId: string,
+  answer: string,
+  responseTimeMs?: number
+) {
   const result = await prisma.$transaction(async (tx) => {
     const attempt = await tx.practiceAttempt.findUnique({
       where: {
@@ -111,6 +116,7 @@ export async function submitPracticeAttempt(userId: string, attemptId: string, a
         questionId: attempt.questionId,
         activityType: "PRACTICE_QUESTION",
         isCorrect,
+        responseTimeMs: sanitizeResponseTime(responseTimeMs),
       },
     })
 
@@ -185,7 +191,12 @@ export async function startCheckpointAttempt(userId: string, conceptId: string) 
   })
 }
 
-export async function submitCheckpointAttempt(userId: string, attemptId: string, answer: string) {
+export async function submitCheckpointAttempt(
+  userId: string,
+  attemptId: string,
+  answer: string,
+  responseTimeMs?: number
+) {
   const result = await prisma.$transaction(async (tx) => {
     const attempt = await tx.checkpointAttempt.findUnique({
       where: {
@@ -231,6 +242,7 @@ export async function submitCheckpointAttempt(userId: string, attemptId: string,
         questionId: attempt.questionId,
         activityType: "CHECKPOINT_QUESTION",
         isCorrect,
+        responseTimeMs: sanitizeResponseTime(responseTimeMs),
       },
     })
 
@@ -253,6 +265,14 @@ export async function submitCheckpointAttempt(userId: string, attemptId: string,
   }
 
   return result
+}
+
+function sanitizeResponseTime(responseTimeMs: number | undefined) {
+  if (!Number.isFinite(responseTimeMs)) {
+    return undefined
+  }
+
+  return Math.max(0, Math.round(responseTimeMs ?? 0))
 }
 
 export async function startExamAttempt(userId: string, conceptId: string, pathway: PathwayType) {

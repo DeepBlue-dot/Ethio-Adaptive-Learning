@@ -72,42 +72,40 @@ export async function importGrade12Math({
     )
 
     for (const conceptPack of unitPack.concepts) {
-      await prisma.$transaction(async (tx) => {
-        const concept = await tx.concept.upsert({
-          where: { unitId_slug: { unitId: unit.id, slug: conceptPack.slug } },
-          update: {
-            title: conceptPack.title,
-            description: conceptPack.description,
-            contentBody: conceptPack.overviewBody,
-            unlockThreshold: conceptPack.unlockThreshold,
-            pLo: conceptPack.pLo,
-            pT: conceptPack.pT,
-            pG: conceptPack.pG,
-            pS: conceptPack.pS,
-            decayLambda: conceptPack.decayLambda,
-          },
-          create: {
-            unitId: unit.id,
-            slug: conceptPack.slug,
-            title: conceptPack.title,
-            description: conceptPack.description,
-            contentBody: conceptPack.overviewBody,
-            unlockThreshold: conceptPack.unlockThreshold,
-            pLo: conceptPack.pLo,
-            pT: conceptPack.pT,
-            pG: conceptPack.pG,
-            pS: conceptPack.pS,
-            decayLambda: conceptPack.decayLambda,
-          },
-          select: { id: true, slug: true },
-        })
-
-        conceptIdsByReference.set(conceptPack.reference, concept.id)
-
-        await syncConceptChunks(tx, concept.id, conceptPack.chunks, authorId)
-        await syncWorkedExamples(tx, concept.id, conceptPack.workedExamples, authorId)
-        await syncQuestions(tx, concept.id, conceptPack.questions, authorId)
+      const concept = await prisma.concept.upsert({
+        where: { unitId_slug: { unitId: unit.id, slug: conceptPack.slug } },
+        update: {
+          title: conceptPack.title,
+          description: conceptPack.description,
+          contentBody: conceptPack.overviewBody,
+          unlockThreshold: conceptPack.unlockThreshold,
+          pLo: conceptPack.pLo,
+          pT: conceptPack.pT,
+          pG: conceptPack.pG,
+          pS: conceptPack.pS,
+          decayLambda: conceptPack.decayLambda,
+        },
+        create: {
+          unitId: unit.id,
+          slug: conceptPack.slug,
+          title: conceptPack.title,
+          description: conceptPack.description,
+          contentBody: conceptPack.overviewBody,
+          unlockThreshold: conceptPack.unlockThreshold,
+          pLo: conceptPack.pLo,
+          pT: conceptPack.pT,
+          pG: conceptPack.pG,
+          pS: conceptPack.pS,
+          decayLambda: conceptPack.decayLambda,
+        },
+        select: { id: true, slug: true },
       })
+
+      conceptIdsByReference.set(conceptPack.reference, concept.id)
+
+      await syncConceptChunks(prisma, concept.id, conceptPack.chunks, authorId)
+      await syncWorkedExamples(prisma, concept.id, conceptPack.workedExamples, authorId)
+      await syncQuestions(prisma, concept.id, conceptPack.questions, authorId)
     }
   }
 

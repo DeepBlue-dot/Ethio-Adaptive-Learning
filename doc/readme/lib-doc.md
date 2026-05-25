@@ -13,6 +13,7 @@ The `ethio-adaptive-learning/lib` folder contains the main backend/domain logic 
 - CMS content access and resource aggregation
 - email sending and cloudinary media support
 - admin/studio helper utilities
+- AI Socratic Tutoring Subsystem
 
 This documentation is intended for other LLMs or developers to quickly understand how the backend intelligence is organized and where to find each subsystem.
 
@@ -98,6 +99,41 @@ These are the core intelligence engines in `/lib`.
 
 - `lib/adaptive/index.ts`
   - re-exports the adaptive helpers.
+
+#### AI Tutoring & RAG Subsystem
+
+- **Purpose**: Provides a RAG (retrieval-augmented generation) backed Socratic tutoring service that guides students with questions (not direct answers) using curriculum context and an LLM.
+- **Core files**: `lib/ai/tutoring/socratic-engine.ts`, `lib/ai/tutoring/prompts.ts`, `lib/ai/tutoring/guardrails.ts`, `lib/ai/rag/retrieval.ts`, `lib/ai/embeddings/embedding-service.ts`, `lib/ai/clients/ollama.ts`, `lib/ai/clients/chroma.ts`, `lib/ai/rag/ingestion.ts`, and `lib/ai/types/index.ts`.
+- **Responsibilities**:
+  - Retrieve semantically relevant curriculum chunks from ChromaDB using embeddings.
+  - Build RAG prompts that include curriculum context and recent session history.
+  - Call a local/remote Ollama LLM for chat completions or streaming responses.
+  - Enforce pedagogical guardrails (Socratic style, no direct answers) and flag violations.
+  - Persist tutoring sessions and messages via Prisma (`TutorSession`, `TutorMessage`).
+- **Entry points**:
+  - HTTP API: `POST /api/tutor` implemented at `app/api/tutor/route.ts` — authenticates via `requireAuth()` and delegates to `getSocraticGuidance`.
+  - Server-side: import and call `getSocraticGuidance(userId, conceptId, question)` for non-stream replies.
+  - Streaming: import and call `getSocraticGuidanceStream(userId, conceptId, question)` to obtain a `ReadableStream` (useful for SSE/websocket UIs).
+- **Prompting & Guardrails**:
+  - The system prompt (`SOCRATIC_SYSTEM_PROMPT`) enforces "ask, don't tell" behavior and curriculum-first authority.
+  - `validateSocraticResponse()` applies heuristic checks (banned phrases, length) and marks flagged messages in the DB.
+- **Vector DB & Embeddings**:
+  - Chroma collection: `curriculum_chunks` is the primary collection for RAG retrieval.
+  - Embeddings: generated via the Ollama embeddings endpoint (wrapped in `generateEmbedding`); `getEmbeddings` handles batching and retries.
+  - Ingestion helpers live in `lib/ai/rag/ingestion.ts` — run those to populate Chroma with curriculum text.
+- **Clients & Config**:
+  - Ollama client: `lib/ai/clients/ollama.ts` — uses `OLLAMA_BASE_URL`, `OLLAMA_LLM_MODEL`, and `OLLAMA_EMBEDDING_MODEL` env vars.
+  - Chroma client: `lib/ai/clients/chroma.ts` — uses `CHROMADB_BASE_URL`.
+- **Database models**: See `prisma/schema.prisma` — `TutorSession` links `userId` + `conceptId`; `TutorMessage` stores `role`, `content`, `timestamp`, `tokens`, `isFlagged`, `flagReason`, and `retrievedContext` JSON (IDs of retrieved chunks).
+- **How other modules should use it**:
+  - UI/client: call `POST /api/tutor` with `{ conceptId, question }` after authenticating; display `content` and optionally show links to `retrievedContextIds`.
+  - Server code: call `getSocraticGuidance`/`getSocraticGuidanceStream` directly when you have `userId` context (e.g., for instructor previews or automated hints).
+  - For content authors: update curriculum content and re-run ingestion so RAG returns up-to-date chunks.
+- **Operational notes & caveats**:
+  - Required services: Ollama (embeddings + chat) and ChromaDB (vector search) must be running and reachable.
+  - Guardrails are heuristic — consider adding stronger validators or human-in-the-loop moderation for high-stakes content.
+  - Replies and retrieved context are persisted; audit access if privacy/regulatory concerns apply.
+  - If Ollama or Chroma are down the API gracefully returns errors (e.g., 503 when the LLM fetch fails).
 
 ### Gamification and Motivation
 
