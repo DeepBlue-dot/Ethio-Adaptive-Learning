@@ -1,30 +1,27 @@
-import { generateEmbedding } from "../clients/ollama"
-import { EmbeddingResult } from "../types"
+import pLimit from "p-limit";
+import { generateEmbedding } from "../clients/ollama";
+import { EmbeddingResult } from "../types";
 
-const DEFAULT_BATCH_SIZE = 10
-const MAX_RETRIES = 3
-const RETRY_DELAY_MS = 1000
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 1000;
+// Limit to 3 concurrent requests to ensure Ollama doesn't crash
+const CONCURRENCY_LIMIT = 3; 
 
 /**
  * High-level service for managing embedding generation with resilience.
  */
 export async function getEmbeddings(
-  texts: string[],
-  options?: { batchSize?: number }
+  texts: string[]
 ): Promise<EmbeddingResult[]> {
-  const batchSize = options?.batchSize || DEFAULT_BATCH_SIZE
-  const results: EmbeddingResult[] = []
+  const limit = pLimit(CONCURRENCY_LIMIT);
 
-  // Process in batches to avoid overwhelming local Ollama instance
-  for (let i = 0; i < texts.length; i += batchSize) {
-    const batch = texts.slice(i, i + batchSize)
-    const batchResults = await Promise.all(
-      batch.map((text) => getEmbeddingWithRetry(text))
-    )
-    results.push(...batchResults)
-  }
+  // Map each text to a promise that respects the concurrency limit
+  const tasks = texts.map((text) =>
+    limit(() => getEmbeddingWithRetry(text))
+  );
 
-  return results
+  // Execute all tasks in parallel, but limited to CONCURRENCY_LIMIT at a time
+  return Promise.all(tasks);
 }
 
 /**
@@ -35,17 +32,17 @@ export async function getEmbeddingWithRetry(
   attempt = 0
 ): Promise<EmbeddingResult> {
   try {
-    return await generateEmbedding(text)
+    return await generateEmbedding(text);
   } catch (error) {
     if (attempt >= MAX_RETRIES) {
-      console.error(`Failed to generate embedding after ${MAX_RETRIES} attempts.`)
-      throw error
+      console.error(`Failed to generate embedding after ${MAX_RETRIES} attempts.`);
+      throw error;
     }
 
-    const delay = RETRY_DELAY_MS * Math.pow(2, attempt)
-    console.warn(`Ollama busy, retrying in ${delay}ms... (Attempt ${attempt + 1})`)
+    const delay = RETRY_DELAY_MS * Math.pow(2, attempt);
+    console.warn(`Ollama busy, retrying in ${delay}ms... (Attempt ${attempt + 1})`);
     
-    await new Promise((resolve) => setTimeout(resolve, delay))
-    return getEmbeddingWithRetry(text, attempt + 1)
+    await new Promise((resolve) => setTimeout(resolve, delay));
+    return getEmbeddingWithRetry(text, attempt + 1);
   }
 }
