@@ -5,6 +5,7 @@ import * as resourceActions from "./actions/resource-actions"
 import * as cmsActions from "./actions/cms-actions"
 import * as helpers from "./actions/helpers"
 import * as inspectorActions from "./actions/inspector-actions"
+import * as siteBuilder from "@/lib/studio/site-builder"
 
 // Resource Actions
 export async function createYouTubeResource(url: string, title?: string) {
@@ -67,6 +68,17 @@ export async function updateInspectorMetadata(
   return inspectorActions.updateInspectorMetadata(type, id, data)
 }
 
+export async function updatePageBlocks(
+  pageId: string,
+  blocks: Parameters<typeof siteBuilder.updatePageBlocks>[1]
+) {
+  return siteBuilder.updatePageBlocks(pageId, blocks)
+}
+
+export async function reorderPageBlocks(pageId: string, blockIds: string[]) {
+  return siteBuilder.reorderPageBlocks(pageId, blockIds)
+}
+
 // CMS Actions
 export async function saveCmsItem(prevState: CmsActionState, formData: FormData) {
   return cmsActions.saveCmsItem(prevState, formData)
@@ -92,8 +104,8 @@ export async function reorderCmsEntities(
   return cmsActions.reorderCmsEntities(contentType, ids, revalidationPaths)
 }
 
-export async function uploadCmsImageAsset(formData: FormData) {
-  return cmsActions.uploadCmsImageAsset(formData)
+export async function uploadCmsImageAsset() {
+  return cmsActions.uploadCmsImageAsset()
 }
 
 // Helpers

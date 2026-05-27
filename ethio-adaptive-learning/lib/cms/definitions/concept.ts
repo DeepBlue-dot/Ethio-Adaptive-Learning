@@ -167,7 +167,7 @@ export const conceptDefinition = {
     "/admin/studio/concept",
     "/admin/studio/question",
     "/concepts",
-    ...(id ? [`/admin/studio/concept/${id}`, `/learn/${id}`] : []),
+    ...(id ? [`/admin/studio/concept/${id}`, `/student/concept/${id}`, `/student/concept/${id}/learn`] : []),
   ],
 } satisfies CmsContentType<ConceptCmsInput>
 

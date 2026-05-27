@@ -132,7 +132,7 @@ export async function bulkActionCmsItems(formData: FormData) {
   const session = await requireCmsAccess()
   const userId = session.user.id
   const contentType = textField(formData, "contentType") ?? ""
-  const ids = (formData.get("ids") as string)?.split(",") || []
+  const ids = formData.getAll("ids").map(String).flatMap((value) => value.split(",")).filter(Boolean)
   const intent = textField(formData, "intent")
   const returnTo = getReturnTo(formData, `/admin/studio/${contentType}`)
 
@@ -142,12 +142,15 @@ export async function bulkActionCmsItems(formData: FormData) {
     let result
     switch (intent) {
       case "publish":
+      case "bulk-publish":
         result = await bulkPublishItems(contentType, ids, userId)
         break
       case "unpublish":
+      case "bulk-unpublish":
         result = await bulkUnpublishItems(contentType, ids, userId)
         break
       case "delete":
+      case "bulk-delete":
         result = await bulkDeleteItems(contentType, ids, userId)
         break
       default:
@@ -184,6 +187,6 @@ export async function reorderCmsEntities(
   }
 }
 
-export async function uploadCmsImageAsset(_formData: FormData) {
+export async function uploadCmsImageAsset() {
   // Placeholder: implement asset upload logic when available.
 }

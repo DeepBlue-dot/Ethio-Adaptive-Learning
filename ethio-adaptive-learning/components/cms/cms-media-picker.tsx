@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Image as ImageIcon, Play, Search, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { CmsReferenceOption } from "@/lib/cms/types"
@@ -170,6 +171,11 @@ export function CmsMediaPicker({
             </div>
 
             <div className="p-6 border-t border-border bg-slate-50 flex justify-end gap-3">
+              <Button asChild variant="outline">
+                <Link href="/admin/resources" target="_blank">
+                  Manage assets
+                </Link>
+              </Button>
               <Button variant="ghost" onClick={() => setIsOpen(false)}>Cancel</Button>
               <Button onClick={() => setIsOpen(false)}>Close Library</Button>
             </div>

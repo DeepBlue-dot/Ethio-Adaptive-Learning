@@ -92,7 +92,7 @@ describe("lib/auth", () => {
 
   it("returns the expected post-login routes for each role", () => {
     expect(getDefaultRedirectPath("ADMIN")).toBe("/admin/dashboard")
-    expect(getDefaultRedirectPath("STUDENT")).toBe("/dashboard")
+    expect(getDefaultRedirectPath("STUDENT")).toBe("/student")
     expect(getDefaultRedirectPath("COURSE_WRITER")).toBe("/admin/dashboard")
   })
 
@@ -225,7 +225,7 @@ describe("lib/auth", () => {
 
     await requireRole("ADMIN")
 
-    expect(mocks.redirect).toHaveBeenCalledWith("/dashboard")
+    expect(mocks.redirect).toHaveBeenCalledWith("/student")
   })
 
   it("redirects authenticated users away from public auth pages", async () => {

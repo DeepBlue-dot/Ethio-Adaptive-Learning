@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { CheckSquare, ExternalLink, Eye, ImageUp, PencilLine, Play, PlusCircle, Search, Square, Trash2, UploadCloud, Video, XCircle } from "lucide-react"
+import { CheckSquare, Eye, ImageUp, PencilLine, Play, PlusCircle, Search, Square, Trash2, UploadCloud, Video, XCircle } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 
 import { uploadCmsImageAsset, saveCmsItem, unpublishCmsItem, bulkActionCmsItems } from "@/app/(admin)/admin/studio/actions"

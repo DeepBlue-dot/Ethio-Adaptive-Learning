@@ -1,22 +1,15 @@
 import { requireRole } from "@/lib/auth"
-import { getStudioIntelligence } from "@/lib/studio/intelligence"
-import { getStudioHubData } from "@/lib/studio/builder-data"
-import { HubContainer } from "@/components/admin/studio/hub/hub-container"
+import { getSiteProjectsData } from "@/lib/studio/site-builder"
+import { SiteProjectDashboard } from "@/components/admin/studio/site-dashboard/site-project-dashboard"
 
 export default async function StudioOverviewPage() {
   await requireRole(["ADMIN", "COURSE_WRITER"])
   
-  const [intelligence, hubData] = await Promise.all([
-    getStudioIntelligence(),
-    getStudioHubData()
-  ])
+  const hubData = await getSiteProjectsData()
 
   return (
     <div className="px-6 py-8 lg:px-10 lg:py-10">
-      <HubContainer 
-        intelligence={intelligence} 
-        projects={hubData.projects} 
-      />
+      <SiteProjectDashboard projects={hubData.projects} />
     </div>
   )
 }

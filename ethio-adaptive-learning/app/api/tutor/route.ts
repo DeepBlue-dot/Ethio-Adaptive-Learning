@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSocraticGuidance } from "@/lib/ai/tutoring/socratic-engine"
-import { requireAuth } from "@/lib/auth"
+import { requireApiAuth } from "@/lib/auth"
 
 /**
  * AI Socratic Tutor API Endpoint
@@ -8,7 +8,6 @@ import { requireAuth } from "@/lib/auth"
  */
 export async function POST(req: Request) {
   try {
-    const session = await requireAuth()
     const body = await req.json()
     const { conceptId, question } = body
 
@@ -18,6 +17,9 @@ export async function POST(req: Request) {
         { status: 400 }
       )
     }
+
+    const session = await requireApiAuth()
+...
 
     console.info(`[Tutor API] Request from user ${session.user.id} for concept ${conceptId}`)
 
@@ -30,7 +32,12 @@ export async function POST(req: Request) {
     return NextResponse.json(response)
   } catch (error) {
     console.error("[Tutor API Error]:", error)
-    
+
+    // Handle auth errors
+    if (error instanceof Error && (error as any).status === 401) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     // Check for specific error types if needed (e.g., Ollama offline)
     if (error instanceof Error && error.message.includes("fetch failed")) {
       return NextResponse.json(

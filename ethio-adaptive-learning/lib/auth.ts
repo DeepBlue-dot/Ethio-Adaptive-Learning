@@ -110,6 +110,21 @@ export async function requireAuth() {
   return session
 }
 
+/**
+ * API-safe authentication check. 
+ * Returns the session if authenticated, otherwise throws an error that can be caught by API handlers.
+ */
+export async function requireApiAuth() {
+  const session = await getAuthSession()
+  if (!session?.user) {
+    const error = new Error("Unauthorized")
+    // @ts-ignore
+    error.status = 401
+    throw error
+  }
+  return session
+}
+
 export async function requireRole(roles: AppRole | AppRole[]) {
   const session = await requireAuth()
   const allowedRoles = Array.isArray(roles) ? roles : [roles]
@@ -136,5 +151,5 @@ export async function redirectIfAuthenticated() {
 }
 
 export function getDefaultRedirectPath(role: AppRole) {
-  return role === "ADMIN" || role === "COURSE_WRITER" ? "/admin/dashboard" : "/dashboard"
+  return role === "ADMIN" || role === "COURSE_WRITER" ? "/admin/dashboard" : "/student"
 }

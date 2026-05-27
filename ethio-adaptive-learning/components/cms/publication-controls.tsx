@@ -1,11 +1,10 @@
 "use client"
 
-import { CheckCircle2, Save, Send, UploadCloud } from "lucide-react"
+import { CheckCircle2, Loader2, Save, Send } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function PublicationControls({
   isPending,
-  hasDraft,
   isPublished,
   label,
   formId = "cms-form",
@@ -25,13 +24,16 @@ export function PublicationControls({
         type="submit"
         value="save-draft"
         variant="outline"
-        className="rounded-full px-6"
+        className="h-11 rounded-xl px-5 text-[10px] font-black uppercase tracking-[0.18em]"
       >
         {isPending ? (
-          "Saving..."
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Saving
+          </>
         ) : (
           <>
-            <Save className="mr-2 size-4" />
+            <Save className="size-4" />
             Save Draft
           </>
         )}
@@ -43,20 +45,23 @@ export function PublicationControls({
         name="intent"
         type="submit"
         value="publish"
-        className="rounded-full bg-teal-600 px-6 hover:bg-teal-700"
+        className="h-11 rounded-xl px-5 text-[10px] font-black uppercase tracking-[0.18em]"
       >
         {isPending ? (
-          "Publishing..."
+          <>
+            <Loader2 className="size-4 animate-spin" />
+            Publishing
+          </>
         ) : (
           <>
             {isPublished ? (
               <>
-                <CheckCircle2 className="mr-2 size-4" />
+                <CheckCircle2 className="size-4" />
                 Publish Changes
               </>
             ) : (
               <>
-                <Send className="mr-2 size-4" />
+                <Send className="size-4" />
                 Publish {label}
               </>
             )}

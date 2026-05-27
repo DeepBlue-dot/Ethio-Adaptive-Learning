@@ -69,7 +69,7 @@ export function CmsEditorShell({
               )}
               {definition.key === "concept" && item.lifecycle?.status === "PUBLISHED" ? (
                 <Button asChild type="button" variant="ghost">
-                  <Link href={`/learn/${item.id}`} target="_blank">
+                  <Link href={`/student/concept/${item.id}/learn`} target="_blank">
                     <Eye className="size-4" />
                     View Live
                   </Link>

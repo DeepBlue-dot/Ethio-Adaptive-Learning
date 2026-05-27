@@ -3,7 +3,7 @@ interface WelcomeProps {
   dashboardUrl?: string
 }
 
-export const WelcomeTemplate = ({ userName, dashboardUrl = "https://ethioadaptive.local/dashboard" }: WelcomeProps) => (
+export const WelcomeTemplate = ({ userName, dashboardUrl = "https://ethioadaptive.local/student" }: WelcomeProps) => (
   <html>
     <head>
       <meta charSet="utf-8" />

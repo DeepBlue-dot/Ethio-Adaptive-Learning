@@ -45,6 +45,7 @@ const blockTypes: Array<{
   { label: "Quiz", value: "quiz" },
   { label: "Code", value: "code" },
   { label: "Snippet", value: "snippet" },
+  { label: "PhET", value: "phet" },
 ]
 
 const inputClassName =
@@ -286,6 +287,20 @@ function BlockFields({
     )
   }
 
+  if (block.type === "phet") {
+    return (
+      <>
+        <CmsMediaPicker
+          label="Select PhET Asset"
+          options={(referenceOptions.assetId ?? []).filter((option) => option.metadata?.kind === "PHET_SIMULATION")}
+          value={String(block.assetId)}
+          onChange={(assetId) => onChange({ assetId })}
+        />
+        <TextInput label="Title" value={block.title} onChange={(title) => onChange({ title })} />
+      </>
+    )
+  }
+
   return (
     <>
       <TextInput label="Title" value={block.title} onChange={(title) => onChange({ title })} />
@@ -455,7 +470,7 @@ function createBlock(type: BlockType, id = createId()): EditableBlock {
   }
 
   if (type === "video") {
-    return { id, type, url: "", caption: "" }
+    return { id, type, url: "", videoId: null, caption: "" }
   }
 
   if (type === "embed") {
@@ -472,6 +487,10 @@ function createBlock(type: BlockType, id = createId()): EditableBlock {
 
   if (type === "snippet") {
     return { id, type, snippetId: "" }
+  }
+
+  if (type === "phet") {
+    return { id, type, assetId: "", title: "" }
   }
 
   return { id, type, title: "", text: "" }

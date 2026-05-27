@@ -9,7 +9,7 @@ import { type CmsEditorModel } from "@/lib/cms/types"
  * This combines the item data, the content type definition, and available references.
  */
 export async function getInspectorModel(type: string, id: string): Promise<CmsEditorModel | null> {
-  const session = await requireRole(["ADMIN", "COURSE_WRITER"])
+  await requireRole(["ADMIN", "COURSE_WRITER"])
   
   try {
     const [item, definition, referenceOptions] = await Promise.all([
@@ -44,12 +44,15 @@ export async function updateInspectorMetadata(
   const session = await requireRole(["ADMIN", "COURSE_WRITER"])
   const userId = session.user.id
   
-  const { updateItem, saveDraftItem } = await import("@/lib/cms/core")
+  const { saveDraftItem } = await import("@/lib/cms/core")
   
   try {
-    // We update the item and mark it as a draft to ensure changes aren't live until published
-    await updateItem(type, id, data, undefined, userId)
-    const result = await saveDraftItem(type, id, data, userId)
+    const item = await getItem(type, id)
+    if (!item) {
+      return { ok: false, error: "Item not found." }
+    }
+
+    const result = await saveDraftItem(type, id, { ...item.data, ...data }, userId)
     
     return { ok: true, updatedAt: result.entity.lifecycle?.updatedAt }
   } catch (error) {

@@ -149,6 +149,6 @@ export const questionDefinition = {
     "/admin/studio/question",
     "/concepts",
     ...(id ? [`/admin/studio/question/${id}`] : []),
-    ...(typeof result?.data.conceptId === "string" ? [`/learn/${result.data.conceptId}`] : []),
+    ...(typeof result?.data.conceptId === "string" ? [`/student/concept/${result.data.conceptId}/learn`] : []),
   ],
 } satisfies CmsContentType<QuestionCmsInput>

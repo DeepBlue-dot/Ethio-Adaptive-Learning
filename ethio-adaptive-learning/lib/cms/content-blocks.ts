@@ -28,7 +28,7 @@ const imageBlockSchema = contentBlockBaseSchema.extend({
 const videoBlockSchema = contentBlockBaseSchema.extend({
   type: z.literal("video"),
   url: requiredTextSchema("YouTube URL"),
-  videoId: optionalTrimmedStringSchema,
+  videoId: optionalTrimmedStringSchema.default(null),
   caption: optionalTrimmedStringSchema,
 })
 

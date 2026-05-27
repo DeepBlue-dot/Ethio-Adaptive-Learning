@@ -48,7 +48,7 @@ export function CmsForm({
   const formId = "cms-editor-form"
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <form action={formAction} id={formId}>
         <input name="contentType" type="hidden" value={definition.key} />
         <input name="id" type="hidden" value={item?.id ?? ""} />
@@ -65,11 +65,14 @@ export function CmsForm({
           </div>
         ) : null}
 
-        <div className="space-y-8">
+        <div className="space-y-5">
           {Object.entries(fieldsBySection).map(([section, fields]) => (
-            <section key={section} className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
-              <h2 className="text-xl font-semibold text-foreground">{section}</h2>
-              <div className="mt-6 grid gap-4 lg:grid-cols-2">
+            <section key={section} className="rounded-[1.5rem] border border-outline-variant bg-surface p-6 shadow-sm">
+              <div className="flex items-center gap-3">
+                <h2 className="text-[11px] font-black uppercase tracking-[0.24em] text-on-surface-variant/60">{section}</h2>
+                <div className="h-px flex-1 bg-outline-variant/40" />
+              </div>
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
                 {fields.map((field) =>
                   field.type === "embedded-list" ? (
                     <CmsRelationManager
@@ -101,7 +104,7 @@ export function CmsForm({
         </div>
       </form>
 
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-[2rem] border border-border bg-white p-6 shadow-sm">
+      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] border border-outline-variant bg-surface/95 p-4 shadow-2xl backdrop-blur">
         <PublicationControls
           formId={formId}
           hasDraft={item?.lifecycle?.hasDraft ?? false}
@@ -109,7 +112,7 @@ export function CmsForm({
           isPublished={item?.lifecycle?.status === "PUBLISHED"}
           label={definition.label}
         />
-        <Button asChild variant="ghost">
+        <Button asChild variant="ghost" className="rounded-xl text-[10px] font-black uppercase tracking-[0.18em]">
           <a href={returnTo}>Cancel and go back</a>
         </Button>
       </div>

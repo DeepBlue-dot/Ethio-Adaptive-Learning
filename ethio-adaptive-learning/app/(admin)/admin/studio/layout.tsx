@@ -1,9 +1,9 @@
-import { CurriculumTree } from "@/components/admin/studio/curriculum-tree"
 import { ContextSidebar } from "@/components/admin/studio/layout/context-sidebar"
+import { SiteMapNavigator } from "@/components/admin/studio/site-map/site-map-navigator"
 import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-header"
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
 import { requireRole } from "@/lib/auth"
-import { getCurriculumHierarchyCmsData } from "@/lib/cms/adapters/curriculum"
+import { getSiteMapData } from "@/lib/studio/site-builder"
 
 export default async function StudioLayout({
   children,
@@ -11,29 +11,12 @@ export default async function StudioLayout({
   children: React.ReactNode
 }) {
   const session = await requireRole(["ADMIN", "COURSE_WRITER"])
-  const hierarchy = await getCurriculumHierarchyCmsData()
-
-  // Transform data for the tree browser
-  const treeData = hierarchy.courses.map(course => ({
-    id: course.id,
-    title: course.title,
-    slug: course.slug,
-    units: course.units.map(unit => ({
-      id: unit.id,
-      title: unit.title,
-      order: unit.order,
-      concepts: unit.concepts.map(concept => ({
-        id: concept.id,
-        title: concept.title,
-        slug: concept.slug
-      }))
-    }))
-  }))
+  const siteMap = await getSiteMapData()
 
   return (
     <>
       <ContextSidebar>
-        <CurriculumTree courses={treeData} />
+        <SiteMapNavigator projects={siteMap.projects} />
       </ContextSidebar>
       
       <WorkspaceShell hasContextSidebar>
@@ -42,8 +25,8 @@ export default async function StudioLayout({
           username={session.user.username} 
           role={session.user.role}
           breadcrumbs={[
-            { label: "Curriculum" },
-            { label: "Grade 12 Mathematics" }
+            { label: "Site Builder" },
+            { label: "Projects" }
           ]}
         />
         <div className="flex-1 overflow-y-auto p-0 custom-scrollbar bg-surface/30 text-on-surface">

@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       phoneNumber,
     })
 
-    const dashboardUrl = `${APP_URL}/dashboard`
+    const dashboardUrl = `${APP_URL}/student`
     const template = createElement(WelcomeTemplate, {
       userName: user.name ?? user.username,
       dashboardUrl,

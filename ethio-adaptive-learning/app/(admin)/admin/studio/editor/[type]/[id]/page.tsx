@@ -24,14 +24,15 @@ type FocusModeEditorPageProps = {
 export default async function FocusModeEditorPage({ params, searchParams }: FocusModeEditorPageProps) {
   const session = await requireCmsAccess()
 
-  const { type, id } = await params
+  const resolvedParams = await params
+  const { type, id } = resolvedParams
   const definition = resolveCmsContentType(type)
 
   if (!definition) {
     notFound()
   }
 
-  const query = (await searchParams) ?? {}
+  const query = (await searchParams) || {}
   const returnTo = sanitizeAdminPath(getSingleValue(query.returnTo), `/admin/studio`)
   
   const isNew = id === "new"
@@ -100,7 +101,7 @@ export default async function FocusModeEditorPage({ params, searchParams }: Focu
 
              {item.id && definition.key === "concept" && isPublished && (
                 <Button asChild variant="ghost" size="sm" className="h-9 rounded-xl text-[10px] font-black uppercase tracking-widest gap-2">
-                   <Link href={`/learn/${item.id}`} target="_blank">
+                   <Link href={`/student/concept/${item.id}/learn`} target="_blank">
                       <Eye className="size-3.5" />
                       View Live
                    </Link>

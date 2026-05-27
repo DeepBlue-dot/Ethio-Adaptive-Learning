@@ -30,7 +30,7 @@ export function BuilderShell({ canvas, inspector, className }: BuilderShellProps
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="w-[400px] border-l border-outline-variant bg-surface-container-lowest shadow-2xl z-20 flex flex-col relative"
+            className="fixed inset-y-0 right-0 z-50 flex w-[min(100vw,400px)] flex-col border-l border-outline-variant bg-surface-container-lowest shadow-2xl lg:relative lg:inset-y-auto lg:z-20 lg:w-[400px]"
           >
             {inspector || (
               <div className="flex-1 flex items-center justify-center p-8 text-center">
