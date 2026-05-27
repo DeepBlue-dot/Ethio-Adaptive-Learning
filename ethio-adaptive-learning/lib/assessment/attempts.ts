@@ -7,14 +7,13 @@ import { getConceptAccessState, getUnlockedConceptOrThrow } from "./access"
 import { ensureStartedMastery, syncUnlockedConceptsForCourse } from "./mastery"
 import { selectQuestionsForAttempt } from "./selection"
 import { EXAM_PASS_THRESHOLD, EXAM_QUESTION_LIMIT, questionSelect, userMasterySelect } from "./constants"
-import { isAnswerCorrect, parseStringArray, parseStringRecord, requireId, requireText } from "./utils"
+import { isAnswerCorrect, parseStringArray, requireId, requireText } from "./utils"
 import {
   awardXpForActivity,
   recordDailyActivity,
   checkAndAwardXpBadges,
   checkAndAwardStreakBadges,
 } from "@/lib/gamification"
-import type { DbClient } from "./types"
 
 export async function startPracticeAttempt(userId: string, conceptId: string) {
   return prisma.$transaction(async (tx) => {
@@ -311,6 +310,7 @@ export async function startExamAttempt(userId: string, conceptId: string, pathwa
       where: {
         userId,
         conceptId,
+        pathway,
         completedAt: null,
       },
       orderBy: {

@@ -2,12 +2,21 @@
 
 import { useState } from "react"
 import { User, UserProfile } from "@prisma/client"
-import { Activity, ShieldCheck, Settings, Sparkles } from "lucide-react"
+import {
+  Activity,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Settings,
+  Sparkles,
+  UserRound,
+} from "lucide-react"
 
-import { Button } from "@/components/ui/button"
 import { AccountPreferences } from "@/components/account/account-preferences"
 import { PasswordChangeForm } from "@/components/account/password-change-form"
 import { ProfileEditForm } from "@/components/account/profile-edit-form"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 type TabType = "profile" | "security" | "preferences"
 
@@ -16,114 +25,62 @@ interface AccountPageProps {
 }
 
 const tabs = [
-  { id: "profile", label: "Profile", icon: <Sparkles className="h-4 w-4" /> },
-  { id: "security", label: "Security", icon: <ShieldCheck className="h-4 w-4" /> },
-  { id: "preferences", label: "Preferences", icon: <Settings className="h-4 w-4" /> },
+  { id: "profile", label: "Profile", icon: UserRound },
+  { id: "security", label: "Security", icon: ShieldCheck },
+  { id: "preferences", label: "Preferences", icon: Settings },
 ] as const
 
 export default function AccountPageContent({ user }: AccountPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>("profile")
 
   return (
-    <div className="space-y-6">
-      <section className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
-        <div className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">
-                Account Settings
-              </p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight text-foreground">
-                Manage your student profile
-              </h1>
-              <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                Update your account, security, and learning preferences in one polished workspace.
-              </p>
-            </div>
-            <div className="rounded-3xl border border-border bg-secondary/70 p-4 text-sm text-slate-700 shadow-sm dark:bg-slate-900/70 dark:text-slate-200">
-              <p className="font-medium text-slate-900 dark:text-slate-100">Quick snapshot</p>
-              <div className="mt-3 grid gap-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">Username</span>
-                  <span className="font-semibold">{user.username}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">Grade</span>
-                  <span className="font-semibold">{user.grade ?? "N/A"}</span>
-                </div>
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs text-muted-foreground">Status</span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[0.7rem] font-semibold text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-900/10 dark:text-emerald-300">
-                    <Activity className="h-3.5 w-3.5" /> Active
-                  </span>
-                </div>
-              </div>
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+      <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+          <div>
+            <p className="text-sm font-semibold text-primary">Account</p>
+            <h1 className="mt-2 text-3xl font-extrabold text-on-surface">Student profile</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-on-surface-variant">
+              Manage identity, security, display preferences, and the learning stats tied to your account.
+            </p>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+              <Snapshot icon={Sparkles} label="Username" value={user.username} />
+              <Snapshot icon={Activity} label="Grade" value={user.grade?.replaceAll("_", " ") ?? "Not set"} />
+              <Snapshot icon={ShieldCheck} label="Status" value={user.emailVerified ? "Verified" : "Pending"} />
             </div>
           </div>
 
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
-            <div className="rounded-3xl border border-border bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Email</p>
-              <p className="mt-3 text-sm font-medium text-foreground truncate">{user.email}</p>
-            </div>
-            <div className="rounded-3xl border border-border bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Role</p>
-              <p className="mt-3 text-sm font-medium text-foreground">{user.role}</p>
-            </div>
-            <div className="rounded-3xl border border-border bg-slate-50 p-5">
-              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-muted-foreground">Verified</p>
-              <p className="mt-3 text-sm font-medium text-foreground">{user.emailVerified ? "Yes" : "Not yet"}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
-          <div className="space-y-6">
-            <div className="rounded-[1.75rem] bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 px-5 py-6 text-white shadow-lg shadow-slate-900/10">
-              <p className="text-sm uppercase tracking-[0.35em] text-slate-300">Need help?</p>
-              <h2 className="mt-2 text-2xl font-semibold">Secure your account</h2>
-              <p className="mt-3 text-sm text-slate-300">
-                Use strong passwords and keep your profile info current to stay ahead.
-              </p>
-            </div>
-            <div className="grid gap-4">
-              <div className="rounded-3xl border border-border bg-secondary p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground">Next recommended action</p>
-                <p className="mt-3 text-sm leading-6 text-foreground">
-                  Verify your email and ensure your phone number is correct.
-                </p>
-              </div>
-              <div className="rounded-3xl border border-border bg-secondary p-5">
-                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-muted-foreground">Pro tip</p>
-                <p className="mt-3 text-sm leading-6 text-foreground">
-                  Choose a unique password and update it regularly for better security.
-                </p>
-              </div>
+          <div className="rounded-lg border border-outline-variant/50 bg-muted p-4">
+            <p className="text-sm font-semibold text-on-surface">Contact snapshot</p>
+            <div className="mt-4 space-y-3 text-sm">
+              <ContactRow icon={Mail} label="Email" value={user.email} />
+              <ContactRow icon={Phone} label="Phone" value={user.phoneNumber ?? "Not set"} />
+              <ContactRow icon={UserRound} label="Role" value={user.role} />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="rounded-[2rem] border border-border bg-white p-4 shadow-sm">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.25em] text-teal-700">Account tabs</p>
-            <p className="text-sm text-muted-foreground">Switch between your profile, security, and preferences.</p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
+      <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-3 shadow-sm">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((tab) => {
+            const Icon = tab.icon
+            const isActive = activeTab === tab.id
+
+            return (
               <Button
                 key={tab.id}
-                variant={activeTab === tab.id ? "secondary" : "outline"}
-                size="sm"
+                className={cn("gap-2", isActive && "shadow-sm")}
                 onClick={() => setActiveTab(tab.id)}
-                className="gap-2"
+                size="sm"
+                type="button"
+                variant={isActive ? "default" : "outline"}
               >
-                {tab.icon}
+                <Icon className="size-4" />
                 {tab.label}
               </Button>
-            ))}
-          </div>
+            )
+          })}
         </div>
       </section>
 
@@ -132,6 +89,46 @@ export default function AccountPageContent({ user }: AccountPageProps) {
         {activeTab === "security" && <PasswordChangeForm />}
         {activeTab === "preferences" && <AccountPreferences user={user} profile={user.profile} />}
       </div>
+    </div>
+  )
+}
+
+function Snapshot({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Sparkles
+  label: string
+  value: string
+}) {
+  return (
+    <div className="min-w-0 rounded-lg border border-outline-variant/50 bg-muted p-3">
+      <div className="flex items-center gap-2 text-xs font-medium text-on-surface-variant">
+        <Icon className="size-4 text-primary" />
+        {label}
+      </div>
+      <p className="mt-2 truncate text-sm font-bold text-on-surface">{value}</p>
+    </div>
+  )
+}
+
+function ContactRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Mail
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex min-w-0 items-center justify-between gap-3 rounded-md bg-background p-3">
+      <div className="flex min-w-0 items-center gap-2 text-on-surface-variant">
+        <Icon className="size-4 shrink-0 text-primary" />
+        <span className="text-xs">{label}</span>
+      </div>
+      <span className="truncate text-right text-sm font-semibold text-on-surface">{value}</span>
     </div>
   )
 }

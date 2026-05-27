@@ -37,6 +37,8 @@ function getErrorMessage(error: unknown) {
 
 function revalidateStudentConcept(conceptId: string) {
   revalidatePath("/student")
+  revalidatePath("/student/activity")
+  revalidatePath("/student/analytics")
   revalidatePath("/student/reviews")
   revalidatePath(`/student/concept/${conceptId}`)
   revalidatePath(`/student/concept/${conceptId}/learn`)

@@ -3,8 +3,8 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  Activity,
   BarChart3,
-  BookOpen,
   Flame,
   Gauge,
   GraduationCap,
@@ -23,9 +23,9 @@ type StudentSidebarProps = {
 
 const navLinks = [
   { href: "/student", label: "Dashboard", icon: Home },
+  { href: "/student/activity", label: "Activity", icon: Activity },
+  { href: "/student/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/student/reviews", label: "Review Queue", icon: RotateCcw },
-  { href: "/student#curriculum", label: "Curriculum", icon: BookOpen },
-  { href: "/student#analytics", label: "Analytics", icon: BarChart3 },
 ]
 
 export function StudentSidebar({ navigation }: StudentSidebarProps) {
@@ -36,7 +36,7 @@ export function StudentSidebar({ navigation }: StudentSidebarProps) {
       : 0
 
   return (
-    <nav className="fixed left-0 top-0 z-40 hidden h-full w-72 flex-col border-r border-outline-variant/40 bg-surface-container-low px-4 py-5 shadow-sm lg:flex">
+    <nav className="fixed left-0 top-0 z-40 hidden h-full w-72 flex-col border-r border-outline-variant/50 bg-surface-container-low px-4 py-5 shadow-sm lg:flex">
       <Link className="flex items-center gap-3 px-2" href="/student">
         <span className="flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
           <GraduationCap className="size-5" />
@@ -47,7 +47,7 @@ export function StudentSidebar({ navigation }: StudentSidebarProps) {
         </span>
       </Link>
 
-      <div className="mt-6 rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4">
+      <div className="mt-6 rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-on-surface">{navigation.profile.username}</p>
@@ -84,9 +84,7 @@ export function StudentSidebar({ navigation }: StudentSidebarProps) {
 
       <div className="mt-6 space-y-1">
         {navLinks.map((link) => {
-          const isHashLink = link.href.includes("#")
           const isActive =
-            !isHashLink &&
             (link.href === "/student" ? pathname === "/student" : pathname.startsWith(link.href))
           return (
             <Link
@@ -95,7 +93,7 @@ export function StudentSidebar({ navigation }: StudentSidebarProps) {
               className={cn(
                 "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
                 isActive
-                  ? "bg-primary-fixed text-on-primary-fixed"
+                  ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
               )}
             >
@@ -139,8 +137,13 @@ export function StudentSidebar({ navigation }: StudentSidebarProps) {
 
       <div className="mt-4 border-t border-outline-variant/50 pt-3">
         <Link
-          href="/account"
-          className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
+          href="/student/account"
+          className={cn(
+            "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+            pathname.startsWith("/student/account")
+              ? "bg-primary text-primary-foreground shadow-sm"
+              : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+          )}
         >
           <Settings className="size-4" />
           Profile settings

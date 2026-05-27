@@ -75,7 +75,9 @@ export default async function StudentChallengePage({
             </p>
             <h1 className="mt-1 text-2xl font-extrabold text-on-surface">{concept.title}</h1>
             <p className="mt-2 text-sm leading-6 text-on-surface-variant">
-              Answer questions to demonstrate mastery. No hints or feedback are shown during the exam.
+              {pathway === PathwayType.LEARN
+                ? "This learn-path exam opens after a passed checkpoint. No hints or feedback are shown during the exam."
+                : "This challenge path starts with the exam directly. No checkpoint is required."}
             </p>
           </div>
         </div>
@@ -90,17 +92,22 @@ export default async function StudentChallengePage({
             <div>
               <p className="font-semibold">Exam locked</p>
               <p className="mt-1 text-sm leading-6">
-                {examError ?? "Complete prerequisites or pass the checkpoint before starting this exam."}
+                {examError ??
+                  (pathway === PathwayType.LEARN
+                    ? "Complete prerequisites and pass the checkpoint before starting this learn-path exam."
+                    : "Complete prerequisites before starting this challenge exam.")}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Button asChild variant="outline">
                   <Link href={`/student/concept/${concept.conceptId}/learn`}>Go to learn path</Link>
                 </Button>
-                <Button asChild variant="outline">
-                  <Link href={`/student/concept/${concept.conceptId}/learn/checkpoint`}>
-                    Retry checkpoint
-                  </Link>
-                </Button>
+                {pathway === PathwayType.LEARN ? (
+                  <Button asChild variant="outline">
+                    <Link href={`/student/concept/${concept.conceptId}/learn/checkpoint`}>
+                      Retry checkpoint
+                    </Link>
+                  </Button>
+                ) : null}
               </div>
             </div>
           </div>

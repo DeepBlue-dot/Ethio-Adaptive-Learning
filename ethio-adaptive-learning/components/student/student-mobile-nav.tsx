@@ -4,8 +4,8 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { AnimatePresence, motion } from "framer-motion"
 import {
+  Activity,
   BarChart3,
-  BookOpen,
   Flame,
   Gauge,
   GraduationCap,
@@ -28,9 +28,9 @@ type StudentMobileNavProps = {
 
 const navLinks = [
   { href: "/student", label: "Dashboard", icon: Home },
+  { href: "/student/activity", label: "Activity", icon: Activity },
+  { href: "/student/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/student/reviews", label: "Review Queue", icon: RotateCcw },
-  { href: "/student#curriculum", label: "Curriculum", icon: BookOpen },
-  { href: "/student#analytics", label: "Analytics", icon: BarChart3 },
 ]
 
 export function StudentMobileNav({ navigation }: StudentMobileNavProps) {
@@ -150,9 +150,7 @@ export function StudentMobileNav({ navigation }: StudentMobileNavProps) {
 
               <div className="mt-5 space-y-1">
                 {navLinks.map((link) => {
-                  const isHashLink = link.href.includes("#")
                   const isActive =
-                    !isHashLink &&
                     (link.href === "/student" ? pathname === "/student" : pathname.startsWith(link.href))
 
                   return (
@@ -161,7 +159,7 @@ export function StudentMobileNav({ navigation }: StudentMobileNavProps) {
                       className={cn(
                         "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
                         isActive
-                          ? "bg-primary-fixed text-on-primary-fixed"
+                          ? "bg-primary text-primary-foreground"
                           : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
                       )}
                       href={link.href}
@@ -208,8 +206,13 @@ export function StudentMobileNav({ navigation }: StudentMobileNavProps) {
 
               <div className="mt-4 border-t border-outline-variant/50 pt-3">
                 <Link
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-on-surface-variant transition hover:bg-surface-container-high hover:text-on-surface"
-                  href="/account"
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition",
+                    pathname.startsWith("/student/account")
+                      ? "bg-primary text-primary-foreground"
+                      : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface"
+                  )}
+                  href="/student/account"
                   onClick={() => setOpen(false)}
                 >
                   <Settings className="size-4" />

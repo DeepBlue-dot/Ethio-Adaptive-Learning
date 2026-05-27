@@ -33,7 +33,7 @@ export async function POST(req: Request) {
     console.error("[Tutor API Error]:", error)
 
     // Handle auth errors
-    if (error instanceof Error && (error as any).status === 401) {
+    if (error instanceof Error && "status" in error && error.status === 401) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 

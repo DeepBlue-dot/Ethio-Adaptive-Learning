@@ -18,6 +18,8 @@ import { prisma } from "@/lib/prisma"
 import type {
   StudentConceptCard,
   StudentConceptDetail,
+  StudentActivity,
+  StudentAnalytics,
   StudentDashboard,
   StudentExamSession,
   StudentNavigation,
@@ -456,6 +458,246 @@ export async function getStudentDashboard(userId: string): Promise<StudentDashbo
         })
         .slice(0, 3),
     },
+  }
+}
+
+function getActivityLabel(activityType: string) {
+  const labels: Record<string, string> = {
+    CONTENT_READ: "Read lesson content",
+    PRACTICE_QUESTION: "Completed practice",
+    CHECKPOINT_QUESTION: "Tried checkpoint",
+    EXAM_RESPONSE: "Answered exam question",
+    SOCRATIC_HINT_USED: "Used tutor hint",
+  }
+
+  return labels[activityType] ?? activityType.replaceAll("_", " ").toLowerCase()
+}
+
+export async function getStudentActivity(userId: string): Promise<StudentActivity> {
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+  const [timelineLogs, summaryLogs, recentExams] = await Promise.all([
+    prisma.interactionLog.findMany({
+      where: {
+        userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 40,
+      select: {
+        id: true,
+        conceptId: true,
+        activityType: true,
+        isCorrect: true,
+        responseTimeMs: true,
+        createdAt: true,
+      },
+    }),
+    prisma.interactionLog.findMany({
+      where: {
+        userId,
+        createdAt: {
+          gte: thirtyDaysAgo,
+        },
+      },
+      select: {
+        conceptId: true,
+        activityType: true,
+        isCorrect: true,
+        createdAt: true,
+      },
+    }),
+    prisma.examAttempt.findMany({
+      where: {
+        userId,
+        completedAt: {
+          not: null,
+        },
+      },
+      orderBy: {
+        completedAt: "desc",
+      },
+      take: 6,
+      select: {
+        id: true,
+        conceptId: true,
+        pathway: true,
+        score: true,
+        isPassed: true,
+        questionCount: true,
+        timeSpentSec: true,
+        completedAt: true,
+      },
+    }),
+  ])
+  const conceptIds = [
+    ...new Set([
+      ...timelineLogs.map((log) => log.conceptId),
+      ...recentExams.map((exam) => exam.conceptId),
+    ]),
+  ]
+  const concepts = conceptIds.length
+    ? await prisma.concept.findMany({
+        where: {
+          id: {
+            in: conceptIds,
+          },
+        },
+        select: {
+          id: true,
+          title: true,
+          unit: {
+            select: {
+              title: true,
+              course: {
+                select: {
+                  title: true,
+                },
+              },
+            },
+          },
+        },
+      })
+    : []
+  const conceptMap = new Map(concepts.map((concept) => [concept.id, concept] as const))
+  const activeDays = new Set(summaryLogs.map((log) => log.createdAt.toISOString().slice(0, 10)))
+
+  return {
+    summary: {
+      totalActivities: summaryLogs.length,
+      practiceCount: summaryLogs.filter((log) => log.activityType === "PRACTICE_QUESTION").length,
+      checkpointCount: summaryLogs.filter((log) => log.activityType === "CHECKPOINT_QUESTION").length,
+      examResponseCount: summaryLogs.filter((log) => log.activityType === "EXAM_RESPONSE").length,
+      contentReadCount: summaryLogs.filter((log) => log.activityType === "CONTENT_READ").length,
+      hintCount: summaryLogs.filter((log) => log.activityType === "SOCRATIC_HINT_USED").length,
+      correctCount: summaryLogs.filter((log) => log.isCorrect === true).length,
+      incorrectCount: summaryLogs.filter((log) => log.isCorrect === false).length,
+      activeDays30: activeDays.size,
+    },
+    timeline: timelineLogs.map((log) => {
+      const concept = conceptMap.get(log.conceptId)
+
+      return {
+        id: log.id.toString(),
+        activityType: log.activityType,
+        label: getActivityLabel(log.activityType),
+        conceptId: log.conceptId,
+        conceptTitle: concept?.title ?? "Unknown concept",
+        unitTitle: concept?.unit.title ?? "Unknown unit",
+        courseTitle: concept?.unit.course.title ?? "Unknown course",
+        isCorrect: log.isCorrect,
+        responseTimeMs: log.responseTimeMs,
+        timestamp: log.createdAt.toISOString(),
+      }
+    }),
+    recentExams: recentExams.map((exam) => {
+      const concept = conceptMap.get(exam.conceptId)
+
+      return {
+        id: exam.id,
+        conceptId: exam.conceptId,
+        conceptTitle: concept?.title ?? "Unknown concept",
+        pathway: exam.pathway,
+        score: exam.score,
+        isPassed: exam.isPassed,
+        questionCount: exam.questionCount,
+        timeSpentSec: exam.timeSpentSec,
+        completedAt: toIsoString(exam.completedAt),
+      }
+    }),
+  }
+}
+
+const statusLabels: Record<MasteryStatus, string> = {
+  LOCKED: "Locked",
+  FRINGE: "Available",
+  IN_PROGRESS: "In progress",
+  MASTERED: "Mastered",
+  REVIEW_NEEDED: "Review due",
+}
+
+export async function getStudentAnalytics(userId: string): Promise<StudentAnalytics> {
+  const [dashboard, navigation] = await Promise.all([
+    getStudentDashboard(userId),
+    getStudentNavigation(userId, "learner", "STUDENT"),
+  ])
+  const concepts = Object.values(dashboard.conceptsByStatus).flat()
+  const totalConcepts = concepts.length
+  const unlockedConcepts = concepts.filter((concept) => concept.status !== "LOCKED").length
+  const masteredConcepts =
+    dashboard.conceptsByStatus.mastered.length + dashboard.conceptsByStatus.reviewNeeded.length
+  const conceptsWithPractice = concepts.filter((concept) => concept.practiceAccuracy > 0)
+  const conceptsWithCheckpoint = concepts.filter((concept) => concept.checkpointPassRate > 0)
+  const conceptsWithTime = concepts.filter((concept) => concept.averageTimePerQuestion > 0)
+  const courseGroups = new Map<
+    string,
+    {
+      courseTitle: string
+      concepts: StudentConceptCard[]
+    }
+  >()
+
+  for (const concept of concepts) {
+    const group = courseGroups.get(concept.course.id) ?? {
+      courseTitle: concept.course.title,
+      concepts: [],
+    }
+    group.concepts.push(concept)
+    courseGroups.set(concept.course.id, group)
+  }
+
+  return {
+    profile: dashboard.profile,
+    progress: {
+      totalConcepts,
+      unlockedConcepts,
+      masteredConcepts,
+      reviewDue: navigation.summary.reviewDue,
+      overallProgress: totalConcepts ? masteredConcepts / totalConcepts : 0,
+    },
+    statusDistribution: (Object.keys(dashboard.conceptsByStatus) as Array<keyof StudentDashboard["conceptsByStatus"]>)
+      .map((bucket) => {
+        const status =
+          bucket === "inProgress"
+            ? "IN_PROGRESS"
+            : bucket === "reviewNeeded"
+              ? "REVIEW_NEEDED"
+              : bucket === "mastered"
+                ? "MASTERED"
+                : bucket === "locked"
+                  ? "LOCKED"
+                  : "FRINGE"
+
+        return {
+          status,
+          label: statusLabels[status],
+          count: dashboard.conceptsByStatus[bucket].length,
+          percentage: totalConcepts ? dashboard.conceptsByStatus[bucket].length / totalConcepts : 0,
+        }
+      }),
+    performance: {
+      totalAttempts: concepts.reduce((sum, concept) => sum + concept.totalAttempts, 0),
+      averagePracticeAccuracy: average(conceptsWithPractice.map((concept) => concept.practiceAccuracy)),
+      averageCheckpointPassRate: average(conceptsWithCheckpoint.map((concept) => concept.checkpointPassRate)),
+      averageTimePerQuestion: average(conceptsWithTime.map((concept) => concept.averageTimePerQuestion)),
+      conceptsStarted: dashboard.analyticsSnapshot.conceptsStarted,
+    },
+    mostDifficultConcepts: dashboard.analyticsSnapshot.mostDifficultConcepts,
+    strongestConcepts: [...concepts]
+      .filter((concept) => concept.status !== "LOCKED")
+      .sort((left, right) => right.pMastery - left.pMastery)
+      .slice(0, 5),
+    courseProgress: [...courseGroups.entries()].map(([courseId, group]) => ({
+      courseId,
+      courseTitle: group.courseTitle,
+      totalConcepts: group.concepts.length,
+      masteredConcepts: group.concepts.filter(
+        (concept) => concept.status === "MASTERED" || concept.status === "REVIEW_NEEDED"
+      ).length,
+      averageMastery: average(group.concepts.map((concept) => concept.pMastery)),
+    })),
   }
 }
 

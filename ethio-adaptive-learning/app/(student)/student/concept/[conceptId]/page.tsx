@@ -70,26 +70,26 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
               {locked ? (
                 <Button disabled>
                   <BookOpen className="size-4" />
-                  Learn
+                  Learn path
                 </Button>
               ) : (
                 <Button asChild>
                   <Link href={`/student/concept/${concept.conceptId}/learn`}>
                     <BookOpen className="size-4" />
-                    Learn
+                    Learn path
                   </Link>
                 </Button>
               )}
               {locked ? (
                 <Button disabled variant="outline">
                   <Target className="size-4" />
-                  Challenge
+                  Challenge exam
                 </Button>
               ) : (
                 <Button asChild variant="outline">
                   <Link href={`/student/concept/${concept.conceptId}/challenge`}>
                     <Target className="size-4" />
-                    Challenge
+                    Challenge exam
                   </Link>
                 </Button>
               )}
@@ -122,8 +122,28 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         <section className="space-y-6">
           <Panel title="Recommendation" icon={BrainCircuit}>
-            <div className="flex items-start gap-3 rounded-lg bg-primary-fixed/50 p-4">
-              <Route className="mt-1 size-5 shrink-0 text-primary" />
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="flex items-start gap-3 rounded-lg bg-primary-fixed/50 p-4">
+                <Route className="mt-1 size-5 shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-bold text-on-surface">Learn path</p>
+                  <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+                    Read the content, practice, pass the checkpoint, then take the mastery exam.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 rounded-lg border border-outline-variant/50 p-4">
+                <Target className="mt-1 size-5 shrink-0 text-primary" />
+                <div>
+                  <p className="text-sm font-bold text-on-surface">Challenge path</p>
+                  <p className="mt-1 text-sm leading-6 text-on-surface-variant">
+                    Start the exam directly. No checkpoint is required on this path.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 flex items-start gap-3 rounded-lg bg-muted p-4">
+              <BrainCircuit className="mt-1 size-5 shrink-0 text-primary" />
               <div>
                 <p className="text-sm font-bold capitalize text-on-surface">
                   {concept.recommendation.type} pathway recommended

@@ -14,7 +14,7 @@ import {
   type CmsEntity,
   type CmsReferenceOptions,
   type CmsSerializableContentType,
-} from "@/lib/cms"
+} from "@/lib/cms/types"
 
 type EmbeddedLists = Record<string, Array<Record<string, string | number | null | undefined>>>
 

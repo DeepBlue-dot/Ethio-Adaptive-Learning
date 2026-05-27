@@ -22,9 +22,7 @@ export async function requireAuth() {
 export async function requireApiAuth() {
   const session = await getAuthSession()
   if (!session?.user) {
-    const error = new Error("Unauthorized")
-    // @ts-ignore
-    error.status = 401
+    const error = Object.assign(new Error("Unauthorized"), { status: 401 })
     throw error
   }
   return session

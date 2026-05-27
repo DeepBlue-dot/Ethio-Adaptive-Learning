@@ -58,6 +58,80 @@ export type StudentDashboard = {
   }
 }
 
+export type StudentActivityTimelineItem = {
+  id: string
+  activityType: string
+  label: string
+  conceptId: string
+  conceptTitle: string
+  unitTitle: string
+  courseTitle: string
+  isCorrect: boolean | null
+  responseTimeMs: number | null
+  timestamp: string
+}
+
+export type StudentActivityExamItem = {
+  id: string
+  conceptId: string
+  conceptTitle: string
+  pathway: PathwayType
+  score: number | null
+  isPassed: boolean | null
+  questionCount: number
+  timeSpentSec: number | null
+  completedAt: string | null
+}
+
+export type StudentActivity = {
+  summary: {
+    totalActivities: number
+    practiceCount: number
+    checkpointCount: number
+    examResponseCount: number
+    contentReadCount: number
+    hintCount: number
+    correctCount: number
+    incorrectCount: number
+    activeDays30: number
+  }
+  timeline: StudentActivityTimelineItem[]
+  recentExams: StudentActivityExamItem[]
+}
+
+export type StudentAnalytics = {
+  profile: StudentDashboard["profile"]
+  progress: {
+    totalConcepts: number
+    unlockedConcepts: number
+    masteredConcepts: number
+    reviewDue: number
+    overallProgress: number
+  }
+  statusDistribution: Array<{
+    status: StudentStatus
+    label: string
+    count: number
+    percentage: number
+  }>
+  performance: {
+    totalAttempts: number
+    averagePracticeAccuracy: number
+    averageCheckpointPassRate: number
+    averageTimePerQuestion: number
+    conceptsStarted: number
+  }
+  mostDifficultConcepts: StudentConceptCard[]
+  strongestConcepts: StudentConceptCard[]
+  courseProgress: Array<{
+    courseId: string
+    courseTitle: string
+    totalConcepts: number
+    masteredConcepts: number
+    averageMastery: number
+  }>
+}
+
 export type StudentNavigation = {
   profile: {
     username: string

@@ -1,10 +1,11 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2 } from "lucide-react"
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ShieldCheck, Target } from "lucide-react"
 
 import { ContentBlocksRenderer } from "@/components/content/content-blocks-renderer"
 import { ContentReadLogger } from "@/components/student/content-read-logger"
 import { QuestionInteraction } from "@/components/student/question-interaction"
+import { MasteryBar, StatusBadge, formatDuration, formatPercent } from "@/components/student/student-status"
 import { TutorPanel } from "@/components/student/tutor-panel"
 import { Button } from "@/components/ui/button"
 import { requireRole } from "@/lib/auth-server"
@@ -36,7 +37,7 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
           </Link>
         </Button>
         <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-6 shadow-sm">
-          <p className="text-sm font-semibold text-primary">Learning path locked</p>
+          <p className="text-sm font-semibold text-primary">Learn path locked</p>
           <h1 className="mt-2 text-2xl font-extrabold text-on-surface">{concept.title}</h1>
           <p className="mt-3 text-sm leading-6 text-on-surface-variant">
             Finish the prerequisite concepts before opening this instructional workspace.
@@ -80,20 +81,41 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
       </div>
 
       <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
           <div>
-            <p className="text-sm font-semibold text-primary">Instructional workspace</p>
-            <h1 className="mt-2 text-3xl font-extrabold text-on-surface">{concept.title}</h1>
-            <p className="mt-2 text-sm text-on-surface-variant">
-              Content, practice, checkpoint, then mastery exam.
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={concept.status} />
+              <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold text-on-surface-variant">
+                Learn path
+              </span>
+            </div>
+            <h1 className="mt-3 text-3xl font-extrabold text-on-surface">{concept.title}</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-on-surface-variant">
+              Read the lesson, answer adaptive practice, pass the checkpoint, then take the mastery exam.
             </p>
+            <div className="mt-5 grid gap-3 sm:grid-cols-3">
+              <ReadinessMetric label="Practice questions" value={concept.practiceQuestionCount} />
+              <ReadinessMetric label="Lesson blocks" value={concept.contentBlocks.length} />
+              <ReadinessMetric label="Worked examples" value={concept.workedExamples.length} />
+            </div>
           </div>
-          <Button asChild>
-            <Link href={`/student/concept/${concept.conceptId}/learn/checkpoint`}>
-              Proceed to checkpoint
-              <ArrowRight className="size-4" />
-            </Link>
-          </Button>
+          <div className="rounded-lg border border-outline-variant/50 bg-muted p-4">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-semibold text-on-surface">Mastery estimate</p>
+              <p className="text-2xl font-extrabold text-primary">{formatPercent(concept.pMastery)}</p>
+            </div>
+            <MasteryBar className="mt-4" value={concept.pMastery} />
+            <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
+              <SmallMetric label="Practice" value={formatPercent(concept.analyticsSnapshot.practiceAccuracy)} />
+              <SmallMetric label="Avg time" value={formatDuration(concept.analyticsSnapshot.averageTimePerQuestion)} />
+            </div>
+            <Button asChild className="mt-4 w-full justify-between">
+              <Link href={`/student/concept/${concept.conceptId}/learn/checkpoint`}>
+                Go to checkpoint
+                <ArrowRight className="size-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -115,12 +137,13 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
           {concept.chunks.length || concept.workedExamples.length ? (
             <article className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
-                <CheckCircle2 className="size-5 text-primary" />
-                <h2 className="text-lg font-bold text-on-surface">Checkpoint readiness</h2>
+                <ShieldCheck className="size-5 text-primary" />
+                <h2 className="text-lg font-bold text-on-surface">Learn path gate</h2>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                <ReadinessMetric label="Chunks" value={concept.chunks.length} />
-                <ReadinessMetric label="Worked examples" value={concept.workedExamples.length} />
+              <div className="grid gap-3 md:grid-cols-3">
+                <PathStep icon={BookOpen} label="Read" value={`${concept.contentBlocks.length} blocks`} />
+                <PathStep icon={CheckCircle2} label="Practice" value={`${concept.practiceQuestionCount} questions`} />
+                <PathStep icon={Target} label="Checkpoint" value={concept.checkpointQuestionId ? "Available" : "Unavailable"} />
               </div>
             </article>
           ) : null}
@@ -147,9 +170,38 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
 
 function ReadinessMetric({ label, value }: { label: string; value: number }) {
   return (
-    <div className="rounded-lg bg-muted p-4">
-      <p className="text-sm text-on-surface-variant">{label}</p>
-      <p className="mt-2 text-2xl font-extrabold text-on-surface">{value}</p>
+    <div className="rounded-lg border border-outline-variant/50 bg-muted p-3">
+      <p className="text-xs text-on-surface-variant">{label}</p>
+      <p className="mt-2 text-lg font-extrabold text-on-surface">{value}</p>
+    </div>
+  )
+}
+
+function SmallMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md bg-background p-3">
+      <p className="text-xs text-on-surface-variant">{label}</p>
+      <p className="mt-1 text-sm font-bold text-on-surface">{value}</p>
+    </div>
+  )
+}
+
+function PathStep({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof BookOpen
+  label: string
+  value: string
+}) {
+  return (
+    <div className="rounded-lg border border-outline-variant/50 bg-muted p-4">
+      <div className="flex items-center gap-2 text-sm font-bold text-on-surface">
+        <Icon className="size-4 text-primary" />
+        {label}
+      </div>
+      <p className="mt-2 text-xs text-on-surface-variant">{value}</p>
     </div>
   )
 }

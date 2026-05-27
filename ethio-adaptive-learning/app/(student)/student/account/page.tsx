@@ -12,7 +12,7 @@ export default async function AccountPage() {
 
   if (!user) {
     return (
-      <div className="rounded-[2rem] border border-border bg-white p-8 shadow-sm">
+      <div className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-8 shadow-sm">
         <p className="text-center text-destructive">User data not found.</p>
       </div>
     )

@@ -3,12 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest"
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(),
   topLevelUserMasteryFindMany: vi.fn(),
+  conceptFindFirst: vi.fn(),
   practiceAttemptFindUnique: vi.fn(),
   practiceAttemptUpdate: vi.fn(),
   checkpointAttemptFindFirst: vi.fn(),
   examAttemptFindUnique: vi.fn(),
+  examAttemptFindFirst: vi.fn(),
+  examAttemptCreate: vi.fn(),
   examAttemptUpdate: vi.fn(),
   questionFindMany: vi.fn(),
+  interactionLogFindMany: vi.fn(),
   interactionLogCreate: vi.fn(),
   interactionLogCreateMany: vi.fn(),
   userMasteryFindUnique: vi.fn(),
@@ -32,7 +36,15 @@ vi.mock("@/lib/curriculum-graph", () => ({
   loadCourseUserState: mocks.loadCourseUserState,
 }))
 
-import { getReviewQueue, submitExamAttempt, submitPracticeAttempt } from "@/lib/assessment"
+vi.mock("@/lib/gamification", () => ({
+  awardXpForActivity: vi.fn().mockResolvedValue(null),
+  recordDailyActivity: vi.fn().mockResolvedValue({ streak: 1 }),
+  checkAndAwardXpBadges: vi.fn().mockResolvedValue([]),
+  checkAndAwardStreakBadges: vi.fn().mockResolvedValue([]),
+}))
+
+import { PathwayType } from "@prisma/client"
+import { getReviewQueue, startExamAttempt, submitExamAttempt, submitPracticeAttempt } from "@/lib/assessment"
 
 describe("lib/assessment", () => {
   beforeEach(() => {
@@ -53,12 +65,18 @@ describe("lib/assessment", () => {
         },
         examAttempt: {
           findUnique: mocks.examAttemptFindUnique,
+          findFirst: mocks.examAttemptFindFirst,
+          create: mocks.examAttemptCreate,
           update: mocks.examAttemptUpdate,
+        },
+        concept: {
+          findFirst: mocks.conceptFindFirst,
         },
         question: {
           findMany: mocks.questionFindMany,
         },
         interactionLog: {
+          findMany: mocks.interactionLogFindMany,
           create: mocks.interactionLogCreate,
           createMany: mocks.interactionLogCreateMany,
         },
@@ -365,5 +383,155 @@ describe("lib/assessment", () => {
       baselineMastery: 0.95,
       status: "REVIEW_NEEDED",
     })
+  })
+
+  it("requires a passed checkpoint before starting a learn-path exam", async () => {
+    mocks.conceptFindFirst.mockResolvedValue({
+      id: "concept_linear",
+      pLo: 0.15,
+      unlockThreshold: 0.9,
+      decayLambda: 0.01,
+      unit: {
+        courseId: "course_math",
+      },
+      userMasteries: [],
+    })
+    mocks.loadCourseUserState.mockResolvedValue({
+      statuses: new Map([
+        [
+          "concept_linear",
+          {
+            unlocked: true,
+            status: "IN_PROGRESS",
+          },
+        ],
+      ]),
+    })
+    mocks.checkpointAttemptFindFirst.mockResolvedValueOnce(null)
+
+    await expect(
+      startExamAttempt("student_1", "concept_linear", PathwayType.LEARN)
+    ).rejects.toThrow("Pass the checkpoint before starting the mastery exam.")
+
+    expect(mocks.examAttemptFindFirst).not.toHaveBeenCalled()
+  })
+
+  it("starts a challenge-path exam without requiring checkpoint completion", async () => {
+    mocks.conceptFindFirst.mockResolvedValue({
+      id: "concept_linear",
+      pLo: 0.15,
+      unlockThreshold: 0.9,
+      decayLambda: 0.01,
+      unit: {
+        courseId: "course_math",
+      },
+      userMasteries: [],
+    })
+    mocks.loadCourseUserState.mockResolvedValue({
+      statuses: new Map([
+        [
+          "concept_linear",
+          {
+            unlocked: true,
+            status: "IN_PROGRESS",
+          },
+        ],
+      ]),
+    })
+    mocks.examAttemptFindFirst.mockResolvedValueOnce(null)
+    mocks.userMasteryFindUnique.mockResolvedValue(null)
+    mocks.questionFindMany.mockResolvedValueOnce([
+      {
+        id: "question_exam_1",
+        content: "Question 1",
+        correctAnswer: "A",
+        distractors: ["B", "C"],
+        hintText: null,
+        explanation: null,
+        difficulty: "HARD",
+        usage: "EXAM",
+      },
+    ])
+    mocks.interactionLogFindMany.mockResolvedValueOnce([])
+    mocks.examAttemptCreate.mockResolvedValueOnce({
+      id: "exam_attempt_1",
+      userId: "student_1",
+      conceptId: "concept_linear",
+      pathway: "CHALLENGE",
+      questionIds: ["question_exam_1"],
+      questionCount: 1,
+    })
+
+    const attempt = await startExamAttempt("student_1", "concept_linear", PathwayType.CHALLENGE)
+
+    expect(attempt).toMatchObject({
+      id: "exam_attempt_1",
+      pathway: "CHALLENGE",
+    })
+    expect(mocks.checkpointAttemptFindFirst).not.toHaveBeenCalled()
+    expect(mocks.examAttemptCreate).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        userId: "student_1",
+        conceptId: "concept_linear",
+        pathway: PathwayType.CHALLENGE,
+      }),
+    })
+  })
+
+  it("reuses only open exam attempts from the same pathway", async () => {
+    mocks.conceptFindFirst.mockResolvedValue({
+      id: "concept_linear",
+      pLo: 0.15,
+      unlockThreshold: 0.9,
+      decayLambda: 0.01,
+      unit: {
+        courseId: "course_math",
+      },
+      userMasteries: [],
+    })
+    mocks.loadCourseUserState.mockResolvedValue({
+      statuses: new Map([
+        [
+          "concept_linear",
+          {
+            unlocked: true,
+            status: "IN_PROGRESS",
+          },
+        ],
+      ]),
+    })
+    mocks.examAttemptFindFirst.mockResolvedValueOnce({
+      id: "open_challenge_attempt",
+      userId: "student_1",
+      conceptId: "concept_linear",
+      pathway: "CHALLENGE",
+      completedAt: null,
+    })
+    mocks.userMasteryFindUnique.mockResolvedValueOnce({
+      userId: "student_1",
+      conceptId: "concept_linear",
+      pMastery: 0.2,
+      unlockedAt: new Date("2026-04-01T00:00:00.000Z"),
+      status: "IN_PROGRESS",
+    })
+
+    const attempt = await startExamAttempt("student_1", "concept_linear", PathwayType.CHALLENGE)
+
+    expect(attempt).toMatchObject({
+      id: "open_challenge_attempt",
+      pathway: "CHALLENGE",
+    })
+    expect(mocks.examAttemptFindFirst).toHaveBeenCalledWith({
+      where: {
+        userId: "student_1",
+        conceptId: "concept_linear",
+        pathway: PathwayType.CHALLENGE,
+        completedAt: null,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
+    expect(mocks.examAttemptCreate).not.toHaveBeenCalled()
   })
 })

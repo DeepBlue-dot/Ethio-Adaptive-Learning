@@ -1,4 +1,15 @@
-import { Activity, BookOpen, Flame, Gauge, Target, TimerReset } from "lucide-react"
+import Link from "next/link"
+import {
+  Activity,
+  ArrowRight,
+  BarChart3,
+  BookOpen,
+  Flame,
+  Gauge,
+  RotateCcw,
+  Target,
+  TimerReset,
+} from "lucide-react"
 
 import { ConceptCard } from "@/components/student/concept-card"
 import {
@@ -23,102 +34,120 @@ export default async function StudentDashboardPage() {
       : totalConcepts > 0
         ? dashboard.analyticsSnapshot.conceptsMastered / totalConcepts
         : 0
+  const nextConcepts = [
+    ...dashboard.conceptsByStatus.reviewNeeded,
+    ...dashboard.conceptsByStatus.inProgress,
+    ...dashboard.conceptsByStatus.fringe,
+  ].slice(0, 6)
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
-        <div className="grid gap-5 lg:grid-cols-[1.35fr_0.65fr]">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
           <div>
-            <p className="text-sm font-semibold text-primary">Learning dashboard</p>
-            <h1 className="mt-2 text-3xl font-extrabold text-on-surface">Your adaptive path</h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-on-surface-variant">
-              Continue available concepts, refresh due mastery, or take a challenge when the
-              recommendation engine says you are ready.
+            <p className="text-sm font-semibold text-primary">Student dashboard</p>
+            <h1 className="mt-2 text-3xl font-extrabold text-on-surface">Today&apos;s learning hub</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-6 text-on-surface-variant">
+              Pick up the next concept, clear reviews, or jump into analytics when you want to see the full signal.
             </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-3">
               <SummaryMetric icon={Gauge} label="Level" value={String(dashboard.profile.currentLevel)} />
-              <SummaryMetric icon={Target} label="Total XP" value={String(dashboard.profile.totalXP)} />
+              <SummaryMetric icon={Target} label="Total XP" value={dashboard.profile.totalXP.toLocaleString()} />
               <SummaryMetric icon={Flame} label="Daily streak" value={`${dashboard.profile.dailyStreak} days`} />
             </div>
           </div>
 
           <div className="rounded-lg border border-outline-variant/50 bg-muted p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <p className="text-sm font-semibold text-on-surface">Overall progress</p>
               <p className="text-2xl font-extrabold text-primary">{formatPercent(progressValue)}</p>
             </div>
             <MasteryBar className="mt-4" value={progressValue} />
             <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
-              <div className="rounded-md bg-background p-3">
-                <p className="text-xs text-on-surface-variant">Mastered</p>
-                <p className="mt-1 font-bold text-on-surface">{dashboard.analyticsSnapshot.conceptsMastered}</p>
-              </div>
-              <div className="rounded-md bg-background p-3">
-                <p className="text-xs text-on-surface-variant">Started</p>
-                <p className="mt-1 font-bold text-on-surface">{dashboard.analyticsSnapshot.conceptsStarted}</p>
-              </div>
+              <MiniStat label="Mastered" value={dashboard.analyticsSnapshot.conceptsMastered} />
+              <MiniStat label="Started" value={dashboard.analyticsSnapshot.conceptsStarted} />
+              <MiniStat label="Review due" value={dashboard.conceptsByStatus.reviewNeeded.length} />
+              <MiniStat label="Available" value={dashboard.conceptsByStatus.fringe.length} />
             </div>
           </div>
         </div>
       </section>
 
-      <section id="analytics" className="grid gap-4 lg:grid-cols-4">
-        <AnalyticsMetric icon={BookOpen} label="Concepts mastered" value={dashboard.analyticsSnapshot.conceptsMastered} />
-        <AnalyticsMetric icon={Activity} label="Concepts started" value={dashboard.analyticsSnapshot.conceptsStarted} />
-        <AnalyticsMetric icon={Flame} label="Current streak" value={dashboard.analyticsSnapshot.currentStreak} />
-        <AnalyticsMetric
-          icon={TimerReset}
-          label="Avg time/question"
+      <section className="grid gap-4 lg:grid-cols-4">
+        <DashboardLink
+          href="/student/activity"
+          icon={Activity}
+          label="Activity"
+          value={`${dashboard.analyticsSnapshot.conceptsStarted} started`}
+        />
+        <DashboardLink
+          href="/student/analytics"
+          icon={BarChart3}
+          label="Analytics"
           value={formatDuration(dashboard.analyticsSnapshot.averageTimePerConcept)}
         />
-      </section>
-
-      <section id="curriculum" className="space-y-6">
-        <ConceptSection
-          concepts={dashboard.conceptsByStatus.reviewNeeded}
-          description="Mastery has likely decayed. Refresh these before they become expensive to relearn."
-          title="Review Needed"
+        <DashboardLink
+          href="/student/reviews"
+          icon={RotateCcw}
+          label="Review queue"
+          value={`${dashboard.conceptsByStatus.reviewNeeded.length} due`}
         />
-        <ConceptSection
-          concepts={dashboard.conceptsByStatus.inProgress}
-          description="You have started these concepts and can continue from the active learning path."
-          title="In Progress"
-        />
-        <ConceptSection
-          concepts={dashboard.conceptsByStatus.fringe}
-          description="Prerequisites are met, so these concepts are ready when you choose to begin."
-          title="Available Concepts"
-        />
-        <ConceptSection
-          concepts={dashboard.conceptsByStatus.mastered}
-          description="Completed concepts remain available for challenge attempts and quick confidence checks."
-          title="Mastered"
-        />
-        <ConceptSection
-          concepts={dashboard.conceptsByStatus.locked}
-          description="Prerequisites are still in progress. These unlock automatically when mastery is high enough."
-          title="Locked Concepts"
+        <DashboardLink
+          href="/student/account"
+          icon={Gauge}
+          label="Profile"
+          value={`Level ${dashboard.profile.currentLevel}`}
         />
       </section>
 
-      {dashboard.analyticsSnapshot.mostDifficultConcepts.length ? (
-        <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5">
-          <h2 className="text-lg font-bold text-on-surface">Concepts to watch</h2>
-          <div className="mt-4 grid gap-3 md:grid-cols-3">
-            {dashboard.analyticsSnapshot.mostDifficultConcepts.map((concept) => (
-              <div key={concept.conceptId} className="rounded-lg border border-outline-variant/50 bg-muted p-4">
-                <p className="text-sm font-bold text-on-surface">{concept.title}</p>
-                <p className="mt-1 text-xs text-on-surface-variant">{concept.unit.title}</p>
-                <div className="mt-3 flex items-center justify-between text-xs">
-                  <span>Practice accuracy</span>
-                  <span className="font-semibold">{formatPercent(concept.practiceAccuracy)}</span>
-                </div>
-                <MasteryBar className="mt-2" value={concept.practiceAccuracy} />
+      <section className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="space-y-6">
+          <ConceptSection
+            concepts={nextConcepts}
+            description="Review due concepts come first, followed by concepts already in progress and newly available lessons."
+            title="Next best actions"
+          />
+          <ConceptSection
+            concepts={dashboard.conceptsByStatus.mastered.slice(0, 3)}
+            description="These are ready for challenge attempts or quick confidence checks."
+            title="Recently mastered"
+          />
+        </div>
+
+        <aside className="space-y-6">
+          <Panel title="Learning mix" icon={BookOpen}>
+            <div className="space-y-3">
+              <DistributionRow label="Review due" value={dashboard.conceptsByStatus.reviewNeeded.length} total={totalConcepts} />
+              <DistributionRow label="In progress" value={dashboard.conceptsByStatus.inProgress.length} total={totalConcepts} />
+              <DistributionRow label="Available" value={dashboard.conceptsByStatus.fringe.length} total={totalConcepts} />
+              <DistributionRow label="Mastered" value={dashboard.conceptsByStatus.mastered.length} total={totalConcepts} />
+            </div>
+          </Panel>
+
+          <Panel title="Concepts to watch" icon={TimerReset}>
+            {dashboard.analyticsSnapshot.mostDifficultConcepts.length ? (
+              <div className="space-y-3">
+                {dashboard.analyticsSnapshot.mostDifficultConcepts.map((concept) => (
+                  <Link
+                    key={concept.conceptId}
+                    className="block rounded-lg border border-outline-variant/50 p-3 transition hover:border-primary/40 hover:bg-muted"
+                    href={`/student/concept/${concept.conceptId}`}
+                  >
+                    <p className="line-clamp-1 text-sm font-bold text-on-surface">{concept.title}</p>
+                    <div className="mt-2 flex items-center justify-between text-xs text-on-surface-variant">
+                      <span>Practice accuracy</span>
+                      <span>{formatPercent(concept.practiceAccuracy)}</span>
+                    </div>
+                    <MasteryBar className="mt-2" value={concept.practiceAccuracy} />
+                  </Link>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
+            ) : (
+              <p className="text-sm text-on-surface-variant">Start a few concepts to build your analytics signal.</p>
+            )}
+          </Panel>
+        </aside>
+      </section>
     </div>
   )
 }
@@ -143,23 +172,40 @@ function SummaryMetric({
   )
 }
 
-function AnalyticsMetric({
+function MiniStat({ label, value }: { label: string; value: number }) {
+  return (
+    <div className="rounded-md bg-background p-3">
+      <p className="text-xs text-on-surface-variant">{label}</p>
+      <p className="mt-1 font-bold text-on-surface">{value}</p>
+    </div>
+  )
+}
+
+function DashboardLink({
+  href,
   icon: Icon,
   label,
   value,
 }: {
-  icon: typeof BookOpen
+  href: string
+  icon: typeof Activity
   label: string
-  value: number | string
+  value: string
 }) {
   return (
-    <div className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-sm">
-      <div className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant">
-        <Icon className="size-4 text-primary" />
-        {label}
+    <Link
+      className="group rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-sm transition hover:border-primary/40 hover:bg-muted"
+      href={href}
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 text-sm font-semibold text-on-surface-variant">
+          <Icon className="size-4 text-primary" />
+          {label}
+        </div>
+        <ArrowRight className="size-4 text-on-surface-variant transition group-hover:translate-x-0.5 group-hover:text-primary" />
       </div>
       <p className="mt-3 text-2xl font-extrabold text-on-surface">{value}</p>
-    </div>
+    </Link>
   )
 }
 
@@ -185,16 +231,50 @@ function ConceptSection({
       </div>
 
       {concepts.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2">
           {concepts.map((concept) => (
             <ConceptCard key={concept.conceptId} concept={concept} />
           ))}
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-outline-variant p-5 text-sm text-on-surface-variant">
-          Nothing here right now.
+          Nothing urgent right now.
         </div>
       )}
     </section>
+  )
+}
+
+function Panel({
+  children,
+  icon: Icon,
+  title,
+}: {
+  children: React.ReactNode
+  icon: typeof BookOpen
+  title: string
+}) {
+  return (
+    <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
+      <div className="mb-4 flex items-center gap-2">
+        <Icon className="size-5 text-primary" />
+        <h2 className="text-lg font-bold text-on-surface">{title}</h2>
+      </div>
+      {children}
+    </section>
+  )
+}
+
+function DistributionRow({ label, total, value }: { label: string; total: number; value: number }) {
+  const ratio = total ? value / total : 0
+
+  return (
+    <div>
+      <div className="flex items-center justify-between text-sm">
+        <span className="text-on-surface-variant">{label}</span>
+        <span className="font-semibold text-on-surface">{value}</span>
+      </div>
+      <MasteryBar className="mt-2" value={ratio} />
+    </div>
   )
 }
