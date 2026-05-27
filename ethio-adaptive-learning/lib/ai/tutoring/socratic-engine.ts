@@ -1,9 +1,65 @@
 import { prisma } from "@/lib/prisma"
 import { chat, chatStream } from "../clients/ollama"
-import { retrieveCurriculumContext } from "../rag/retrieval"
 import { SOCRATIC_SYSTEM_PROMPT, buildRagPrompt } from "./prompts"
 import { validateSocraticResponse } from "./guardrails"
 import { AiMessage, TutorResponse } from "../types"
+
+async function loadCurriculumContext(conceptId: string): Promise<string[]> {
+  const concept = await prisma.concept.findFirst({
+    where: { id: conceptId, status: "PUBLISHED" },
+    include: {
+      chunks: {
+        where: { status: "PUBLISHED" },
+        orderBy: { order: "asc" },
+        select: { title: true, bodyMd: true },
+      },
+    },
+  })
+
+  if (!concept) {
+    throw new Error("Concept not found.")
+  }
+
+  const context: string[] = [`Concept: ${concept.title}`]
+
+  if (concept.description) {
+    context.push(`Description: ${concept.description}`)
+  }
+
+  if (concept.contentBody) {
+    context.push(`Concept body:\n${concept.contentBody}`)
+  }
+
+  for (const chunk of concept.chunks) {
+    context.push(`Chunk: ${chunk.title}\n${chunk.bodyMd}`)
+  }
+
+  return context
+}
+
+export async function loadSessionMessages(
+  userId: string,
+  conceptId: string
+): Promise<Array<{ id: string; role: "student" | "ai"; content: string }>> {
+  const session = await prisma.tutorSession.findFirst({
+    where: { userId, conceptId },
+    include: {
+      messages: {
+        orderBy: { timestamp: "asc" },
+      },
+    },
+  })
+
+  if (!session) {
+    return []
+  }
+
+  return session.messages.map((message) => ({
+    id: message.id,
+    role: message.role === "STUDENT" ? "student" : "ai",
+    content: message.content,
+  }))
+}
 
 /**
  * Orchestrates the Socratic tutoring interaction
@@ -37,9 +93,8 @@ export async function getSocraticGuidance(
     }
   })
 
-  // 3. RAG: Retrieve context
-  const contextResults = await retrieveCurriculumContext(studentQuestion)
-  const contextTexts = contextResults.map(r => r.text)
+  // 3. Load curriculum context directly from the database
+  const contextTexts = await loadCurriculumContext(conceptId)
 
   // 4. Format history
   const historyTexts = activeSession.messages.map(
@@ -68,13 +123,13 @@ export async function getSocraticGuidance(
       content: aiContent,
       isFlagged: validation.isFlagged,
       flagReason: validation.reason,
-      retrievedContext: contextResults.map(r => r.id) as never // Prisma JSON field
+      retrievedContext: []
     }
   })
 
   return {
     content: aiContent,
-    retrievedContextIds: contextResults.map(r => r.id),
+    retrievedContextIds: [],
     isFlagged: validation.isFlagged,
     flagReason: validation.reason
   }
@@ -111,9 +166,8 @@ export async function getSocraticGuidanceStream(
     }
   })
 
-  // 2. RAG & Prompt Construction
-  const contextResults = await retrieveCurriculumContext(studentQuestion)
-  const contextTexts = contextResults.map(r => r.text)
+  // 2. Prompt Construction with curriculum context loaded from the database
+  const contextTexts = await loadCurriculumContext(conceptId)
   const historyTexts = activeSession.messages.map(
     m => `${m.role === "STUDENT" ? "Student" : "Tutor"}: ${m.content}`
   )

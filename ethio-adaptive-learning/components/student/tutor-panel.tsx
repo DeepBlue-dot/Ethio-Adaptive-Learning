@@ -24,12 +24,14 @@ export function TutorPanel({
   className,
   conceptId,
   conceptTitle,
+  initialMessages = [],
 }: {
   className?: string
   conceptId: string
   conceptTitle: string
+  initialMessages?: TutorMessage[]
 }) {
-  const [messages, setMessages] = useState<TutorMessage[]>([])
+  const [messages, setMessages] = useState<TutorMessage[]>(initialMessages)
   const [question, setQuestion] = useState("")
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()

@@ -19,6 +19,7 @@ import { MasteryBar, StatusBadge, formatDuration, formatPercent } from "@/compon
 import { TutorPanel } from "@/components/student/tutor-panel"
 import { Button } from "@/components/ui/button"
 import { requireRole } from "@/lib/auth-server"
+import { loadSessionMessages } from "@/lib/ai/tutoring/socratic-engine"
 import { getPracticeQuestionForConcept, getStudentConceptDetail } from "@/lib/student/data"
 import type { StudentQuestion } from "@/lib/student/types"
 
@@ -82,6 +83,7 @@ export default async function StudentLearnPage({ params, searchParams }: LearnPa
   const leadImage = mediaAssets.find((asset) => asset.kind === "IMAGE" && asset.url)
   const hasVideo = concept.contentBlocks.some((block) => block.type === "video")
   const hasSimulation = mediaAssets.some((asset) => asset.kind === "PHET_SIMULATION")
+  const tutorMessages = await loadSessionMessages(session.user.id, concept.conceptId)
   const lessonSteps = [
     {
       icon: BookOpen,
@@ -281,7 +283,11 @@ export default async function StudentLearnPage({ params, searchParams }: LearnPa
               {questionError ?? "Practice opens after prerequisites are complete."}
             </div>
           )}
-          <TutorPanel conceptId={concept.conceptId} conceptTitle={concept.title} />
+          <TutorPanel
+            conceptId={concept.conceptId}
+            conceptTitle={concept.title}
+            initialMessages={tutorMessages}
+          />
         </aside>
       </div>
     </div>

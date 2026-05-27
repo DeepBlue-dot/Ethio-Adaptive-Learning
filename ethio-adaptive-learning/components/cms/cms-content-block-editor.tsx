@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { GripVertical, PlusCircle, Search, Trash2 } from "lucide-react"
 import {
   DndContext,
@@ -80,6 +80,39 @@ export function CmsContentBlockEditor({
       const newIndex = blocks.findIndex((block) => block.id === over.id)
       setBlocks(arrayMove(blocks, oldIndex, newIndex))
     }
+
+    return (
+      <div className="lg:col-span-2">
+        <input name={name} type="hidden" value={JSON.stringify(blocks)} />
+
+        <div className="rounded-[2rem] border border-border bg-slate-50 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold text-foreground">Lesson blocks</h3>
+            <Button onClick={() => setBlocks([...blocks, createBlock("paragraph")])} type="button" variant="outline">
+              <PlusCircle className="size-4" />
+              Add block
+            </Button>
+          </div>
+
+          <CmsFieldErrors errors={errors} path={name} />
+
+          <div className="mt-5 space-y-4">
+            {/* Client-side DnD wrapper renders fallback server-side to avoid hydration mismatch */}
+            <ClientDndWrapper
+              sensors={sensors}
+              blocks={blocks}
+              errors={errors}
+              name={name}
+              referenceOptions={referenceOptions}
+              setBlocks={setBlocks}
+              onUpdate={(idx, patch) => updateBlock(setBlocks, blocks, idx, { ...blocks[idx], ...patch })}
+              onRemove={(idx) => setBlocks(blocks.filter((_, i) => i !== idx))}
+              handleDragEnd={handleDragEnd}
+            />
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -98,24 +131,19 @@ export function CmsContentBlockEditor({
         <CmsFieldErrors errors={errors} path={name} />
 
         <div className="mt-5 space-y-4">
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-              {blocks.map((block, index) => (
-                <SortableBlock
-                  key={block.id}
-                  block={block}
-                  errors={errors}
-                  index={index}
-                  name={name}
-                  onRemove={() => setBlocks(blocks.filter((_, i) => i !== index))}
-                  onUpdate={(patch) => updateBlock(setBlocks, blocks, index, { ...block, ...patch })}
-                  referenceOptions={referenceOptions}
-                  setBlocks={setBlocks}
-                  blocks={blocks}
-                />
-              ))}
-            </SortableContext>
-          </DndContext>
+          {/* Render non-interactive fallback on the server to avoid hydration mismatches from DnD-generated IDs. */}
+          {/* On the client, mount the full DnD tree. */}
+          <ClientDndWrapper
+            sensors={sensors}
+            blocks={blocks}
+            errors={errors}
+            name={name}
+            referenceOptions={referenceOptions}
+            setBlocks={setBlocks}
+            onUpdate={(idx, patch) => updateBlock(setBlocks, blocks, idx, { ...blocks[idx], ...patch })}
+            onRemove={(idx) => setBlocks(blocks.filter((_, i) => i !== idx))}
+            handleDragEnd={handleDragEnd}
+          />
         </div>
       </div>
     </div>
@@ -204,6 +232,73 @@ function useEditableBlocks(value: unknown) {
   )
 
   return [blocks, setBlocks] as const
+}
+
+function ClientDndWrapper({
+  sensors,
+  blocks,
+  errors,
+  name,
+  referenceOptions,
+  setBlocks,
+  onUpdate,
+  onRemove,
+  handleDragEnd,
+}: {
+  sensors: any
+  blocks: EditableBlock[]
+  errors: Record<string, string[]>
+  name: string
+  referenceOptions: CmsReferenceOptions
+  setBlocks: (blocks: EditableBlock[]) => void
+  onUpdate: (index: number, patch: Partial<EditableBlock>) => void
+  onRemove: (index: number) => void
+  handleDragEnd: (e: DragEndEvent) => void
+}) {
+  const [isMounted, setIsMounted] = useState(false)
+
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
+  if (!isMounted) {
+    // Server-rendered fallback: non-interactive list (no DnD attributes or generated IDs)
+    return (
+      <div>
+        {blocks.map((block, index) => (
+          <div key={block.id} className="rounded-3xl border border-border bg-white p-5 mb-4">
+            <div className="flex items-center gap-3">
+              <div className="p-1 text-muted-foreground">
+                <GripVertical className="size-5" />
+              </div>
+              <div className="text-sm font-medium text-foreground">{block.type}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+        {blocks.map((block, index) => (
+          <SortableBlock
+            key={block.id}
+            block={block}
+            errors={errors}
+            index={index}
+            name={name}
+            onRemove={() => onRemove(index)}
+            onUpdate={(patch) => onUpdate(index, patch)}
+            referenceOptions={referenceOptions}
+            setBlocks={setBlocks}
+            blocks={blocks}
+          />
+        ))}
+      </SortableContext>
+    </DndContext>
+  )
 }
 
 function BlockFields({

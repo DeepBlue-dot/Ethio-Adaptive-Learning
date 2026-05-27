@@ -16,6 +16,7 @@ import {
   bulkPublishItems,
   bulkUnpublishItems,
   bulkDeleteItems,
+  createCmsErrorState,
 } from "@/lib/cms"
 import { getErrorMessage, getReturnTo, redirectWithMessage, textField } from "@/lib/cms/forms"
 import type { CmsActionState } from "@/lib/cms/types"
@@ -80,11 +81,17 @@ export async function saveCmsItem(
       throw error
     }
 
-    return {
-      ok: false,
-      message: getErrorMessage(error),
-      fieldErrors: {},
-      statusCode: 500,
+    // Map validation-like errors (graph cycles, publish prereqs, zod parse errors) into
+    // the same structured shape returned by parseCmsFormData so the UI can highlight fields.
+    try {
+      return createCmsErrorState(error)
+    } catch (err) {
+      return {
+        ok: false,
+        message: getErrorMessage(error),
+        fieldErrors: {},
+        statusCode: 500,
+      }
     }
   }
 }
