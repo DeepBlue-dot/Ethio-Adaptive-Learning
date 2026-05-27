@@ -3,6 +3,20 @@
   "title": "Limits",
   "description": "Reason about the value a function approaches near a target input.",
   "overview": "overview.md",
+  "contentBlocks": [
+    {
+      "id": "limits-content-heading",
+      "type": "heading",
+      "level": 2,
+      "text": "What value is the function approaching?"
+    },
+    {
+      "id": "limits-content-intuition",
+      "type": "paragraph",
+      "title": "Core idea",
+      "text": "A limit focuses on nearby behavior. For continuous functions, the approaching value and the actual function value are the same, so direct substitution works."
+    }
+  ],
   "unlockThreshold": 0.9,
   "pLo": 0.15,
   "pT": 0.1,

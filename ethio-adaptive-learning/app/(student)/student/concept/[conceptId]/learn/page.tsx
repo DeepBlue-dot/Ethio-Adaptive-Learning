@@ -1,6 +1,16 @@
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, ShieldCheck, Target } from "lucide-react"
+import {
+  ArrowLeft,
+  ArrowRight,
+  BookOpen,
+  CheckCircle2,
+  ImageIcon,
+  PlayCircle,
+  ShieldCheck,
+  Sparkles,
+  Target,
+} from "lucide-react"
 
 import { ContentBlocksRenderer } from "@/components/content/content-blocks-renderer"
 import { ContentReadLogger } from "@/components/student/content-read-logger"
@@ -16,16 +26,28 @@ type LearnPageProps = {
   params: Promise<{
     conceptId: string
   }>
+  searchParams: Promise<{
+    page?: string
+  }>
 }
 
-export default async function StudentLearnPage({ params }: LearnPageProps) {
+export default async function StudentLearnPage({ params, searchParams }: LearnPageProps) {
   const session = await requireRole("STUDENT")
   const { conceptId } = await params
+  const { page: pageParam } = await searchParams
   const concept = await getStudentConceptDetail(session.user.id, conceptId)
 
   if (!concept) {
     notFound()
   }
+
+  const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10))
+  const BLOCKS_PER_PAGE = 5
+  const totalPages = Math.ceil(concept.contentBlocks.length / BLOCKS_PER_PAGE)
+  const paginatedBlocks = concept.contentBlocks.slice(
+    (currentPage - 1) * BLOCKS_PER_PAGE,
+    currentPage * BLOCKS_PER_PAGE
+  )
 
   if (concept.status === "LOCKED") {
     return (
@@ -56,9 +78,36 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
     questionError = error instanceof Error ? error.message : "Practice is unavailable right now."
   }
 
+  const mediaAssets = Object.values(concept.contentBlockAssets)
+  const leadImage = mediaAssets.find((asset) => asset.kind === "IMAGE" && asset.url)
+  const hasVideo = concept.contentBlocks.some((block) => block.type === "video")
+  const hasSimulation = mediaAssets.some((asset) => asset.kind === "PHET_SIMULATION")
+  const lessonSteps = [
+    {
+      icon: BookOpen,
+      label: "Read",
+      value: `${concept.contentBlocks.length} blocks`,
+    },
+    {
+      icon: PlayCircle,
+      label: "Watch",
+      value: hasVideo ? "Video ready" : "Optional",
+    },
+    {
+      icon: Sparkles,
+      label: "Explore",
+      value: hasSimulation ? "Simulation" : `${mediaAssets.length} media`,
+    },
+    {
+      icon: Target,
+      label: "Practice",
+      value: `${concept.practiceQuestionCount} questions`,
+    },
+  ]
+
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <ContentReadLogger conceptId={concept.conceptId} />
+      {currentPage === totalPages && <ContentReadLogger conceptId={concept.conceptId} />}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav className="text-sm text-on-surface-variant">
@@ -80,26 +129,52 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
         </Button>
       </div>
 
-      <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
-        <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
-          <div>
+      <section className="overflow-hidden rounded-lg border border-outline-variant/50 bg-surface-container-lowest shadow-sm">
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1fr)_390px]">
+          <div className="p-5 sm:p-6">
             <div className="flex flex-wrap items-center gap-2">
               <StatusBadge status={concept.status} />
               <span className="rounded-md bg-muted px-2 py-1 text-xs font-semibold text-on-surface-variant">
                 Learn path
               </span>
+              <span className="rounded-md bg-primary-fixed px-2 py-1 text-xs font-semibold text-on-primary-fixed">
+                {concept.course.title}
+              </span>
             </div>
             <h1 className="mt-3 text-3xl font-extrabold text-on-surface">{concept.title}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-6 text-on-surface-variant">
-              Read the lesson, answer adaptive practice, pass the checkpoint, then take the mastery exam.
+              {concept.description ??
+                "Read the lesson, answer adaptive practice, pass the checkpoint, then take the mastery exam."}
             </p>
-            <div className="mt-5 grid gap-3 sm:grid-cols-3">
-              <ReadinessMetric label="Practice questions" value={concept.practiceQuestionCount} />
-              <ReadinessMetric label="Lesson blocks" value={concept.contentBlocks.length} />
-              <ReadinessMetric label="Worked examples" value={concept.workedExamples.length} />
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              {lessonSteps.map((step) => (
+                <ReadinessMetric key={step.label} icon={step.icon} label={step.label} value={step.value} />
+              ))}
             </div>
           </div>
-          <div className="rounded-lg border border-outline-variant/50 bg-muted p-4">
+
+          <div
+            className="relative min-h-72 border-t border-outline-variant/50 bg-muted p-5 lg:border-l lg:border-t-0"
+            style={
+              leadImage?.url
+                ? {
+                    backgroundImage: `linear-gradient(to top, rgba(0,0,0,0.72), rgba(0,0,0,0.14)), url(${leadImage.url})`,
+                    backgroundPosition: "center",
+                    backgroundSize: "cover",
+                  }
+                : undefined
+            }
+          >
+            {leadImage?.url ? (
+              <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                <p className="text-xs font-bold uppercase">Visual lesson</p>
+                <p className="mt-1 text-sm leading-5 text-white/85">
+                  {leadImage.caption ?? leadImage.title ?? "Use the visual cue before trying the adaptive practice."}
+                </p>
+              </div>
+            ) : null}
+            <div className="relative ml-auto w-full max-w-sm rounded-lg border border-outline-variant/50 bg-background/95 p-4 shadow-sm">
             <div className="flex items-center justify-between">
               <p className="text-sm font-semibold text-on-surface">Mastery estimate</p>
               <p className="text-2xl font-extrabold text-primary">{formatPercent(concept.pMastery)}</p>
@@ -115,6 +190,7 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
                 <ArrowRight className="size-4" />
               </Link>
             </Button>
+            </div>
           </div>
         </div>
       </section>
@@ -122,26 +198,70 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_430px]">
         <section className="space-y-6">
           <article className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
-            <div className="mb-5 flex items-center gap-2">
-              <BookOpen className="size-5 text-primary" />
-              <h2 className="text-lg font-bold text-on-surface">Content reader</h2>
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="size-5 text-primary" />
+                <h2 className="text-lg font-bold text-on-surface">Interactive lesson</h2>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <MediaPill icon={ImageIcon} label={`${mediaAssets.length} media`} />
+                {hasVideo ? <MediaPill icon={PlayCircle} label="Video" /> : null}
+                {hasSimulation ? <MediaPill icon={Sparkles} label="Simulation" /> : null}
+              </div>
             </div>
             <ContentBlocksRenderer
               assets={concept.contentBlockAssets}
-              blocks={concept.contentBlocks}
+              blocks={paginatedBlocks}
               questions={concept.contentBlockQuestions}
               snippets={concept.contentBlockSnippets}
             />
+
+            {totalPages > 1 && (
+              <div className="mt-8 flex items-center justify-between border-t border-outline-variant/50 pt-6">
+                {currentPage > 1 ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link href={`/student/concept/${concept.conceptId}/learn?page=${currentPage - 1}`}>
+                      <ArrowLeft className="mr-2 size-4" />
+                      Previous
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button disabled size="sm" variant="outline">
+                    <ArrowLeft className="mr-2 size-4" />
+                    Previous
+                  </Button>
+                )}
+
+                <span className="text-sm font-medium text-on-surface-variant">
+                  Page {currentPage} of {totalPages}
+                </span>
+
+                {currentPage < totalPages ? (
+                  <Button asChild size="sm" variant="default">
+                    <Link href={`/student/concept/${concept.conceptId}/learn?page=${currentPage + 1}`}>
+                      Next
+                      <ArrowRight className="ml-2 size-4" />
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button disabled size="sm" variant="outline">
+                    Finished
+                    <CheckCircle2 className="ml-2 size-4 text-primary" />
+                  </Button>
+                )}
+              </div>
+            )}
           </article>
 
           {concept.chunks.length || concept.workedExamples.length ? (
             <article className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
               <div className="mb-4 flex items-center gap-2">
                 <ShieldCheck className="size-5 text-primary" />
-                <h2 className="text-lg font-bold text-on-surface">Learn path gate</h2>
+                <h2 className="text-lg font-bold text-on-surface">Mastery path</h2>
               </div>
-              <div className="grid gap-3 md:grid-cols-3">
-                <PathStep icon={BookOpen} label="Read" value={`${concept.contentBlocks.length} blocks`} />
+              <div className="grid gap-3 md:grid-cols-4">
+                <PathStep icon={BookOpen} label="Lesson" value={`${concept.contentBlocks.length} blocks`} />
+                <PathStep icon={PlayCircle} label="Media" value={hasVideo || hasSimulation ? "Available" : "Text focused"} />
                 <PathStep icon={CheckCircle2} label="Practice" value={`${concept.practiceQuestionCount} questions`} />
                 <PathStep icon={Target} label="Checkpoint" value={concept.checkpointQuestionId ? "Available" : "Unavailable"} />
               </div>
@@ -168,12 +288,32 @@ export default async function StudentLearnPage({ params }: LearnPageProps) {
   )
 }
 
-function ReadinessMetric({ label, value }: { label: string; value: number }) {
+function ReadinessMetric({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof BookOpen
+  label: string
+  value: string
+}) {
   return (
     <div className="rounded-lg border border-outline-variant/50 bg-muted p-3">
-      <p className="text-xs text-on-surface-variant">{label}</p>
-      <p className="mt-2 text-lg font-extrabold text-on-surface">{value}</p>
+      <div className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
+        <Icon className="size-4 text-primary" />
+        {label}
+      </div>
+      <p className="mt-2 text-sm font-extrabold text-on-surface">{value}</p>
     </div>
+  )
+}
+
+function MediaPill({ icon: Icon, label }: { icon: typeof ImageIcon; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted px-2 py-1 text-xs font-bold text-on-surface-variant">
+      <Icon className="size-3.5 text-primary" />
+      {label}
+    </span>
   )
 }
 

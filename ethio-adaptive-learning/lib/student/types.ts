@@ -132,6 +132,42 @@ export type StudentAnalytics = {
   }>
 }
 
+export type StudentCurriculumExplore = {
+  summary: {
+    courseCount: number
+    unitCount: number
+    conceptCount: number
+    unlockedConcepts: number
+    masteredConcepts: number
+    mediaAssets: number
+  }
+  courses: Array<{
+    id: string
+    title: string
+    description: string | null
+    totalConcepts: number
+    masteredConcepts: number
+    unlockedConcepts: number
+    mediaAssets: number
+    units: Array<{
+      id: string
+      title: string
+      order: number
+      totalConcepts: number
+      masteredConcepts: number
+      unlockedConcepts: number
+      concepts: Array<StudentConceptCard & {
+        lessonBlockCount: number
+        mediaAssets: number
+        hasVideo: boolean
+        hasSimulation: boolean
+        questionCount: number
+        imageUrl: string | null
+      }>
+    }>
+  }>
+}
+
 export type StudentNavigation = {
   profile: {
     username: string

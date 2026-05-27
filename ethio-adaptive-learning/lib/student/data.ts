@@ -20,6 +20,7 @@ import type {
   StudentConceptDetail,
   StudentActivity,
   StudentAnalytics,
+  StudentCurriculumExplore,
   StudentDashboard,
   StudentExamSession,
   StudentNavigation,
@@ -458,6 +459,213 @@ export async function getStudentDashboard(userId: string): Promise<StudentDashbo
         })
         .slice(0, 3),
     },
+  }
+}
+
+export async function getStudentCurriculumExplore(userId: string): Promise<StudentCurriculumExplore> {
+  const courses = await prisma.course.findMany({
+    where: {
+      archivedAt: null,
+      status: "PUBLISHED",
+    },
+    include: {
+      units: {
+        where: {
+          status: "PUBLISHED",
+        },
+        orderBy: {
+          order: "asc",
+        },
+        include: {
+          concepts: {
+            where: {
+              status: "PUBLISHED",
+            },
+            orderBy: {
+              title: "asc",
+            },
+            select: {
+              id: true,
+              slug: true,
+              title: true,
+              description: true,
+              contentBody: true,
+              contentBlocks: true,
+              unlockThreshold: true,
+              pLo: true,
+              questions: {
+                where: {
+                  status: "PUBLISHED",
+                },
+                select: {
+                  id: true,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      title: "asc",
+    },
+  })
+
+  const courseStates = new Map(
+    await Promise.all(
+      courses.map(async (course) => [course.id, await loadCourseUserState(course.id, userId)] as const)
+    )
+  )
+  const conceptIds = courses.flatMap((course) =>
+    course.units.flatMap((unit) => unit.concepts.map((concept) => concept.id))
+  )
+  const analytics = await getConceptAnalytics(userId, conceptIds)
+  const masteryByConceptId = new Map(
+    [...courseStates.values()].flatMap((courseState) =>
+      courseState.masteries.map((mastery) => [mastery.conceptId, mastery] as const)
+    )
+  )
+  const blockReferencesByConceptId = new Map<
+    string,
+    ReturnType<typeof getContentBlockReferences> & { blocks: ReturnType<typeof normalizeContentBlocks> }
+  >()
+  const referencedAssetIds = new Set<string>()
+
+  for (const course of courses) {
+    for (const unit of course.units) {
+      for (const concept of unit.concepts) {
+        const blocks = normalizeContentBlocks(concept.contentBlocks)
+        const references = getContentBlockReferences(blocks)
+
+        blockReferencesByConceptId.set(concept.id, { ...references, blocks })
+        for (const assetId of references.assetIds) {
+          referencedAssetIds.add(assetId)
+        }
+      }
+    }
+  }
+
+  const assets = referencedAssetIds.size
+    ? await prisma.mediaAsset.findMany({
+        where: {
+          id: {
+            in: [...referencedAssetIds],
+          },
+          status: "PUBLISHED",
+        },
+        select: {
+          id: true,
+          kind: true,
+          url: true,
+          thumbnailUrl: true,
+        },
+      })
+    : []
+  const assetsById = new Map(assets.map((asset) => [asset.id, asset] as const))
+  const exploredCourses: StudentCurriculumExplore["courses"] = []
+
+  for (const course of courses) {
+    const courseState = courseStates.get(course.id)
+    let courseMasteredConcepts = 0
+    let courseUnlockedConcepts = 0
+    let courseMediaAssets = 0
+
+    const units = course.units.map((unit) => {
+      let unitMasteredConcepts = 0
+      let unitUnlockedConcepts = 0
+
+      const concepts = unit.concepts.map((concept) => {
+        const derivedStatus = courseState?.statuses.get(concept.id)
+        const mastery = masteryByConceptId.get(concept.id)
+        const conceptAnalytics = getAnalyticsSummary(analytics.get(concept.id) ?? emptyAnalytics())
+        const pMastery = roundProbability(
+          derivedStatus?.masteryProbability ?? (derivedStatus?.unlocked ? concept.pLo : 0)
+        )
+        const prerequisiteTitles =
+          courseState?.ancestorMap.get(concept.id)?.map((ancestor) => ancestor.title) ?? []
+        const status = derivedStatus?.status ?? "LOCKED"
+        const references = blockReferencesByConceptId.get(concept.id)
+        const conceptAssets = (references?.assetIds ?? [])
+          .map((assetId) => assetsById.get(assetId))
+          .filter(Boolean)
+        const firstImage = conceptAssets.find((asset) => asset?.kind === "IMAGE")
+        const isUnlocked = Boolean(derivedStatus?.unlocked)
+        const isMastered = status === "MASTERED" || status === "REVIEW_NEEDED"
+
+        if (isUnlocked) {
+          unitUnlockedConcepts++
+        }
+        if (isMastered) {
+          unitMasteredConcepts++
+        }
+        courseMediaAssets += conceptAssets.length
+
+        return {
+          conceptId: concept.id,
+          slug: concept.slug,
+          title: concept.title,
+          description: concept.description,
+          unit: {
+            id: unit.id,
+            title: unit.title,
+          },
+          course: {
+            id: course.id,
+            title: course.title,
+          },
+          status,
+          pMastery,
+          nextReviewAt: toIsoString(derivedStatus?.nextReviewAt),
+          lastAssessedAt: toIsoString(mastery?.lastAssessedAt),
+          unlockedAt: toIsoString(mastery?.unlockedAt),
+          prerequisiteTitles,
+          prerequisitesMet: (derivedStatus?.unmetPrerequisites.length ?? 0) === 0,
+          ...conceptAnalytics,
+          lessonBlockCount: references?.blocks.length ?? 0,
+          mediaAssets: conceptAssets.length,
+          hasVideo: (references?.blocks ?? []).some((block) => block.type === "video"),
+          hasSimulation: conceptAssets.some((asset) => asset?.kind === "PHET_SIMULATION"),
+          questionCount: concept.questions.length,
+          imageUrl: firstImage?.url ?? firstImage?.thumbnailUrl ?? null,
+        }
+      })
+
+      courseMasteredConcepts += unitMasteredConcepts
+      courseUnlockedConcepts += unitUnlockedConcepts
+
+      return {
+        id: unit.id,
+        title: unit.title,
+        order: unit.order,
+        totalConcepts: unit.concepts.length,
+        masteredConcepts: unitMasteredConcepts,
+        unlockedConcepts: unitUnlockedConcepts,
+        concepts,
+      }
+    })
+
+    exploredCourses.push({
+      id: course.id,
+      title: course.title,
+      description: course.description,
+      totalConcepts: course.units.reduce((total, unit) => total + unit.concepts.length, 0),
+      masteredConcepts: courseMasteredConcepts,
+      unlockedConcepts: courseUnlockedConcepts,
+      mediaAssets: courseMediaAssets,
+      units,
+    })
+  }
+
+  return {
+    summary: {
+      courseCount: exploredCourses.length,
+      unitCount: exploredCourses.reduce((total, course) => total + course.units.length, 0),
+      conceptCount: exploredCourses.reduce((total, course) => total + course.totalConcepts, 0),
+      unlockedConcepts: exploredCourses.reduce((total, course) => total + course.unlockedConcepts, 0),
+      masteredConcepts: exploredCourses.reduce((total, course) => total + course.masteredConcepts, 0),
+      mediaAssets: exploredCourses.reduce((total, course) => total + course.mediaAssets, 0),
+    },
+    courses: exploredCourses,
   }
 }
 

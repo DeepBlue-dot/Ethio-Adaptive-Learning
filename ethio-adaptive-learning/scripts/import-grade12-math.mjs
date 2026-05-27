@@ -78,6 +78,7 @@ export async function importGrade12Math({
           title: conceptPack.title,
           description: conceptPack.description,
           contentBody: conceptPack.overviewBody,
+          contentBlocks: conceptPack.contentBlocks,
           unlockThreshold: conceptPack.unlockThreshold,
           pLo: conceptPack.pLo,
           pT: conceptPack.pT,
@@ -91,6 +92,7 @@ export async function importGrade12Math({
           title: conceptPack.title,
           description: conceptPack.description,
           contentBody: conceptPack.overviewBody,
+          contentBlocks: conceptPack.contentBlocks,
           unlockThreshold: conceptPack.unlockThreshold,
           pLo: conceptPack.pLo,
           pT: conceptPack.pT,
@@ -206,6 +208,10 @@ export async function loadGrade12MathContentPack(contentRoot = DEFAULT_CONTENT_R
                 overviewBody: conceptManifest.overview
                   ? optionalText(await readText(path.join(conceptDir, conceptManifest.overview)))
                   : null,
+                contentBlocks: normalizeContentBlocksManifest(
+                  conceptManifest.contentBlocks,
+                  `${reference}.contentBlocks`
+                ),
                 unlockThreshold: requireProbability(
                   conceptManifest.unlockThreshold,
                   `${reference}.unlockThreshold`
@@ -954,6 +960,34 @@ function normalizeStringArray(value, fieldLabel) {
   const normalized = value.map((item) => requireText(item, `${fieldLabel}[]`))
 
   return normalized.length ? normalized : null
+}
+
+function normalizeContentBlocksManifest(value, fieldLabel) {
+  if (value == null) {
+    return []
+  }
+
+  if (!Array.isArray(value)) {
+    throw new Error(`${fieldLabel} must be an array when provided.`)
+  }
+
+  return value.map((block, index) => {
+    if (!block || typeof block !== "object" || Array.isArray(block)) {
+      throw new Error(`${fieldLabel}[${index}] must be an object.`)
+    }
+
+    if (typeof block.type !== "string" || !block.type.trim()) {
+      throw new Error(`${fieldLabel}[${index}].type is required.`)
+    }
+
+    return {
+      ...block,
+      id:
+        typeof block.id === "string" && block.id.trim()
+          ? block.id.trim()
+          : `${fieldLabel.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${index + 1}`,
+    }
+  })
 }
 
 function requireDifficultyTier(value, fieldLabel) {

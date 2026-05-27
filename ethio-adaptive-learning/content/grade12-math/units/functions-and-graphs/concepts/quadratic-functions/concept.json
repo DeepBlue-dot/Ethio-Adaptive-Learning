@@ -3,6 +3,20 @@
   "title": "Quadratic Functions",
   "description": "Explore parabolas, vertex form, and factoring-based reasoning about quadratic expressions.",
   "overview": "overview.md",
+  "contentBlocks": [
+    {
+      "id": "quadratic-content-heading",
+      "type": "heading",
+      "level": 2,
+      "text": "Read the parabola from the form"
+    },
+    {
+      "id": "quadratic-content-intuition",
+      "type": "paragraph",
+      "title": "Core idea",
+      "text": "Quadratic expressions can reveal different information depending on the form. Factored form shows roots, vertex form shows the turning point, and standard form helps compare coefficients."
+    }
+  ],
   "unlockThreshold": 0.9,
   "pLo": 0.15,
   "pT": 0.1,

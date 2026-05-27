@@ -75,6 +75,12 @@ export default async function StudentDashboardPage() {
 
       <section className="grid gap-4 lg:grid-cols-4">
         <DashboardLink
+          href="/student/curriculum"
+          icon={BookOpen}
+          label="Curriculum"
+          value={`${totalConcepts} concepts`}
+        />
+        <DashboardLink
           href="/student/activity"
           icon={Activity}
           label="Activity"

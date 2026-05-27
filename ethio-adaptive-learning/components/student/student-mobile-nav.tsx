@@ -6,6 +6,7 @@ import { AnimatePresence, motion } from "framer-motion"
 import {
   Activity,
   BarChart3,
+  BookOpen,
   Flame,
   Gauge,
   GraduationCap,
@@ -28,6 +29,7 @@ type StudentMobileNavProps = {
 
 const navLinks = [
   { href: "/student", label: "Dashboard", icon: Home },
+  { href: "/student/curriculum", label: "Curriculum", icon: BookOpen },
   { href: "/student/activity", label: "Activity", icon: Activity },
   { href: "/student/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/student/reviews", label: "Review Queue", icon: RotateCcw },

@@ -10,6 +10,16 @@
     "explanation": "In slope-intercept form, the coefficient of `x` is the slope."
   },
   {
+    "slug": "compare-linear-rates-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Which function has the greater rate of change: `f(x) = 4x - 1` or `g(x) = 2x + 9`?",
+    "correctAnswer": "f(x) = 4x - 1",
+    "distractors": ["g(x) = 2x + 9", "They have the same rate", "Cannot be determined"],
+    "hintText": "Compare the coefficients of `x`.",
+    "explanation": "`f` has slope `4` and `g` has slope `2`, so `f` has the greater rate of change."
+  },
+  {
     "slug": "identify-intercept-checkpoint",
     "usage": "CHECKPOINT",
     "difficulty": "MEDIUM",
@@ -18,6 +28,16 @@
     "distractors": ["2", "-3", "5"],
     "hintText": "The intercept is the constant term in `f(x) = mx + b`.",
     "explanation": "The line crosses the `y`-axis at the constant term, so the intercept is `3`."
+  },
+  {
+    "slug": "build-linear-equation-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "A line has slope `-3` and y-intercept `5`. Which equation matches it?",
+    "correctAnswer": "y = -3x + 5",
+    "distractors": ["y = 5x - 3", "y = 3x + 5", "y = -5x + 3"],
+    "hintText": "Use `y = mx + b`.",
+    "explanation": "With slope `m = -3` and intercept `b = 5`, the equation is `y = -3x + 5`."
   },
   {
     "slug": "evaluate-linear-function-exam",

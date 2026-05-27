@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,143 +7,98 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ==========================================
-// 1. IDENTITY & PROFILE (Subsystem 1)
-// ==========================================
-
-enum UserRole {
-  STUDENT
-  COURSE_WRITER
-  ADMIN
-}
-
-enum StudentGrade {
-  MIDDLE_SCHOOL
-  GRADE_9
-  GRADE_10
-  GRADE_11
-  GRADE_12
-  ABOVE
-}
-
-enum CmsPublicationStatus {
-  DRAFT
-  PUBLISHED
-  UNPUBLISHED
-}
-
-enum MediaAssetKind {
-  IMAGE
-  YOUTUBE_EMBED
-  PHET_SIMULATION
-}
-
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  username      String    @unique
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  passwordHash  String
-  role          UserRole  @default(STUDENT) // <--- Added Role
-  grade         StudentGrade?
-  phoneNumber   String?
-  createdAt     DateTime  @default(now())
-  
-  // Relations
-  profile       UserProfile?
-  accounts      Account[]
-  sessions      Session[]
-  masteries     UserMastery[]
-  logs          InteractionLog[]
-  practiceAttempts   PracticeAttempt[]
-  checkpointAttempts CheckpointAttempt[]
-  examAttempts  ExamAttempt[]
-  tutorSessions TutorSession[]
-
-  // Audit Fields: Content created by this user (if they are a Course Writer)
-  authoredCourses        Course[]        @relation("CourseAuthor")
-  authoredQuestions      Question[]      @relation("QuestionAuthor")
-  authoredConceptChunks  ConceptChunk[]  @relation("ConceptChunkAuthor")
-  authoredWorkedExamples WorkedExample[] @relation("WorkedExampleAuthor")
-  authoredContentSnippets ContentSnippet[] @relation("ContentSnippetAuthor")
-  passwordResetTokens    PasswordResetToken[]
-  activityLogs           ActivityLog[]
+  id                      String               @id @default(cuid())
+  name                    String?
+  username                String               @unique
+  email                   String               @unique
+  emailVerified           DateTime?
+  image                   String?
+  passwordHash            String
+  role                    UserRole             @default(STUDENT)
+  grade                   StudentGrade?
+  phoneNumber             String?
+  createdAt               DateTime             @default(now())
+  accounts                Account[]
+  activityLogs            ActivityLog[]
+  checkpointAttempts      CheckpointAttempt[]
+  authoredConceptChunks   ConceptChunk[]       @relation("ConceptChunkAuthor")
+  authoredContentSnippets ContentSnippet[]     @relation("ContentSnippetAuthor")
+  authoredCourses         Course[]             @relation("CourseAuthor")
+  examAttempts            ExamAttempt[]
+  logs                    InteractionLog[]
+  passwordResetTokens     PasswordResetToken[]
+  practiceAttempts        PracticeAttempt[]
+  authoredQuestions       Question[]           @relation("QuestionAuthor")
+  sessions                Session[]
+  tutorSessions           TutorSession[]
+  masteries               UserMastery[]
+  profile                 UserProfile?
+  authoredWorkedExamples  WorkedExample[]      @relation("WorkedExampleAuthor")
 }
 
 model ActivityLog {
-  id            String   @id @default(cuid())
-  userId        String
-  user          User     @relation(fields: [userId], references: [id])
-  action        String   // CREATE, UPDATE, DELETE, PUBLISH, UNPUBLISH
-  contentType   String
-  entityId      String
-  entityTitle   String?
-  details       Json?
-  createdAt     DateTime @default(now())
+  id          String   @id @default(cuid())
+  userId      String
+  action      String
+  contentType String
+  entityId    String
+  entityTitle String?
+  details     Json?
+  createdAt   DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id])
 
   @@index([userId])
   @@index([contentType, entityId])
   @@index([createdAt])
 }
 
-
 model UserProfile {
-  userId           String   @id
-  user             User     @relation(fields: [userId], references: [id])
-  totalXP          Int      @default(0)
-  currentLevel     Int      @default(1)
-  dailyStreak      Int      @default(0)
-  lastLogin        DateTime @default(now())
-  overallProgress  Float    @default(0.0) // Percentage 0-100
+  userId          String   @id
+  totalXP         Int      @default(0)
+  currentLevel    Int      @default(1)
+  dailyStreak     Int      @default(0)
+  lastLogin       DateTime @default(now())
+  overallProgress Float    @default(0.0)
+  user            User     @relation(fields: [userId], references: [id])
 }
 
-// ==========================================
-// 2. KNOWLEDGE STRUCTURE & CMS (Subsystem 2 & 9)
-// ==========================================
-
 model Course {
-  id          String   @id @default(cuid())
-  slug        String   @unique
-  title       String
-  description String?
-  archivedAt  DateTime?
-  units       Unit[]
-
-  // Editorial lifecycle
+  id              String               @id @default(cuid())
+  slug            String               @unique
+  title           String
+  description     String?
+  archivedAt      DateTime?
   status          CmsPublicationStatus @default(PUBLISHED)
   publishedAt     DateTime?
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
-
-  // Audit
-  authorId    String?
-  author      User?    @relation("CourseAuthor", fields: [authorId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  authorId        String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  author          User?                @relation("CourseAuthor", fields: [authorId], references: [id])
+  units           Unit[]
 
   @@index([archivedAt])
   @@index([status])
 }
 
-
 model Unit {
-  id        String    @id @default(cuid())
-  slug      String
-  title     String
-  order     Int
-  courseId  String
-  course    Course    @relation(fields: [courseId], references: [id])
-  concepts  Concept[]
+  id              String               @id @default(cuid())
+  slug            String
+  title           String
+  order           Int
+  courseId        String
   status          CmsPublicationStatus @default(PUBLISHED)
   publishedAt     DateTime?
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
+  concepts        Concept[]
+  course          Course               @relation(fields: [courseId], references: [id])
 
   @@unique([courseId, order])
   @@unique([courseId, slug])
@@ -157,46 +106,39 @@ model Unit {
 }
 
 model Concept {
-  id             String   @id @default(cuid())
-  slug           String
-  title          String
-  description    String?
-  unitId         String
-  unit           Unit     @relation(fields: [unitId], references: [id])
-  
-  // Instructional Content (Path A)
-  contentBody    String?  @db.Text // Markdown/LaTeX content
-  contentBlocks  Json     @default("[]")
-  unlockThreshold Float   @default(0.90)
-  status          CmsPublicationStatus @default(PUBLISHED)
-  publishedAt     DateTime?
-  publishedById   String?
-  unpublishedAt   DateTime?
-  unpublishedById String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Default BKT Parameters for this Concept
-  pLo            Float    @default(0.15) // Initial knowledge
-  pT             Float    @default(0.10) // Probability of learning
-  pG             Float    @default(0.20) // Probability of guess
-  pS             Float    @default(0.10) // Probability of slip
-  decayLambda    Float    @default(0.01) // Forgetting rate
-  
-  // KST: explicit DAG edges for maintainable prerequisite editing
-  prerequisiteEdges ConceptPrerequisite[] @relation("DependentConcept")
-  dependentEdges    ConceptPrerequisite[] @relation("PrerequisiteConcept")
-  chunks           ConceptChunk[]
-  workedExamples   WorkedExample[]
-  closureAncestors   ConceptClosure[] @relation("ConceptClosureDescendant")
-  closureDescendants ConceptClosure[] @relation("ConceptClosureAncestor")
-
-  questions      Question[]
-  userMasteries  UserMastery[]
-  practiceAttempts   PracticeAttempt[]
+  id                 String                @id @default(cuid())
+  slug               String
+  title              String
+  description        String?
+  unitId             String
+  contentBody        String?
+  contentBlocks      Json                  @default("[]")
+  unlockThreshold    Float                 @default(0.90)
+  status             CmsPublicationStatus  @default(PUBLISHED)
+  publishedAt        DateTime?
+  publishedById      String?
+  unpublishedAt      DateTime?
+  unpublishedById    String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  pLo                Float                 @default(0.15)
+  pT                 Float                 @default(0.10)
+  pG                 Float                 @default(0.20)
+  pS                 Float                 @default(0.10)
+  decayLambda        Float                 @default(0.01)
   checkpointAttempts CheckpointAttempt[]
-  examAttempts   ExamAttempt[]
-  tutorSessions  TutorSession[]
+  unit               Unit                  @relation(fields: [unitId], references: [id])
+  chunks             ConceptChunk[]
+  closureDescendants ConceptClosure[]      @relation("ConceptClosureAncestor")
+  closureAncestors   ConceptClosure[]      @relation("ConceptClosureDescendant")
+  prerequisiteEdges  ConceptPrerequisite[] @relation("DependentConcept")
+  dependentEdges     ConceptPrerequisite[] @relation("PrerequisiteConcept")
+  examAttempts       ExamAttempt[]
+  practiceAttempts   PracticeAttempt[]
+  questions          Question[]
+  tutorSessions      TutorSession[]
+  userMasteries      UserMastery[]
+  workedExamples     WorkedExample[]
 
   @@unique([unitId, title])
   @@unique([unitId, slug])
@@ -206,30 +148,30 @@ model Concept {
 model ConceptPrerequisite {
   prerequisiteConceptId String
   dependentConceptId    String
-  prerequisiteConcept   Concept @relation("PrerequisiteConcept", fields: [prerequisiteConceptId], references: [id], onDelete: Cascade)
   dependentConcept      Concept @relation("DependentConcept", fields: [dependentConceptId], references: [id], onDelete: Cascade)
+  prerequisiteConcept   Concept @relation("PrerequisiteConcept", fields: [prerequisiteConceptId], references: [id], onDelete: Cascade)
 
   @@id([prerequisiteConceptId, dependentConceptId])
   @@index([dependentConceptId])
 }
 
 model ConceptChunk {
-  id        String   @id @default(cuid())
-  conceptId String
-  slug      String
-  title     String
-  bodyMd    String   @db.Text
-  order     Int
-  authorId  String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String               @id @default(cuid())
+  conceptId       String
+  slug            String
+  title           String
+  bodyMd          String
+  order           Int
+  authorId        String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   status          CmsPublicationStatus @default(PUBLISHED)
   publishedAt     DateTime?
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
-  concept   Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  author    User?    @relation("ConceptChunkAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  author          User?                @relation("ConceptChunkAuthor", fields: [authorId], references: [id])
+  concept         Concept              @relation(fields: [conceptId], references: [id], onDelete: Cascade)
 
   @@unique([conceptId, slug])
   @@unique([conceptId, order])
@@ -237,23 +179,23 @@ model ConceptChunk {
 }
 
 model WorkedExample {
-  id         String   @id @default(cuid())
-  conceptId  String
-  slug       String
-  title      String
-  problemMd  String   @db.Text
-  solutionMd String   @db.Text
-  order      Int
-  authorId   String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  id              String               @id @default(cuid())
+  conceptId       String
+  slug            String
+  title           String
+  problemMd       String
+  solutionMd      String
+  order           Int
+  authorId        String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   status          CmsPublicationStatus @default(PUBLISHED)
   publishedAt     DateTime?
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
-  concept    Concept  @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  author     User?    @relation("WorkedExampleAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+  author          User?                @relation("WorkedExampleAuthor", fields: [authorId], references: [id])
+  concept         Concept              @relation(fields: [conceptId], references: [id], onDelete: Cascade)
 
   @@unique([conceptId, slug])
   @@unique([conceptId, order])
@@ -271,81 +213,46 @@ model ConceptClosure {
   @@index([descendantConceptId])
 }
 
-// ==========================================
-// 3. MASTERY & RETENTION (Subsystem 3 & 4)
-// ==========================================
-
-enum MasteryStatus {
-  LOCKED
-  FRINGE
-  IN_PROGRESS
-  MASTERED
-  REVIEW_NEEDED
-}
-
 model UserMastery {
-  userId            String
-  conceptId         String
-  user              User          @relation(fields: [userId], references: [id])
-  concept           Concept       @relation(fields: [conceptId], references: [id])
-
-  // BKT Latent State
-  pMastery          Float         @default(0.15) // P(L)
-  lastAssessedAt    DateTime?
-  nextReviewAt      DateTime?
-  unlockedAt        DateTime?
-  status            MasteryStatus @default(LOCKED)
-  consecutiveFails  Int           @default(0)    // For Exam Policy logic
+  userId           String
+  conceptId        String
+  pMastery         Float         @default(0.15)
+  lastAssessedAt   DateTime?
+  nextReviewAt     DateTime?
+  unlockedAt       DateTime?
+  status           MasteryStatus @default(LOCKED)
+  consecutiveFails Int           @default(0)
+  concept          Concept       @relation(fields: [conceptId], references: [id])
+  user             User          @relation(fields: [userId], references: [id])
 
   @@id([userId, conceptId])
   @@index([userId, nextReviewAt])
 }
 
-// ==========================================
-// 4. ASSESSMENT & DELIVERY (Subsystem 5)
-// ==========================================
-
-enum DifficultyTier {
-  EASY
-  MEDIUM
-  HARD
-}
-
-enum QuestionUsage {
-  PRACTICE
-  CHECKPOINT
-  EXAM
-}
-
 model Question {
-  id            String         @id @default(cuid())
-  conceptId     String
-  slug          String
-  concept       Concept        @relation(fields: [conceptId], references: [id])
-  
-  difficulty    DifficultyTier
-  usage         QuestionUsage
-  
-  content       String         @db.Text 
-  correctAnswer String
-  distractors   Json?          
-  hintText      String?        
-  explanation   String?        @db.Text 
-  
-  // Audit: Track which writer created this question
-  authorId      String?
-  author        User?          @relation("QuestionAuthor", fields: [authorId], references: [id])
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  status          CmsPublicationStatus @default(PUBLISHED)
-  publishedAt     DateTime?
-  publishedById   String?
-  unpublishedAt   DateTime?
-  unpublishedById String?
-
-  logs          InteractionLog[]
-  practiceAttempts   PracticeAttempt[]
+  id                 String               @id @default(cuid())
+  conceptId          String
+  slug               String
+  difficulty         DifficultyTier
+  usage              QuestionUsage
+  content            String
+  correctAnswer      String
+  distractors        Json?
+  hintText           String?
+  explanation        String?
+  authorId           String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  status             CmsPublicationStatus @default(PUBLISHED)
+  publishedAt        DateTime?
+  publishedById      String?
+  unpublishedAt      DateTime?
+  unpublishedById    String?
   checkpointAttempts CheckpointAttempt[]
+  logs               InteractionLog[]
+  practiceAttempts   PracticeAttempt[]
+  author             User?                @relation("QuestionAuthor", fields: [authorId], references: [id])
+  concept            Concept              @relation(fields: [conceptId], references: [id])
 
   @@unique([conceptId, slug])
   @@index([status])
@@ -367,28 +274,27 @@ model CmsDraft {
 }
 
 model MediaAsset {
-  id           String @id @default(cuid())
-  kind         MediaAssetKind
-  title        String?
-  alt          String?
-  caption      String?
-  publicId     String? @unique
-  url          String?
-  width        Int?
-  height       Int?
-  bytes        Int?
-  videoId      String?
-  thumbnailUrl String?
-  createdById  String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id              String               @id @default(cuid())
+  kind            MediaAssetKind
+  title           String?
+  alt             String?
+  caption         String?
+  publicId        String?              @unique
+  url             String?
+  width           Int?
+  height          Int?
+  bytes           Int?
+  videoId         String?
+  thumbnailUrl    String?
+  createdById     String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   status          CmsPublicationStatus @default(PUBLISHED)
   publishedAt     DateTime?
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
-
-  usageLinks   ResourceUsage[] @relation("MediaAssetUsage")
+  usageLinks      ResourceUsage[]      @relation("MediaAssetUsage")
 
   @@index([kind])
   @@index([status])
@@ -396,48 +302,41 @@ model MediaAsset {
 }
 
 model ContentSnippet {
-  id            String @id @default(cuid())
-  slug          String @unique
-  title         String
-  contentBlocks Json   @default("[]")
-  authorId      String?
-  author        User?  @relation("ContentSnippetAuthor", fields: [authorId], references: [id], onDelete: SetNull)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String               @id @default(cuid())
+  slug            String               @unique
+  title           String
+  contentBlocks   Json                 @default("[]")
+  authorId        String?
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   status          CmsPublicationStatus @default(PUBLISHED)
   publishedAt     DateTime?
   publishedById   String?
   unpublishedAt   DateTime?
   unpublishedById String?
-
-  usageLinks    ResourceUsage[] @relation("ContentSnippetUsage")
+  author          User?                @relation("ContentSnippetAuthor", fields: [authorId], references: [id])
+  usageLinks      ResourceUsage[]      @relation("ContentSnippetUsage")
 
   @@index([status])
   @@index([title])
 }
 
 model ResourceUsage {
-  id           String @id @default(cuid())
-  
-  // The resource being used
-  mediaAssetId   String?
-  mediaAsset     MediaAsset? @relation("MediaAssetUsage", fields: [mediaAssetId], references: [id], onDelete: Cascade)
+  id               String          @id @default(cuid())
+  mediaAssetId     String?
   contentSnippetId String?
+  consumerType     String
+  consumerId       String
+  context          String?
+  createdAt        DateTime        @default(now())
   contentSnippet   ContentSnippet? @relation("ContentSnippetUsage", fields: [contentSnippetId], references: [id], onDelete: Cascade)
-  
-  // The consumer of the resource
-  consumerType String // "CONCEPT", "QUESTION", "CONTENT_SNIPPET"
-  consumerId   String
-  
-  // Metadata
-  context      String? // e.g. "contentBlocks[0]"
-  createdAt    DateTime @default(now())
+  mediaAsset       MediaAsset?     @relation("MediaAssetUsage", fields: [mediaAssetId], references: [id], onDelete: Cascade)
 
+  @@unique([mediaAssetId, consumerId, context])
+  @@unique([contentSnippetId, consumerId, context])
   @@index([mediaAssetId])
   @@index([contentSnippetId])
   @@index([consumerId])
-  @@unique([mediaAssetId, consumerId, context])
-  @@unique([contentSnippetId, consumerId, context])
 }
 
 model PracticeAttempt {
@@ -445,13 +344,13 @@ model PracticeAttempt {
   userId         String
   conceptId      String
   questionId     String
-  selectedAnswer String?   @db.Text
+  selectedAnswer String?
   isCorrect      Boolean?
   createdAt      DateTime  @default(now())
   completedAt    DateTime?
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   concept        Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   question       Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, conceptId, createdAt])
   @@index([questionId])
@@ -462,79 +361,68 @@ model CheckpointAttempt {
   userId         String
   conceptId      String
   questionId     String
-  selectedAnswer String?   @db.Text
+  selectedAnswer String?
   isCorrect      Boolean?
   createdAt      DateTime  @default(now())
   completedAt    DateTime?
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   concept        Concept   @relation(fields: [conceptId], references: [id], onDelete: Cascade)
   question       Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, conceptId, createdAt])
   @@index([questionId])
 }
 
 model ExamAttempt {
-  id              String       @id @default(cuid())
-  userId          String
-  conceptId       String
-  user            User         @relation(fields: [userId], references: [id])
-  concept         Concept      @relation(fields: [conceptId], references: [id])
-  
-  pathway         PathwayType
-  questionIds     Json
+  id               String      @id @default(cuid())
+  userId           String
+  conceptId        String
+  pathway          PathwayType
+  questionIds      Json
   submittedAnswers Json?
-  questionCount   Int          @default(0)
-  correctCount    Int?
-  score           Float?
-  timeSpentSec    Int?
-  isPassed        Boolean?
-  createdAt       DateTime     @default(now())
-  completedAt     DateTime?
+  questionCount    Int         @default(0)
+  correctCount     Int?
+  score            Float?
+  timeSpentSec     Int?
+  isPassed         Boolean?
+  createdAt        DateTime    @default(now())
+  completedAt      DateTime?
+  concept          Concept     @relation(fields: [conceptId], references: [id])
+  user             User        @relation(fields: [userId], references: [id])
 
   @@index([userId, conceptId, createdAt])
 }
 
-enum PathwayType {
-  LEARN
-  CHALLENGE
-}
-
-// ==========================================
-// 5. ANALYTICS & LOGGING (Subsystem 8)
-// ==========================================
-
 model InteractionLog {
-  id             BigInt   @id @default(autoincrement())
+  id             BigInt    @id @default(autoincrement())
   userId         String
   conceptId      String
   questionId     String?
-  user           User     @relation(fields: [userId], references: [id])
-  question       Question? @relation(fields: [questionId], references: [id])
-  
-  activityType   String   // e.g., "PRACTICE_QUESTION", "SOCRATIC_HINT"
+  activityType   String
   isCorrect      Boolean?
   responseTimeMs Int?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime  @default(now())
+  question       Question? @relation(fields: [questionId], references: [id])
+  user           User      @relation(fields: [userId], references: [id])
 
   @@index([userId, conceptId, createdAt])
   @@index([userId, questionId])
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String? @db.Text
-  access_token       String? @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String? @db.Text
-  session_state      String?
-  user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -566,40 +454,84 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-// ==========================================
-// 6. AI SOCRATIC TUTORING (Subsystem 6)
-// ==========================================
-
 model TutorSession {
-  id          String         @id @default(cuid())
-  userId      String
-  conceptId   String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  
-  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  concept     Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
-  messages    TutorMessage[]
-  
+  id        String         @id @default(cuid())
+  userId    String
+  conceptId String
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  messages  TutorMessage[]
+  concept   Concept        @relation(fields: [conceptId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId, conceptId])
 }
 
 model TutorMessage {
-  id             String       @id @default(cuid())
-  sessionId      String
-  role           MessageRole
-  content        String       @db.Text
-  timestamp      DateTime     @default(now())
-  
-  // Metadata for RAG and Guardrails
-  tokens         Int?         
-  isFlagged      Boolean      @default(false)
-  flagReason     String?
-  retrievedContext Json?      // Store context used for this response
-  
-  session        TutorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  id               String       @id @default(cuid())
+  sessionId        String
+  role             MessageRole
+  content          String
+  timestamp        DateTime     @default(now())
+  tokens           Int?
+  isFlagged        Boolean      @default(false)
+  flagReason       String?
+  retrievedContext Json?
+  session          TutorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+}
+
+enum UserRole {
+  STUDENT
+  COURSE_WRITER
+  ADMIN
+}
+
+enum StudentGrade {
+  MIDDLE_SCHOOL
+  GRADE_9
+  GRADE_10
+  GRADE_11
+  GRADE_12
+  ABOVE
+}
+
+enum CmsPublicationStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+}
+
+enum MediaAssetKind {
+  IMAGE
+  YOUTUBE_EMBED
+  PHET_SIMULATION
+}
+
+enum MasteryStatus {
+  LOCKED
+  FRINGE
+  IN_PROGRESS
+  MASTERED
+  REVIEW_NEEDED
+}
+
+enum DifficultyTier {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum QuestionUsage {
+  PRACTICE
+  CHECKPOINT
+  EXAM
+}
+
+enum PathwayType {
+  LEARN
+  CHALLENGE
 }
 
 enum MessageRole {

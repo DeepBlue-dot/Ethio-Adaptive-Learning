@@ -2,6 +2,7 @@ import { redirect } from "next/navigation"
 import type { UserRole } from "@prisma/client"
 
 import { getAuthSession } from "@/lib/auth"
+import { prisma } from "@/lib/prisma"
 
 type AppRole = UserRole
 
@@ -9,6 +10,16 @@ export async function requireAuth() {
   const session = await getAuthSession()
 
   if (!session?.user) {
+    redirect("/login")
+  }
+
+  // Verify user still exists in DB to avoid foreign key violations (e.g. after DB reset)
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  })
+
+  if (!user) {
     redirect("/login")
   }
 
@@ -25,6 +36,18 @@ export async function requireApiAuth() {
     const error = Object.assign(new Error("Unauthorized"), { status: 401 })
     throw error
   }
+
+  // Verify user still exists in DB
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { id: true },
+  })
+
+  if (!user) {
+    const error = Object.assign(new Error("User not found"), { status: 401 })
+    throw error
+  }
+
   return session
 }
 

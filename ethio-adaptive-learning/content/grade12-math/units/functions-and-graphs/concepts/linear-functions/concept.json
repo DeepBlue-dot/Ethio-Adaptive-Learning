@@ -3,6 +3,27 @@
   "title": "Linear Functions",
   "description": "Understand slope, intercept form, and how linear relationships behave on a graph.",
   "overview": "overview.md",
+  "contentBlocks": [
+    {
+      "id": "linear-content-heading",
+      "type": "heading",
+      "level": 2,
+      "text": "Slope, intercept, and visual change"
+    },
+    {
+      "id": "linear-content-intuition",
+      "type": "paragraph",
+      "title": "Core idea",
+      "text": "A linear function has a constant rate of change. The coefficient of x tells you how quickly the output changes, and the constant term tells you where the line begins on the y-axis."
+    },
+    {
+      "id": "linear-content-video",
+      "type": "video",
+      "url": "https://www.youtube.com/watch?v=IL3UCuXrUzE",
+      "videoId": "IL3UCuXrUzE",
+      "caption": "A quick slope-intercept refresher for visual learners."
+    }
+  ],
   "unlockThreshold": 0.9,
   "pLo": 0.15,
   "pT": 0.1,
