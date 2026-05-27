@@ -2,7 +2,7 @@ import { ResourceSidebar } from "@/components/admin/resources/resource-sidebar"
 import { ContextSidebar } from "@/components/admin/studio/layout/context-sidebar"
 import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-header"
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { prisma } from "@/lib/prisma"
 import { getUnusedResourcesCount } from "@/app/(admin)/admin/studio/actions"
 

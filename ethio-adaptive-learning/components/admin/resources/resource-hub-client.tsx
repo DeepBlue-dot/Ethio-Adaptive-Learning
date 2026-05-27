@@ -16,6 +16,7 @@ import { ResourceInspector } from "./resource-inspector"
 import { UploadResourceModal } from "./upload-resource-modal"
 import { ResourceBrowser } from "./resource-browser"
 import { bulkActionResources } from "@/app/(admin)/admin/studio/actions"
+import { CmsFeedback } from "@/components/cms/cms-feedback"
 
 interface ResourceHubClientProps {
   initialItems: ResourceItem[]
@@ -25,6 +26,9 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+
+  const msg = searchParams.get("msg")
+  const error = searchParams.get("error")
 
   const isUploadParamSet = searchParams.get("upload") === "true"
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(isUploadParamSet)
@@ -36,6 +40,19 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [isBulkOperating, setIsBulkOperating] = useState(false)
+
+  useEffect(() => {
+    // Clear messages after a delay
+    if (msg || error) {
+      const timer = setTimeout(() => {
+        const params = new URLSearchParams(searchParams.toString())
+        params.delete("msg")
+        params.delete("error")
+        router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [msg, error, pathname, router, searchParams])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -90,6 +107,7 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
       const result = await bulkActionResources(itemsToProcess, intent)
       if (result.ok) {
         setSelectedIds(new Set())
+        // router.refresh() // Ensure we see latest data
       }
     } catch (e) {
       console.error(e)
@@ -99,7 +117,14 @@ export function ResourceHubClient({ initialItems }: ResourceHubClientProps) {
   }
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background/50">
+    <div className="flex h-full w-full overflow-hidden bg-background/50 relative">
+      {/* Toast Feedback */}
+      {(msg || error) && (
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-6 animate-in fade-in slide-in-from-top-4 duration-500">
+           <CmsFeedback message={(msg || error)!} tone={error ? "error" : "success"} />
+        </div>
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-w-0">
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">

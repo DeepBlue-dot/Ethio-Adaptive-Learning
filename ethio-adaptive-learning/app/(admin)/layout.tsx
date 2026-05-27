@@ -1,6 +1,6 @@
 import { NexusSidebar } from "@/components/admin/studio/layout/nexus-sidebar"
 import { StudioLayoutProvider } from "@/components/admin/studio/layout/studio-layout-provider"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 
 export default async function AdminLayout({
   children,

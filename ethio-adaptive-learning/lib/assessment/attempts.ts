@@ -92,7 +92,10 @@ export async function submitPracticeAttempt(
     }
 
     if (attempt.completedAt) {
-      return attempt
+      return {
+        conceptId: attempt.conceptId,
+        isCorrect: attempt.isCorrect ?? false,
+      }
     }
 
     const selectedAnswer = requireText(answer, "Answer")
@@ -368,6 +371,7 @@ export async function submitExamAttempt(
       return {
         conceptId: attempt.conceptId,
         isPassed: attempt.isPassed ?? false,
+        unlockedNewConcepts: attempt.isPassed ?? false,
       }
     }
 

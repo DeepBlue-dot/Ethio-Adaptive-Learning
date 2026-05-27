@@ -31,6 +31,7 @@ export {
   getCmsRevalidationPaths,
   parseCmsFormData,
 } from "@/lib/cms/validation"
+export { initialCmsActionState } from "@/lib/cms/types"
 export type {
   CmsActionState,
   CmsContentType,

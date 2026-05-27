@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { 
   Database, 
   BarChart3, 

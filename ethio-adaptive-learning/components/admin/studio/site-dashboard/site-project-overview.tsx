@@ -25,16 +25,16 @@ export function SiteProjectOverview({ data }: { data: AwaitedSiteProjectData }) 
 
           <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Action href={firstPage?.builderPath ?? `/admin/studio/sites/${data.project.id}/pages/new`} label="Open Builder" icon={<ArrowUpRight className="size-4" />} primary />
-            <Action href={`/admin/studio/sites/${data.project.id}/pages/new`} label="New Page" icon={<FilePlus2 className="size-4" />} />
-            <Action href={data.project.previewPath} label="Preview Site" icon={<Eye className="size-4" />} />
+            <Action href={`/admin/studio/sites/${data.project.id}/pages/new`} label="New Concept" icon={<FilePlus2 className="size-4" />} />
+            <Action href={data.project.previewPath} label="Preview Course" icon={<Eye className="size-4" />} />
             <Action href="/admin/governance/review" label="Review Queue" icon={<RadioTower className="size-4" />} />
           </div>
         </section>
       </div>
 
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <PageList title="Recent Pages" pages={data.recentPages} emptyLabel="No pages yet" />
-        <PageList title="Publication Queue" pages={data.publishQueue} emptyLabel="No draft pages waiting" />
+        <PageList title="Recent Concepts" pages={data.recentPages} emptyLabel="No concepts yet" />
+        <PageList title="Publication Queue" pages={data.publishQueue} emptyLabel="No draft concepts waiting" />
       </div>
     </div>
   )

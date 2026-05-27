@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getSiteProjectsData } from "@/lib/studio/site-builder"
 import { SiteProjectDashboard } from "@/components/admin/studio/site-dashboard/site-project-dashboard"
 

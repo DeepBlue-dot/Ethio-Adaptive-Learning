@@ -1,8 +1,13 @@
 "use server"
 
-import { requireRole } from "@/lib/auth"
+import { revalidatePath } from "next/cache"
+
+import { requireRole } from "@/lib/auth-server"
 import { getItem, getContentType, getReferenceOptions, toSerializableContentType } from "@/lib/cms"
 import { type CmsEditorModel } from "@/lib/cms/types"
+import { createConceptDraft } from "@/lib/curriculum/concept"
+import { createUnit } from "@/lib/curriculum/unit"
+import { prisma } from "@/lib/prisma"
 
 /**
  * Fetches the necessary data to initialize the Inspector for a curriculum node.
@@ -57,6 +62,136 @@ export async function updateInspectorMetadata(
     return { ok: true, updatedAt: result.entity.lifecycle?.updatedAt }
   } catch (error) {
     console.error(`Inspector auto-save failed for ${type}/${id}:`, error)
-    return { ok: false, error: "Auto-save failed." }
+    return { ok: false, error: error instanceof Error ? error.message : "Auto-save failed." }
+  }
+}
+
+export async function linkResourceToNode({
+  nodeId,
+  nodeType,
+  resourceId,
+  resourceType,
+}: {
+  nodeId: string
+  nodeType: "concept" | "unit"
+  resourceId: string
+  resourceType: "media-asset" | "content-snippet"
+}) {
+  await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  try {
+    const consumerType = nodeType.toUpperCase()
+    const context = "builder-inspector"
+
+    await prisma.resourceUsage.upsert({
+      where:
+        resourceType === "media-asset"
+          ? {
+              mediaAssetId_consumerId_context: {
+                mediaAssetId: resourceId,
+                consumerId: nodeId,
+                context,
+              },
+            }
+          : {
+              contentSnippetId_consumerId_context: {
+                contentSnippetId: resourceId,
+                consumerId: nodeId,
+                context,
+              },
+            },
+      create:
+        resourceType === "media-asset"
+          ? {
+              mediaAssetId: resourceId,
+              consumerType,
+              consumerId: nodeId,
+              context,
+            }
+          : {
+              contentSnippetId: resourceId,
+              consumerType,
+              consumerId: nodeId,
+              context,
+            },
+      update: {
+        consumerType,
+      },
+    })
+
+    return { ok: true }
+  } catch (error) {
+    console.error(`Failed to link resource ${resourceId} to ${nodeType}/${nodeId}:`, error)
+    return { ok: false, error: "Unable to link resource." }
+  }
+}
+
+export async function createBuilderUnit(courseId: string, title?: string) {
+  await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  try {
+    const lastUnit = await prisma.unit.findFirst({
+      where: { courseId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    })
+    const order = (lastUnit?.order ?? 0) + 1
+    const unit = await createUnit({
+      courseId,
+      order,
+      title: title?.trim() || `New Unit ${order}`,
+    })
+
+    revalidatePath(`/admin/studio/builder/${courseId}`)
+    revalidatePath("/admin/studio")
+
+    return {
+      ok: true,
+      unit: {
+        id: unit.id,
+        type: "UNIT" as const,
+        title: unit.title,
+        status: unit.status,
+        order: unit.order,
+        concepts: [],
+      },
+    }
+  } catch (error) {
+    console.error(`Failed to create unit for course ${courseId}:`, error)
+    return { ok: false, error: "Unable to create unit." }
+  }
+}
+
+export async function createBuilderConcept(unitId: string, title?: string) {
+  await requireRole(["ADMIN", "COURSE_WRITER"])
+
+  try {
+    const conceptCount = await prisma.concept.count({ where: { unitId } })
+    const concept = await createConceptDraft({
+      unitId,
+      title: title?.trim() || `New Concept ${conceptCount + 1}`,
+    })
+    const unit = await prisma.unit.findUnique({
+      where: { id: unitId },
+      select: { courseId: true },
+    })
+
+    if (unit) {
+      revalidatePath(`/admin/studio/builder/${unit.courseId}`)
+    }
+    revalidatePath("/admin/studio")
+
+    return {
+      ok: true,
+      concept: {
+        id: concept.id,
+        type: "CONCEPT" as const,
+        title: concept.title,
+        status: concept.status,
+      },
+    }
+  } catch (error) {
+    console.error(`Failed to create concept for unit ${unitId}:`, error)
+    return { ok: false, error: "Unable to create concept." }
   }
 }

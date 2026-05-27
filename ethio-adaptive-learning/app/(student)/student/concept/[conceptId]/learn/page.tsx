@@ -7,7 +7,7 @@ import { ContentReadLogger } from "@/components/student/content-read-logger"
 import { QuestionInteraction } from "@/components/student/question-interaction"
 import { TutorPanel } from "@/components/student/tutor-panel"
 import { Button } from "@/components/ui/button"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getPracticeQuestionForConcept, getStudentConceptDetail } from "@/lib/student/data"
 import type { StudentQuestion } from "@/lib/student/types"
 

@@ -1,4 +1,4 @@
-import { redirectIfAuthenticated } from "@/lib/auth"
+import { redirectIfAuthenticated } from "@/lib/auth-server"
 import { LoginForm } from "@/components/shared/login-form"
 
 type LoginPageProps = {

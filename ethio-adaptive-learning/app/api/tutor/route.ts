@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { getSocraticGuidance } from "@/lib/ai/tutoring/socratic-engine"
-import { requireApiAuth } from "@/lib/auth"
+import { requireApiAuth } from "@/lib/auth-server"
 
 /**
  * AI Socratic Tutor API Endpoint
@@ -19,7 +19,6 @@ export async function POST(req: Request) {
     }
 
     const session = await requireApiAuth()
-...
 
     console.info(`[Tutor API] Request from user ${session.user.id} for concept ${conceptId}`)
 

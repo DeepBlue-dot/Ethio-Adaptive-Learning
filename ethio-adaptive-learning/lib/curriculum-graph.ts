@@ -24,38 +24,45 @@ const masterySelect = {
 } satisfies Prisma.UserMasterySelect
 
 export async function rebuildConceptClosureForCourse(courseId: string, db: DbClient = prisma) {
-  const concepts = await db.concept.findMany({
+  const allCourseConcepts = await db.concept.findMany({
     where: {
-      status: "PUBLISHED",
       unit: {
         courseId,
-        status: "PUBLISHED",
       },
     },
     select: {
       id: true,
+      status: true,
+      unit: {
+        select: {
+          status: true,
+        },
+      },
     },
   })
-  const conceptIds = concepts.map((concept) => concept.id)
+  const allCourseConceptIds = allCourseConcepts.map((concept) => concept.id)
+  const publishedConceptIds = allCourseConcepts
+    .filter((concept) => concept.status === "PUBLISHED" && concept.unit.status === "PUBLISHED")
+    .map((concept) => concept.id)
 
   await db.conceptClosure.deleteMany({
     where: {
       OR: [
         {
           ancestorConceptId: {
-            in: conceptIds,
+            in: allCourseConceptIds,
           },
         },
         {
           descendantConceptId: {
-            in: conceptIds,
+            in: allCourseConceptIds,
           },
         },
       ],
     },
   })
 
-  if (!conceptIds.length) {
+  if (!publishedConceptIds.length) {
     return []
   }
 
@@ -78,7 +85,7 @@ export async function rebuildConceptClosureForCourse(courseId: string, db: DbCli
     },
   })
 
-  const rows = buildConceptClosureRows(conceptIds, directEdges)
+  const rows = buildConceptClosureRows(publishedConceptIds, directEdges)
 
   if (rows.length) {
     await db.conceptClosure.createMany({

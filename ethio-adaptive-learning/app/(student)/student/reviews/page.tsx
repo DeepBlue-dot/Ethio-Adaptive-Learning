@@ -10,7 +10,7 @@ import {
 
 import { MasteryBar, ReviewAlert, formatDate, formatPercent } from "@/components/student/student-status"
 import { Button } from "@/components/ui/button"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getStudentReviewQueue } from "@/lib/student/data"
 import type { StudentReviewItem } from "@/lib/student/types"
 

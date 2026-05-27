@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation"
 
 import { SiteProjectOverview } from "@/components/admin/studio/site-dashboard/site-project-overview"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getSiteProjectData } from "@/lib/studio/site-builder"
 
 export default async function SiteProjectPage({

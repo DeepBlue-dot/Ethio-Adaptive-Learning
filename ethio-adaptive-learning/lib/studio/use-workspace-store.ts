@@ -2,6 +2,7 @@ import { create } from "zustand"
 
 type InspectorTarget = "page" | "block" | null
 type DevicePreview = "desktop" | "tablet" | "mobile"
+type ActiveNodeType = "concept" | "unit" | null
 
 interface WorkspaceState {
   activeSiteId: string | null
@@ -9,6 +10,7 @@ interface WorkspaceState {
   selectedBlockId: string | null
   selectedInspectorTarget: InspectorTarget
   activeNodeId: string | null
+  activeNodeType: ActiveNodeType
   selectedItems: Set<string>
   shelfOpen: boolean
   zoomLevel: number
@@ -21,7 +23,7 @@ interface WorkspaceState {
   selectPage: (id: string | null) => void
   selectBlock: (id: string | null) => void
   setInspectorTarget: (target: InspectorTarget) => void
-  setActiveNode: (id: string | null) => void
+  setActiveNode: (id: string | null, type?: ActiveNodeType) => void
   toggleSelection: (id: string) => void
   clearSelection: () => void
   setShelfOpen: (isOpen: boolean) => void
@@ -38,6 +40,7 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
   selectedBlockId: null,
   selectedInspectorTarget: null,
   activeNodeId: null,
+  activeNodeType: null,
   selectedItems: new Set(),
   shelfOpen: false,
   zoomLevel: 1.0,
@@ -53,20 +56,23 @@ export const useWorkspaceStore = create<WorkspaceState>((set) => ({
     selectedBlockId: null,
     selectedInspectorTarget: id ? "page" : null,
     activeNodeId: id,
+    activeNodeType: id ? "concept" : null,
   }),
 
   selectBlock: (id) => set({
     selectedBlockId: id,
     selectedInspectorTarget: id ? "block" : null,
     activeNodeId: id,
+    activeNodeType: null,
   }),
 
   setInspectorTarget: (target) => set({ selectedInspectorTarget: target }),
 
-  setActiveNode: (id) => set({
+  setActiveNode: (id, type = null) => set({
     activeNodeId: id,
-    selectedBlockId: id,
-    selectedInspectorTarget: id ? "block" : null,
+    activeNodeType: id ? type : null,
+    selectedBlockId: null,
+    selectedInspectorTarget: null,
   }),
 
   toggleSelection: (id) => set((state) => {

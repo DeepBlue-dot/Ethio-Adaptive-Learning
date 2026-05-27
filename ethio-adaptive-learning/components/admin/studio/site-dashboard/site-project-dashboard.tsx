@@ -22,6 +22,12 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
     }),
     { pages: 0, live: 0, drafts: 0, blocks: 0 }
   )
+  const metrics = [
+    { label: "Courses", value: projects.length, icon: <Globe2 className="size-4" /> },
+    { label: "Concepts", value: totals.pages, icon: <Layers3 className="size-4" />, tone: "blue" as const },
+    { label: "Live concepts", value: totals.live, icon: <RadioTower className="size-4" />, tone: "green" as const },
+    { label: "Draft concepts", value: totals.drafts, icon: <Blocks className="size-4" />, tone: "amber" as const },
+  ]
 
   return (
     <motion.div
@@ -30,11 +36,15 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
       transition={{ staggerChildren: 0.08 }}
       className="space-y-8"
     >
-      <motion.section variants={itemVariants} className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Site projects" value={projects.length} icon={<Globe2 className="size-4" />} />
-        <Metric label="Pages" value={totals.pages} icon={<Layers3 className="size-4" />} tone="blue" />
-        <Metric label="Live pages" value={totals.live} icon={<RadioTower className="size-4" />} tone="green" />
-        <Metric label="Draft pages" value={totals.drafts} icon={<Blocks className="size-4" />} tone="amber" />
+      <motion.section
+        variants={itemVariants}
+        role="list"
+        aria-label="Course dashboard metrics"
+        className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
+      >
+        {metrics.map((metric) => (
+          <Metric key={metric.label} {...metric} />
+        ))}
       </motion.section>
 
       <motion.section
@@ -46,7 +56,7 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
             <div>
               <p className="text-[10px] font-black uppercase tracking-[0.28em] text-primary">Workspace</p>
               <h2 className="mt-3 max-w-2xl text-3xl font-black tracking-tight text-on-surface">
-                Build learning pages like a site, publish them like a CMS.
+                Build learning concepts like a course, publish them like a CMS.
               </h2>
             </div>
             <div className="hidden rounded-2xl border border-primary/15 bg-primary/10 p-4 text-primary lg:block">
@@ -55,7 +65,7 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
           </div>
           <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Action href={projects[0] ? `/admin/studio/sites/${projects[0].id}` : "/admin/studio"} label="Open Builder" icon={<ArrowUpRight className="size-4" />} primary />
-            <Action href={projects[0] ? `/admin/studio/sites/${projects[0].id}/pages/new` : "/admin/studio"} label="New Page" icon={<FilePlus2 className="size-4" />} />
+            <Action href={projects[0] ? `/admin/studio/sites/${projects[0].id}/pages/new` : "/admin/studio"} label="New Concept" icon={<FilePlus2 className="size-4" />} />
             <Action href="/concepts" label="Preview Live" icon={<Eye className="size-4" />} />
           </div>
         </div>
@@ -73,7 +83,7 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
       <section className="space-y-4">
         <motion.div variants={itemVariants} className="flex items-center gap-4">
           <h2 className="text-xs font-black uppercase tracking-[0.25em] text-on-surface-variant/60">
-            Site Projects
+            Active Courses
           </h2>
           <div className="h-px flex-1 bg-outline-variant/40" />
         </motion.div>
@@ -99,7 +109,7 @@ export function SiteProjectCard({ project }: { project: SiteProjectSummary }) {
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             <Globe2 className="size-3.5" />
-            Site Project
+            Course Project
           </div>
           <h3 className="mt-3 truncate text-2xl font-black tracking-tight text-on-surface group-hover:text-primary">
             {project.title}
@@ -111,14 +121,14 @@ export function SiteProjectCard({ project }: { project: SiteProjectSummary }) {
         <Link
           href={`/admin/studio/sites/${project.id}`}
           className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition hover:scale-105"
-          title="Open site project"
+          title="Open course project"
         >
           <ArrowUpRight className="size-5" />
         </Link>
       </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 md:grid-cols-4">
-        <MiniStat label="Pages" value={project.pageCount} />
+        <MiniStat label="Concepts" value={project.pageCount} />
         <MiniStat label="Live" value={project.livePageCount} />
         <MiniStat label="Draft" value={project.draftPageCount} />
         <MiniStat label="Blocks" value={project.blockCount} />
@@ -156,7 +166,7 @@ export function SiteProjectCard({ project }: { project: SiteProjectSummary }) {
             href={`/admin/studio/sites/${project.id}/pages/new`}
             className="rounded-full bg-primary/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-primary transition hover:bg-primary/15"
           >
-            New page
+            New concept
           </Link>
         </div>
       </div>
@@ -166,7 +176,7 @@ export function SiteProjectCard({ project }: { project: SiteProjectSummary }) {
 
 function Metric({ label, value, icon, tone = "default" }: { label: string; value: number; icon: React.ReactNode; tone?: "default" | "blue" | "green" | "amber" }) {
   return (
-    <div className="rounded-3xl border border-outline-variant/50 bg-surface p-5 shadow-sm">
+    <div role="listitem" className="min-w-0 rounded-3xl border border-outline-variant/50 bg-surface p-5 shadow-sm">
       <div className="flex items-center gap-4">
         <div
           className={cn(

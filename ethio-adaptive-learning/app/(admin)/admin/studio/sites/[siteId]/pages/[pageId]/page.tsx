@@ -2,7 +2,7 @@ import { notFound } from "next/navigation"
 
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
 import { PageBuilderWorkspace } from "@/components/admin/studio/site-builder/page-builder-workspace"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getUnifiedResources } from "@/lib/resources/unified-resources"
 import { getPageBuilderData } from "@/lib/studio/site-builder"
 

@@ -7,10 +7,18 @@ import { type BuilderUnit } from "@/lib/studio/builder-data"
 
 export function BuilderCanvas({ 
   units, 
-  courseTitle 
+  courseTitle,
+  onAddUnit,
+  onAddConcept,
+  isAddingUnit = false,
+  addingConceptUnitId = null,
 }: { 
   units: BuilderUnit[], 
   courseTitle: string 
+  onAddUnit?: () => void
+  onAddConcept?: (unitId: string) => void
+  isAddingUnit?: boolean
+  addingConceptUnitId?: string | null
 }) {
   return (
     <div className="min-h-full w-full bg-surface-container-lowest/50 relative p-12 lg:p-24 overflow-y-auto custom-scrollbar">
@@ -50,11 +58,18 @@ export function BuilderCanvas({
                  ))}
 
                  {/* Quick Add Concept */}
-                 <button className="flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-all group">
+                 <button
+                   type="button"
+                   onClick={() => onAddConcept?.(unit.id)}
+                   disabled={addingConceptUnitId === unit.id}
+                   className="flex items-center gap-3 p-4 rounded-2xl border-2 border-dashed border-outline-variant/30 text-on-surface-variant hover:text-primary hover:border-primary/30 transition-all group"
+                 >
                     <div className="size-8 rounded-lg bg-surface-container-high flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
                        <Plus className="size-4" />
                     </div>
-                    <span className="text-[10px] font-black uppercase tracking-widest">Add Concept</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      {addingConceptUnitId === unit.id ? "Adding..." : "Add Concept"}
+                    </span>
                  </button>
               </div>
 
@@ -70,11 +85,18 @@ export function BuilderCanvas({
           {/* Quick Add Unit */}
           <div className="flex flex-col items-center">
              <div className="h-12 w-0.5 bg-outline-variant/30" />
-             <button className="flex items-center gap-4 px-8 py-6 rounded-[2.5rem] border-2 border-dashed border-outline-variant hover:border-primary hover:bg-primary/5 transition-all group shadow-sm">
+             <button
+               type="button"
+               onClick={onAddUnit}
+               disabled={isAddingUnit}
+               className="flex items-center gap-4 px-8 py-6 rounded-[2.5rem] border-2 border-dashed border-outline-variant hover:border-primary hover:bg-primary/5 transition-all group shadow-sm"
+             >
                 <div className="size-10 rounded-2xl bg-surface-container-highest flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
                    <Plus className="size-6" />
                 </div>
-                <span className="text-sm font-black uppercase tracking-widest text-on-surface-variant group-hover:text-primary">Add New Unit</span>
+                <span className="text-sm font-black uppercase tracking-widest text-on-surface-variant group-hover:text-primary">
+                  {isAddingUnit ? "Adding..." : "Add New Unit"}
+                </span>
              </button>
           </div>
         </div>

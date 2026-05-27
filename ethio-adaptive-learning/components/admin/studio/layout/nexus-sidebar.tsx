@@ -75,6 +75,9 @@ export function NexusSidebar({ user }: NexusSidebarProps) {
 
   const activeModule = getActiveModule()
 
+  const isFocusMode = pathname.includes("/admin/studio/editor/")
+  if (isFocusMode) return null
+
   const roleLabel = user.role === "ADMIN" ? "Systems Admin" : "Content Specialist"
 
   return (

@@ -9,7 +9,7 @@ import {
 } from "@/lib/cms/content-blocks"
 import { getItem, saveDraftItem } from "@/lib/cms/core"
 import { prisma } from "@/lib/prisma"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 
 export type SiteProjectSummary = {
   id: string

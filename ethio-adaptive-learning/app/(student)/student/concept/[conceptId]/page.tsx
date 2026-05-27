@@ -20,7 +20,7 @@ import {
   formatDuration,
   formatPercent,
 } from "@/components/student/student-status"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getStudentConceptDetail } from "@/lib/student/data"
 
 type ConceptPageProps = {

@@ -1,6 +1,6 @@
 import { StudentHeader } from "@/components/student/student-header"
 import { StudentSidebar } from "@/components/student/student-sidebar"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getStudentNavigation } from "@/lib/student/data"
 
 export default async function StudentLayout({

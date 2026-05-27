@@ -4,7 +4,7 @@ import { ArrowLeft, ShieldCheck } from "lucide-react"
 
 import { QuestionInteraction } from "@/components/student/question-interaction"
 import { Button } from "@/components/ui/button"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import {
   getCheckpointQuestionForConcept,
   getStudentConceptDetail,

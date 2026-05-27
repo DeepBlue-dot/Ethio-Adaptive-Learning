@@ -114,7 +114,7 @@ export function CurriculumTree({
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant opacity-30 size-4 group-focus-within:text-primary group-focus-within:opacity-100 transition-all" />
           <input
             type="text"
-            placeholder="Search assets..."
+            placeholder="Search concepts..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full pl-10 pr-4 py-2.5 bg-surface border border-outline-variant/40 rounded-2xl text-[13px] font-bold text-on-surface placeholder:text-on-surface-variant/30 focus:outline-none focus:ring-4 focus:ring-primary/5 focus:border-primary/40 transition-all"
@@ -147,7 +147,7 @@ export function CurriculumTree({
           ) : (
             <div className="py-20 text-center space-y-4 opacity-20">
                <Sparkles className="size-10 mx-auto" />
-               <p className="text-[10px] font-black uppercase tracking-widest">No assets found</p>
+               <p className="text-[10px] font-black uppercase tracking-widest">No concepts found</p>
             </div>
           )}
         </AnimatePresence>
@@ -157,7 +157,7 @@ export function CurriculumTree({
           className="flex w-full items-center justify-center gap-2 rounded-2xl px-3 py-4 text-[10px] font-black uppercase tracking-[0.2em] text-primary hover:bg-primary/5 transition-all mt-8 border border-dashed border-primary/20 hover:border-primary/40 group active:scale-[0.98]"
         >
           <Plus className="size-3 group-hover:scale-125 transition-transform" />
-          Add Course Project
+          Add Course
         </Link>
       </div>
 

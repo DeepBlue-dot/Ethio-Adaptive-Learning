@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, RotateCcw } from "lucide-react"
 import { QuestionInteraction } from "@/components/student/question-interaction"
 import { ReviewAlert, formatPercent } from "@/components/student/student-status"
 import { Button } from "@/components/ui/button"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getPracticeQuestionForConcept, getStudentConceptDetail } from "@/lib/student/data"
 import type { StudentQuestion } from "@/lib/student/types"
 

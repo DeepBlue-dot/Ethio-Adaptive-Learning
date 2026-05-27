@@ -22,7 +22,7 @@ export function NodeCard({ node }: { node: BuilderNode }) {
   return (
     <motion.div
       layoutId={node.id}
-      onClick={() => setActiveNode(node.id)}
+      onClick={() => setActiveNode(node.id, isUnit ? "unit" : "concept")}
       className={cn(
         "group relative cursor-pointer transition-all duration-300",
         isUnit 

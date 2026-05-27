@@ -2,14 +2,13 @@ import type { Adapter } from "next-auth/adapters"
 import { getServerSession, type NextAuthOptions } from "next-auth"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { PrismaAdapter } from "@auth/prisma-adapter"
-import { redirect } from "next/navigation"
 import type { UserRole } from "@prisma/client"
 
 import { prisma } from "@/lib/prisma"
 import { verifyPassword } from "@/lib/password"
 import { findUserByIdentifier } from "@/lib/users"
 
-type AppRole = UserRole
+export type AppRole = UserRole
 
 if (!process.env.NEXTAUTH_URL && process.env.NEXT_PUBLIC_APP_URL) {
   process.env.NEXTAUTH_URL = process.env.NEXT_PUBLIC_APP_URL
@@ -98,58 +97,4 @@ export const authOptions: NextAuthOptions = {
 
 export async function getAuthSession() {
   return getServerSession(authOptions)
-}
-
-export async function requireAuth() {
-  const session = await getAuthSession()
-
-  if (!session?.user) {
-    redirect("/login")
-  }
-
-  return session
-}
-
-/**
- * API-safe authentication check. 
- * Returns the session if authenticated, otherwise throws an error that can be caught by API handlers.
- */
-export async function requireApiAuth() {
-  const session = await getAuthSession()
-  if (!session?.user) {
-    const error = new Error("Unauthorized")
-    // @ts-ignore
-    error.status = 401
-    throw error
-  }
-  return session
-}
-
-export async function requireRole(roles: AppRole | AppRole[]) {
-  const session = await requireAuth()
-  const allowedRoles = Array.isArray(roles) ? roles : [roles]
-
-  if (!allowedRoles.includes(session.user.role)) {
-    console.warn("Unauthorized route access", {
-      userId: session.user.id,
-      userRole: session.user.role,
-      allowedRoles,
-    })
-
-    redirect(getDefaultRedirectPath(session.user.role))
-  }
-
-  return session
-}
-
-export async function redirectIfAuthenticated() {
-  const session = await getAuthSession()
-
-  if (session?.user) {
-    redirect(getDefaultRedirectPath(session.user.role))
-  }
-}
-
-export function getDefaultRedirectPath(role: AppRole) {
-  return role === "ADMIN" || role === "COURSE_WRITER" ? "/admin/dashboard" : "/student"
 }

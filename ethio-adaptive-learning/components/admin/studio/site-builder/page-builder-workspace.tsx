@@ -95,7 +95,7 @@ const blockTemplates: BlockTemplate[] = [
     label: "Text",
     description: "Rich learning copy",
     icon: <Text className="size-4" />,
-    create: () => ({ id: createBlockId(), type: "paragraph", title: null, text: "Write the page content here." }),
+    create: () => ({ id: createBlockId(), type: "paragraph", title: null, text: "Write the concept content here." }),
   },
   {
     id: "template-image",
@@ -316,7 +316,7 @@ function PageBuilderTopbar({ data, saveStatus }: { data: PageBuilderData; saveSt
       <div className="min-w-0">
         <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
           <Layers3 className="size-3.5" />
-          Page Builder
+          Concept Builder
         </div>
         <h1 className="truncate text-sm font-black text-on-surface lg:text-base">{data.page.title}</h1>
       </div>
@@ -387,9 +387,11 @@ function PageCanvas({
   const zoomLevel = useWorkspaceStore((state) => state.zoomLevel)
 
   return (
-    <div className="h-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,rgb(0_0_0_/_0.08)_1px,transparent_0)] [background-size:24px_24px] p-4 custom-scrollbar lg:p-8">
+    <div
+      ref={setNodeRef}
+      className="h-full overflow-auto bg-[radial-gradient(circle_at_1px_1px,rgb(0_0_0_/_0.08)_1px,transparent_0)] [background-size:24px_24px] p-4 custom-scrollbar lg:p-8"
+    >
       <div
-        ref={setNodeRef}
         className={cn(
           "mx-auto min-h-full transition-all",
           devicePreview === "desktop" && (design.width === "wide" ? "max-w-7xl" : "max-w-5xl"),
@@ -596,7 +598,7 @@ function BlockInspector({
         <div className="min-w-0">
           <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-primary">
             <Settings className="size-3.5" />
-            {editingPage ? "Page Properties" : "Block Properties"}
+            {editingPage ? "Concept Properties" : "Block Properties"}
           </div>
           <h3 className="mt-2 truncate text-base font-black text-on-surface">
             {editingPage ? pageDraft.title : block.label}
@@ -668,8 +670,8 @@ function PageInspectorFields({
   if (activeTab === "advanced") {
     return (
       <div className="space-y-4">
-        <ReadOnly label="Page ID" value={page.id} />
-        <ReadOnly label="Group" value={data.group.title} />
+        <ReadOnly label="Concept ID" value={page.id} />
+        <ReadOnly label="Unit" value={data.group.title} />
         <Button asChild className="w-full rounded-xl">
           <Link href={`/admin/studio/editor/concept/${page.id}?returnTo=/admin/studio/sites/${data.site.id}/pages/${page.id}`}>
             Deep Editor
@@ -740,7 +742,7 @@ function PageInspectorFields({
 
   return (
     <div className="space-y-5">
-      <TextInput label="Page title" value={page.title} onChange={(value) => onChange("title", value)} />
+      <TextInput label="Concept title" value={page.title} onChange={(value) => onChange("title", value)} />
       <TextInput label="Slug" value={page.slug} onChange={(value) => onChange("slug", value)} />
       <TextArea label="Description" value={page.description} onChange={(value) => onChange("description", value)} />
     </div>
@@ -879,7 +881,7 @@ function AssetBlockLibrary({ resources }: { resources: ResourceItem[] }) {
         <div className="flex items-center justify-between border-b border-outline-variant bg-surface-container-highest/70 px-5 py-3">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-primary">Asset / Block Library</p>
-            <p className="text-sm font-semibold text-on-surface-variant">Drag blocks or media onto the page canvas</p>
+            <p className="text-sm font-semibold text-on-surface-variant">Drag blocks or media onto the concept canvas</p>
           </div>
           <div className="flex flex-wrap items-center justify-end gap-2">
             <Button asChild variant="outline" size="sm" className="rounded-xl text-[10px] font-black uppercase tracking-widest">

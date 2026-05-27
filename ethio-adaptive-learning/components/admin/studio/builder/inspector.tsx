@@ -23,12 +23,13 @@ import { Button } from "@/components/ui/button"
 import { CmsFieldInput } from "@/components/cms/cms-field"
 import { useDroppable } from "@dnd-kit/core"
 
-export function Inspector() {
+export function Inspector({ linkStatus = "idle" }: { linkStatus?: "idle" | "linking" | "linked" | "error" }) {
   const { setNodeRef, isOver } = useDroppable({
     id: "inspector-drop-zone",
   })
 
   const activeNodeId = useWorkspaceStore((state) => state.activeNodeId)
+  const activeNodeType = useWorkspaceStore((state) => state.activeNodeType)
   const setActiveNode = useWorkspaceStore((state) => state.setActiveNode)
   
   const [model, setModel] = useState<CmsEditorModel | null>(null)
@@ -48,20 +49,11 @@ export function Inspector() {
       }
 
       setIsLoading(true)
-      
-      const [conceptData, unitData] = await Promise.all([
-        getInspectorModel("concept", activeNodeId),
-        getInspectorModel("unit", activeNodeId)
-      ])
+      const modelType = activeNodeType ?? "concept"
+      const modelData = await getInspectorModel(modelType, activeNodeId)
 
       if (isMounted) {
-        if (conceptData) {
-          setModel(conceptData)
-        } else if (unitData) {
-          setModel(unitData)
-        } else {
-          setModel(null)
-        }
+        setModel(modelData)
         setIsLoading(false)
       }
     }
@@ -69,7 +61,7 @@ export function Inspector() {
     loadModel()
 
     return () => { isMounted = false }
-  }, [activeNodeId])
+  }, [activeNodeId, activeNodeType])
 
   const handleFieldChange = async (fieldName: string, value: unknown) => {
     if (!model || !activeNodeId || !model.item) return
@@ -130,7 +122,7 @@ export function Inspector() {
                  </span>
                ) : (
                  <span className="text-[9px] font-black uppercase tracking-widest text-on-surface-variant opacity-40">
-                   {model?.definition.label || "Entity"}
+                   {linkStatus === "linking" ? "Linking resource" : linkStatus === "linked" ? "Resource linked" : linkStatus === "error" ? "Link failed" : model?.definition.label || "Entity"}
                  </span>
                )}
             </div>
@@ -185,7 +177,7 @@ export function Inspector() {
                          "text-sm font-black uppercase tracking-[0.2em] mb-2 transition-colors duration-500",
                          isOver ? "text-primary" : "text-on-surface-variant opacity-60"
                        )}>
-                         {isOver ? "Release to Link" : "Asset Drop Zone"}
+                         {isOver ? "Release to Link" : linkStatus === "linked" ? "Linked" : linkStatus === "error" ? "Link Failed" : "Asset Drop Zone"}
                        </h4>
                        <p className="text-[10px] font-black text-on-surface-variant/30 uppercase tracking-[0.2em] leading-relaxed max-w-[200px] mx-auto">
                          Drag media from the shelf to establish curriculum relations

@@ -68,6 +68,18 @@ export async function updateInspectorMetadata(
   return inspectorActions.updateInspectorMetadata(type, id, data)
 }
 
+export async function linkResourceToNode(input: Parameters<typeof inspectorActions.linkResourceToNode>[0]) {
+  return inspectorActions.linkResourceToNode(input)
+}
+
+export async function createBuilderUnit(courseId: string, title?: string) {
+  return inspectorActions.createBuilderUnit(courseId, title)
+}
+
+export async function createBuilderConcept(unitId: string, title?: string) {
+  return inspectorActions.createBuilderConcept(unitId, title)
+}
+
 export async function updatePageBlocks(
   pageId: string,
   blocks: Parameters<typeof siteBuilder.updatePageBlocks>[1]
@@ -104,8 +116,8 @@ export async function reorderCmsEntities(
   return cmsActions.reorderCmsEntities(contentType, ids, revalidationPaths)
 }
 
-export async function uploadCmsImageAsset() {
-  return cmsActions.uploadCmsImageAsset()
+export async function uploadCmsImageAsset(formData: FormData) {
+  return cmsActions.uploadCmsImageAsset(formData)
 }
 
 // Helpers

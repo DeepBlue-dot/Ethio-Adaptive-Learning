@@ -14,7 +14,7 @@ import {
 } from "@/lib/assessment"
 import { awardXpForActivity, recordDailyActivity } from "@/lib/gamification"
 import { prisma } from "@/lib/prisma"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import type { StudentExamResult, StudentQuestion } from "@/lib/student/types"
 
 type ActionResult<T> =

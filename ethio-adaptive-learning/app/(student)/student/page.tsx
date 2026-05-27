@@ -6,7 +6,7 @@ import {
   formatDuration,
   formatPercent,
 } from "@/components/student/student-status"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getStudentDashboard } from "@/lib/student/data"
 import type { StudentConceptCard } from "@/lib/student/types"
 

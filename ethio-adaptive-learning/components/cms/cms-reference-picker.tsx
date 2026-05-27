@@ -7,6 +7,7 @@ const selectClassName =
 
 export function CmsReferencePicker({
   defaultValue,
+  id,
   multiple = false,
   name,
   options,
@@ -14,6 +15,7 @@ export function CmsReferencePicker({
   onChange,
 }: {
   defaultValue?: string | string[]
+  id?: string
   multiple?: boolean
   name: string
   options: CmsReferenceOption[]
@@ -24,6 +26,7 @@ export function CmsReferencePicker({
     <select
       className={`${selectClassName} ${multiple ? "min-h-44" : ""}`}
       defaultValue={defaultValue}
+      id={id}
       value={value}
       onChange={(e) => {
         if (multiple) {

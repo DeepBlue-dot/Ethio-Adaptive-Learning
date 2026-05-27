@@ -10,10 +10,11 @@ import { PublicationControls } from "@/components/cms/publication-controls"
 import { Button } from "@/components/ui/button"
 import {
   initialCmsActionState,
+  type CmsActionState,
   type CmsEntity,
   type CmsReferenceOptions,
   type CmsSerializableContentType,
-} from "@/lib/cms/types"
+} from "@/lib/cms"
 
 type EmbeddedLists = Record<string, Array<Record<string, string | number | null | undefined>>>
 
@@ -23,14 +24,16 @@ export function CmsForm({
   referenceOptions,
   returnTo,
   userRole,
+  initialState,
 }: {
   definition: CmsSerializableContentType
   item: CmsEntity | null
   referenceOptions: CmsReferenceOptions
   returnTo: string
   userRole: string
+  initialState?: CmsActionState
 }) {
-  const [state, formAction, isPending] = useActionState(saveCmsItem, initialCmsActionState)
+  const [state, formAction, isPending] = useActionState(saveCmsItem, initialState ?? initialCmsActionState)
   const [embeddedLists, setEmbeddedLists] = useState<EmbeddedLists>(() => {
     const initialLists: EmbeddedLists = {}
 
@@ -65,14 +68,14 @@ export function CmsForm({
           </div>
         ) : null}
 
-        <div className="space-y-5">
+        <div className="space-y-12">
           {Object.entries(fieldsBySection).map(([section, fields]) => (
-            <section key={section} className="rounded-[1.5rem] border border-outline-variant bg-surface p-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <h2 className="text-[11px] font-black uppercase tracking-[0.24em] text-on-surface-variant/60">{section}</h2>
-                <div className="h-px flex-1 bg-outline-variant/40" />
+            <section key={section} className="rounded-[2rem] border border-outline-variant/60 bg-surface p-8 shadow-sm transition-all hover:shadow-md">
+              <div className="flex items-center gap-4">
+                <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/70">{section}</h2>
+                <div className="h-px flex-1 bg-gradient-to-r from-outline-variant/60 to-transparent" />
               </div>
-              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+              <div className="mt-8 grid gap-6 lg:grid-cols-2">
                 {fields.map((field) =>
                   field.type === "embedded-list" ? (
                     <CmsRelationManager
@@ -102,20 +105,21 @@ export function CmsForm({
             </section>
           ))}
         </div>
-      </form>
 
-      <div className="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-4 rounded-[1.5rem] border border-outline-variant bg-surface/95 p-4 shadow-2xl backdrop-blur">
-        <PublicationControls
-          formId={formId}
-          hasDraft={item?.lifecycle?.hasDraft ?? false}
-          isPending={isPending}
-          isPublished={item?.lifecycle?.status === "PUBLISHED"}
-          label={definition.label}
-        />
-        <Button asChild variant="ghost" className="rounded-xl text-[10px] font-black uppercase tracking-[0.18em]">
-          <a href={returnTo}>Cancel and go back</a>
-        </Button>
-      </div>
+        {/* Sticky Actions Bar - Uses sticky to avoid sidebar overlap and stay within content flow */}
+        <div className="sticky bottom-4 z-30 mt-12 flex items-center justify-between gap-4 rounded-3xl border border-outline-variant bg-surface/95 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+          <PublicationControls
+            formId={formId}
+            hasDraft={item?.lifecycle?.hasDraft ?? false}
+            isPending={isPending}
+            isPublished={item?.lifecycle?.status === "PUBLISHED"}
+            label={definition.label}
+          />
+          <Button asChild variant="ghost" className="rounded-xl text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant hover:text-primary">
+            <a href={returnTo}>Cancel changes</a>
+          </Button>
+        </div>
+      </form>
     </div>
   )
 }

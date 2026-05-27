@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { prisma } from "@/lib/prisma"
 import AccountPageContent from "./page-client"
 

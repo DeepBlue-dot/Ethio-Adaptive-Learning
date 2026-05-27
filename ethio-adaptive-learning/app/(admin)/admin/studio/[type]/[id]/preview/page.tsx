@@ -4,7 +4,7 @@ import { ArrowLeft, ExternalLink, Monitor } from "lucide-react"
 
 import { ContentBlocksRenderer } from "@/components/content/content-blocks-renderer"
 import { Button } from "@/components/ui/button"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { resolveCmsContentType } from "@/lib/cms"
 import { getStudioContentPreview } from "@/lib/studio/site-builder"
 
@@ -84,7 +84,7 @@ export default async function StudioPreviewPage({ params }: StudioPreviewPagePro
             ) : (
               <div className="rounded-3xl border-2 border-dashed border-outline-variant bg-surface-container-low p-10 text-center">
                 <p className="text-sm font-black uppercase tracking-[0.2em] text-on-surface-variant/50">
-                  This draft has no page blocks yet.
+                  This draft has no concept blocks yet.
                 </p>
               </div>
             )}

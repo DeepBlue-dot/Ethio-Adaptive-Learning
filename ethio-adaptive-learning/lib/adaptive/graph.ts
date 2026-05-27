@@ -69,7 +69,7 @@ export function validatePrerequisiteSelection({
   const uniquePrerequisiteIds = [...new Set(prerequisiteConceptIds)]
 
   if (uniquePrerequisiteIds.includes(conceptId)) {
-    throw new GraphValidationError("A concept cannot depend on itself.", {
+    throw new GraphValidationError("A concept cannot depend on itself. Circular Dependency.", {
       cyclePath: [conceptId, conceptId],
     })
   }
@@ -86,7 +86,7 @@ export function validatePrerequisiteSelection({
 
   if (cyclePath) {
     throw new GraphValidationError(
-      `Saving prerequisites would create a cycle: ${cyclePath.join(" -> ")}.`,
+      `Saving prerequisites would create a cycle: ${cyclePath.join(" -> ")}. Circular Dependency.`,
       {
         cyclePath,
       }

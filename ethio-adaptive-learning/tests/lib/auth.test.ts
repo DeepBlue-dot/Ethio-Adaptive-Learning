@@ -51,13 +51,13 @@ vi.mock("next-auth", async () => {
   }
 })
 
+import { authOptions } from "@/lib/auth"
 import {
-  authOptions,
   getDefaultRedirectPath,
   redirectIfAuthenticated,
   requireAuth,
   requireRole,
-} from "@/lib/auth"
+} from "@/lib/auth-server"
 
 function getCredentialsAuthorize() {
   const provider = authOptions.providers.find(

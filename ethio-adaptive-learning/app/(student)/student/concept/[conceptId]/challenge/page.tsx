@@ -5,7 +5,7 @@ import { AlertTriangle, ArrowLeft, Target } from "lucide-react"
 
 import { ExamSession } from "@/components/student/exam-session"
 import { Button } from "@/components/ui/button"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getStudentConceptDetail, getStudentExamSession } from "@/lib/student/data"
 import type { StudentExamSession } from "@/lib/student/types"
 

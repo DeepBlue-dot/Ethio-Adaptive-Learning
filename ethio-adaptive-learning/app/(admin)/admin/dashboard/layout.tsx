@@ -2,7 +2,7 @@ import { DashboardSidebar } from "@/components/admin/studio/modules/dashboard/da
 import { ContextSidebar } from "@/components/admin/studio/layout/context-sidebar"
 import { WorkspaceHeader } from "@/components/admin/studio/layout/workspace-header"
 import { WorkspaceShell } from "@/components/admin/studio/layout/workspace-shell"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 
 export default async function DashboardLayout({
   children,

@@ -1,4 +1,4 @@
-import { redirectIfAuthenticated } from "@/lib/auth"
+import { redirectIfAuthenticated } from "@/lib/auth-server"
 import { RegisterForm } from "@/components/shared/register-form"
 
 export default async function RegisterPage() {

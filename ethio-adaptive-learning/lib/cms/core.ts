@@ -1,4 +1,5 @@
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
+import { validatePrerequisiteSelection } from "@/lib/adaptive/graph"
 import { prismaCmsRepository } from "@/lib/cms/repository/prisma"
 import {
   getCmsContentType,
@@ -8,6 +9,8 @@ import {
 } from "@/lib/cms/registry"
 import { getCmsRevalidationPaths } from "@/lib/cms/validation"
 import { logCmsActivity } from "@/lib/cms/activity"
+import { rebuildConceptClosureForCourse } from "@/lib/curriculum-graph"
+import { prisma } from "@/lib/prisma"
 import { syncUsage } from "@/lib/studio/usage-sync"
 import type {
   CmsContentType,
@@ -45,7 +48,16 @@ export async function createItem(
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
+  
+  if (definition.key === "concept") {
+    await assertPublishableConceptPrerequisites(definition.key, data)
+    // For new items, we can't check for cycles with their own ID yet, 
+    // but we can check if the requested prerequisites themselves have cycles (less likely)
+    // or wait until saveDraft/publish which handle the ID-based check.
+  }
+
   const entity = decorateEntity(definition, await repository.createItem(definition.key, data))
+  await rebuildClosureForGraphLifecycleChange(definition.key, entity.id)
   
   // Sync resource usage if applicable
   if (RESOURCE_CONSUMERS.includes(definition.key)) {
@@ -86,6 +98,13 @@ export async function updateItem(
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
+
+  if (definition.key === "concept") {
+    await assertConceptPrerequisiteSelectionIsAcyclic(id, data)
+    // Note: We don't check draft leakage here because updateItem is generic.
+    // Draft leakage is specific to the "PUBLISHED" status transition.
+  }
+
   const entity = decorateEntity(definition, await repository.updateItem(definition.key, id, data, lastUpdatedAt))
   
   // Sync resource usage if applicable
@@ -127,6 +146,9 @@ export async function saveDraftItem(
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
+  if (definition.key === "concept" && id) {
+    await assertConceptPrerequisiteSelectionIsAcyclic(id, data)
+  }
   const entity = decorateEntity(
     definition,
     repository.saveDraftItem
@@ -173,6 +195,10 @@ export async function publishItem(
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
+  await assertPublishableConceptPrerequisites(definition.key, data)
+  if (definition.key === "concept" && id) {
+    await assertConceptPrerequisiteSelectionIsAcyclic(id, data)
+  }
   const entity = decorateEntity(
     definition,
     repository.publishItem
@@ -181,6 +207,7 @@ export async function publishItem(
         ? await repository.updateItem(definition.key, id, data, lastUpdatedAt)
         : await repository.createItem(definition.key, data)
   )
+  await rebuildClosureForGraphLifecycleChange(definition.key, entity.id)
 
   // Sync resource usage if applicable
   if (RESOURCE_CONSUMERS.includes(definition.key)) {
@@ -218,11 +245,16 @@ export async function unpublishItem(
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
 
+  if (definition.key === "concept") {
+    await assertNoPublishedDependents(id)
+  }
+
   if (!repository.unpublishItem) {
     throw new Error("This CMS repository does not support unpublishing.")
   }
 
   const entity = decorateEntity(definition, await repository.unpublishItem(definition.key, id, userId))
+  await rebuildClosureForGraphLifecycleChange(definition.key, entity.id)
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: "update",
@@ -242,6 +274,27 @@ export async function unpublishItem(
     entity,
     message: `${definition.label} unpublished.`,
     revalidationPaths,
+  }
+}
+
+async function assertNoPublishedDependents(conceptId: string) {
+  const dependents = await prisma.concept.findMany({
+    where: {
+      prerequisiteEdges: {
+        some: {
+          prerequisiteConceptId: conceptId,
+        },
+      },
+      status: "PUBLISHED",
+    },
+    select: {
+      title: true,
+    },
+  })
+
+  if (dependents.length) {
+    const titles = dependents.map((d) => d.title).join(", ")
+    throw new Error(`Cannot Unpublish: This concept is a prerequisite for published concepts: ${titles}. Unpublish them first.`)
   }
 }
 
@@ -442,5 +495,131 @@ function decorateEntity(definition: CmsContentType, entity: CmsEntity): CmsEntit
     title: definition.getTitle(entity),
     subtitle: definition.getSubtitle?.(entity) ?? entity.subtitle ?? null,
     status: definition.getStatus?.(entity) ?? entity.status ?? null,
+  }
+}
+
+function getPrerequisiteConceptIds(data: unknown) {
+  if (!data || typeof data !== "object" || !("prerequisiteConceptIds" in data)) {
+    return []
+  }
+
+  const value = (data as { prerequisiteConceptIds?: unknown }).prerequisiteConceptIds
+  if (!Array.isArray(value)) {
+    return []
+  }
+
+  return [...new Set(value.map(String).map((id) => id.trim()).filter(Boolean))]
+}
+
+async function assertConceptPrerequisiteSelectionIsAcyclic(conceptId: string, data: unknown) {
+  const prerequisiteConceptIds = getPrerequisiteConceptIds(data)
+  if (!prerequisiteConceptIds.length) {
+    return
+  }
+
+  const concept = await prisma.concept.findUnique({
+    where: { id: conceptId },
+    select: {
+      unit: {
+        select: {
+          courseId: true,
+        },
+      },
+    },
+  })
+
+  if (!concept) {
+    return
+  }
+
+  const existingEdges = await prisma.conceptPrerequisite.findMany({
+    where: {
+      dependentConcept: {
+        unit: {
+          courseId: concept.unit.courseId,
+        },
+      },
+    },
+    select: {
+      prerequisiteConceptId: true,
+      dependentConceptId: true,
+    },
+  })
+
+  validatePrerequisiteSelection({
+    conceptId,
+    prerequisiteConceptIds,
+    existingEdges,
+  })
+}
+
+async function assertPublishableConceptPrerequisites(contentType: CmsContentTypeKey, data: unknown) {
+  if (contentType !== "concept") {
+    return
+  }
+
+  const prerequisiteConceptIds = getPrerequisiteConceptIds(data)
+  if (!prerequisiteConceptIds.length) {
+    return
+  }
+
+  const prerequisites = await prisma.concept.findMany({
+    where: {
+      id: {
+        in: prerequisiteConceptIds,
+      },
+    },
+    select: {
+      id: true,
+      title: true,
+      status: true,
+    },
+  })
+  const prerequisitesById = new Map(prerequisites.map((concept) => [concept.id, concept]))
+  const unpublishedPrerequisites = prerequisiteConceptIds
+    .map((id) => prerequisitesById.get(id))
+    .filter((concept) => concept && concept.status !== "PUBLISHED")
+
+  if (unpublishedPrerequisites.length) {
+    const titles = unpublishedPrerequisites.map((concept) => concept?.title).filter(Boolean).join(", ")
+    throw new Error(`Publish Prerequisites First: ${titles} must be published before this concept can be published.`)
+  }
+}
+
+async function rebuildClosureForGraphLifecycleChange(contentType: CmsContentTypeKey, id: string) {
+  const courseId = await getAffectedCourseId(contentType, id)
+  if (!courseId) {
+    return
+  }
+
+  await rebuildConceptClosureForCourse(courseId)
+}
+
+async function getAffectedCourseId(contentType: CmsContentTypeKey, id: string) {
+  switch (contentType) {
+    case "course":
+      return id
+    case "unit": {
+      const unit = await prisma.unit.findUnique({
+        where: { id },
+        select: { courseId: true },
+      })
+      return unit?.courseId ?? null
+    }
+    case "concept": {
+      const concept = await prisma.concept.findUnique({
+        where: { id },
+        select: {
+          unit: {
+            select: {
+              courseId: true,
+            },
+          },
+        },
+      })
+      return concept?.unit.courseId ?? null
+    }
+    default:
+      return null
   }
 }

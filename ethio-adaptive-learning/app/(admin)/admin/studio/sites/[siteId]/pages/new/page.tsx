@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation"
 
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { getSiteMapData } from "@/lib/studio/site-builder"
 
 export default async function NewSitePage({

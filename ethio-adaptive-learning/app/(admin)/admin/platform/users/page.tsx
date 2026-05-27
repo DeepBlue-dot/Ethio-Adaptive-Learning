@@ -1,4 +1,4 @@
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 import { prisma } from "@/lib/prisma"
 import { User, Shield, GraduationCap, Mail, Search } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -28,7 +28,6 @@ export default async function PlatformUsersPage() {
       </div>
 
       <div className="bg-white border border-outline-variant rounded-[2.5rem] overflow-hidden shadow-sm">
-...
         <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse text-sm">
             <thead>

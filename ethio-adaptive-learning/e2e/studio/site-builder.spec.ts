@@ -351,7 +351,8 @@ test.describe('Site Builder Redesign - Functionality Tests', () => {
           await page.waitForTimeout(500);
           console.log('✅ Drag and drop attempted');
         } catch (e) {
-          console.log('❌ FAIL: Drag and drop failed:', e.message.substring(0, 50));
+          const message = e instanceof Error ? e.message : String(e);
+          console.log('❌ FAIL: Drag and drop failed:', message.substring(0, 50));
         }
       } else {
         console.log('ℹ️  Not enough blocks to test drag/drop');

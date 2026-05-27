@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { requireRole } from "@/lib/auth"
+import { requireRole } from "@/lib/auth-server"
 
 export default async function CourseBuilderPage({
   params,

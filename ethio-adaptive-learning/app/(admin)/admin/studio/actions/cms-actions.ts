@@ -1,25 +1,26 @@
 "use server"
 
+import { revalidatePath } from "next/cache"
 import { redirect } from "next/navigation"
+import { MediaAssetKind, type Prisma } from "@prisma/client"
 
 import {
-  createCmsErrorState,
   createItem,
   deleteItem,
   getContentType,
   parseCmsFormData,
-  prismaCmsRepository,
   publishItem,
   requireCmsAccess,
   saveDraftItem,
   unpublishItem,
-  updateItem,
   bulkPublishItems,
   bulkUnpublishItems,
   bulkDeleteItems,
 } from "@/lib/cms"
 import { getErrorMessage, getReturnTo, redirectWithMessage, textField } from "@/lib/cms/forms"
 import type { CmsActionState } from "@/lib/cms/types"
+import { uploadImage } from "@/lib/cloudinary/upload-image"
+import { prisma } from "@/lib/prisma"
 
 import { revalidateCmsPaths, buildEditorRedirectPath } from "./helpers"
 
@@ -35,39 +36,35 @@ export async function saveCmsItem(
   const result = await parseCmsFormData(definition, formData, userId)
 
   if (!result.success) {
-    return createCmsErrorState(result)
+    return {
+      ok: false,
+      message: result.message,
+      fieldErrors: result.fieldErrors,
+      statusCode: result.statusCode,
+    }
   }
 
-  const { data, id, intent, returnTo } = result.data as {
-    data: Record<string, unknown>
-    id: string | undefined
-    intent: string
-    returnTo: string
-  }
+  const data = result.data as Record<string, unknown>
+  const id = textField(formData, "id") || null
+  const intent = textField(formData, "intent") ?? "publish"
+  const returnTo = getReturnTo(formData, `/admin/studio/${definition.key}`)
+  const lastUpdatedAtValue = textField(formData, "lastUpdatedAt")
+  const lastUpdatedAt = lastUpdatedAtValue ? Number(lastUpdatedAtValue) : undefined
   const contentType = definition.key
 
   try {
     let mutationResult
     if (intent === "publish") {
-      if (id) {
-        await updateItem(contentType, id, data, undefined, userId)
-        mutationResult = await publishItem(contentType, id, data, userId)
-      } else {
-        const createResult = await createItem(contentType, data, userId)
-        const item = createResult.entity
-        mutationResult = await publishItem(contentType, item.id, data, userId)
-        redirect(await buildEditorRedirectPath(contentType, item.id, returnTo, "Published."))
+      mutationResult = await publishItem(contentType, id, data, userId, lastUpdatedAt)
+
+      if (!id) {
+        redirect(await buildEditorRedirectPath(contentType, mutationResult.entity.id, returnTo, "Published."))
       }
     } else {
-      // intent === "draft"
-      if (id) {
-        await updateItem(contentType, id, data, undefined, userId)
-        mutationResult = await saveDraftItem(contentType, id, data, userId)
-      } else {
-        const createResult = await createItem(contentType, data, userId)
-        const item = createResult.entity
-        mutationResult = await saveDraftItem(contentType, item.id, data, userId)
-        redirect(await buildEditorRedirectPath(contentType, item.id, returnTo, "Draft saved."))
+      mutationResult = await saveDraftItem(contentType, id, data, userId, lastUpdatedAt)
+
+      if (!id) {
+        redirect(await buildEditorRedirectPath(contentType, mutationResult.entity.id, returnTo, "Draft saved."))
       }
     }
 
@@ -173,11 +170,10 @@ export async function reorderCmsEntities(
   const definition = getContentType(contentType)
 
   try {
-    await Promise.all(
-      ids.map((id, index) =>
-        prismaCmsRepository.updateItem(definition.key, id, { order: index + 1 })
-      )
-    )
+    await prisma.$transaction(async (tx) => {
+      await writeTemporaryOrderValues(tx, definition.key, ids)
+      await writeFinalOrderValues(tx, definition.key, ids)
+    })
 
     revalidateCmsPaths(revalidationPaths)
     return { ok: true, message: "Order updated successfully." }
@@ -187,6 +183,89 @@ export async function reorderCmsEntities(
   }
 }
 
-export async function uploadCmsImageAsset() {
-  // Placeholder: implement asset upload logic when available.
+async function writeTemporaryOrderValues(
+  tx: Prisma.TransactionClient,
+  contentType: string,
+  ids: string[]
+) {
+  await Promise.all(ids.map((id, index) => updateEntityOrder(tx, contentType, id, -1 * (index + 1))))
+}
+
+async function writeFinalOrderValues(
+  tx: Prisma.TransactionClient,
+  contentType: string,
+  ids: string[]
+) {
+  await Promise.all(ids.map((id, index) => updateEntityOrder(tx, contentType, id, index + 1)))
+}
+
+async function updateEntityOrder(
+  tx: Prisma.TransactionClient,
+  contentType: string,
+  id: string,
+  order: number
+) {
+  switch (contentType) {
+    case "unit":
+      await tx.unit.update({ where: { id }, data: { order } })
+      return
+    case "chunk":
+      await tx.conceptChunk.update({ where: { id }, data: { order } })
+      return
+    case "worked-example":
+      await tx.workedExample.update({ where: { id }, data: { order } })
+      return
+    default:
+      throw new Error(`${contentType} does not support manual ordering.`)
+  }
+}
+
+export async function uploadCmsImageAsset(formData: FormData) {
+  const session = await requireCmsAccess()
+  const userId = session.user.id
+  const returnTo = getReturnTo(formData, "/admin/studio/media-asset")
+  const file = formData.get("file")
+
+  if (!(file instanceof File) || file.size === 0) {
+    redirectWithMessage(returnTo, "error", "Please choose an image to upload.")
+  }
+
+  if (!file.type.startsWith("image/")) {
+    redirectWithMessage(returnTo, "error", "Only image uploads are supported here.")
+  }
+
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const base64 = `data:${file.type};base64,${Buffer.from(arrayBuffer).toString("base64")}`
+    const uploaded = await uploadImage(base64, {
+      resource_type: "image",
+      folder: "ethioprep/cms",
+    })
+    const title = textField(formData, "title") || file.name
+    const alt = textField(formData, "alt") || title
+
+    await createItem(
+      "media-asset",
+      {
+        kind: MediaAssetKind.IMAGE,
+        title,
+        alt,
+        publicId: uploaded.public_id,
+        url: uploaded.secure_url,
+        width: uploaded.width,
+        height: uploaded.height,
+        bytes: uploaded.bytes,
+        thumbnailUrl: uploaded.thumbnail_url || uploaded.secure_url,
+        createdById: userId,
+      },
+      userId
+    )
+
+    revalidatePath("/admin/studio/media-asset")
+    revalidatePath("/admin/resources")
+  } catch (error) {
+    redirectWithMessage(returnTo, "error", error instanceof Error ? error.message : "Image upload failed.")
+  }
+
+  redirectWithMessage(returnTo, "msg", "Image uploaded.")
 }
