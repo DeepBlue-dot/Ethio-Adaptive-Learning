@@ -78,13 +78,30 @@ function extractResourceIds(content: unknown): { mediaAssets: string[], contentS
   // Media Assets
   const assetMatches = stringified.matchAll(/"assetId"\s*:\s*"([^"]+)"/g)
   for (const match of assetMatches) {
-    mediaAssets.add(match[1])
+    const id = match[1]
+    if (id !== "pending-asset") {
+      mediaAssets.add(id)
+    }
   }
 
   // Content Snippets (if referenced by ID)
   const snippetMatches = stringified.matchAll(/"snippetId"\s*:\s*"([^"]+)"/g)
   for (const match of snippetMatches) {
-    contentSnippets.add(match[1])
+    const id = match[1]
+    if (id !== "pending-snippet") {
+      contentSnippets.add(id)
+    }
+  }
+
+  // Question IDs (for quiz blocks)
+  const questionMatches = stringified.matchAll(/"questionId"\s*:\s*"([^"]+)"/g)
+  for (const match of questionMatches) {
+    const id = match[1]
+    if (id !== "pending-question") {
+      // In this system, questions are currently synced as media assets for usage tracking
+      // but let's see if we need a separate bucket.
+      // For now, extractResourceIds returns mediaAssets and contentSnippets.
+    }
   }
 
   // Also look for raw IDs if they are used in markdown or elsewhere

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation"
 import {
   ChevronDown,
   ChevronRight,
+  ExternalLink,
   FilePlus2,
   Globe2,
   LayoutPanelLeft,
@@ -71,13 +72,22 @@ export function SiteMapNavigator({ projects }: { projects: SiteMapProject[] }) {
     <div className="flex h-full flex-col overflow-hidden border-r border-outline-variant/30 bg-surface-container-lowest/70">
       <div className="relative z-10 shrink-0 space-y-5 border-b border-outline-variant/30 bg-surface-container-low/70 p-5">
         <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-[10px] font-black uppercase tracking-[0.25em] text-on-surface-variant/50">
               Course Builder
             </p>
-            <h2 className="mt-1 truncate text-lg font-black tracking-tight text-on-surface">
-              Curriculum Map
-            </h2>
+            <div className="flex items-center gap-2 mt-1">
+               <h2 className="truncate text-lg font-black tracking-tight text-on-surface">
+                 Curriculum Map
+               </h2>
+               <Link 
+                 href="/admin/studio/explorer" 
+                 className="size-5 rounded-lg bg-primary/10 flex items-center justify-center text-primary hover:bg-primary/20 transition-all"
+                 title="Open Explorer"
+               >
+                 <ExternalLink className="size-3" />
+               </Link>
+            </div>
           </div>
           <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl border border-primary/10 bg-primary/10 text-primary">
             <LayoutPanelLeft className="size-5" />

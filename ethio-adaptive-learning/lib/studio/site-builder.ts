@@ -149,7 +149,7 @@ export async function getSiteProjectsData() {
       author: {
         username: site.author?.username ?? "System",
       },
-      previewPath: `/student`,
+      previewPath: `/student/curriculum#course-${site.id}`,
     }
   })
 
@@ -257,7 +257,7 @@ export async function getPageBuilderData(siteId: string, pageId: string): Promis
       id: page.unit.course.id,
       title: page.unit.course.title,
       slug: page.unit.course.slug,
-      previewPath: "/student",
+      previewPath: `/student/curriculum#course-${page.unit.course.id}`,
     },
     group: {
       id: page.unit.id,
@@ -355,7 +355,18 @@ export async function updatePageBlocks(pageId: string, blocks: CmsContentBlock[]
   const parsed = contentBlocksSchema.safeParse(blocks)
 
   if (!parsed.success) {
-    return { ok: false, message: "Page blocks contain invalid fields." }
+    const validationIssues = parsed.error.issues.map((issue) => ({
+      path: issue.path.length ? issue.path.join(".") : "blocks",
+      message: issue.message,
+    }))
+
+    const detail = validationIssues.map((issue) => `${issue.path}: ${issue.message}`).join("; ")
+
+    return {
+      ok: false,
+      message: detail ? `Page blocks contain invalid fields: ${detail}` : "Page blocks contain invalid fields.",
+      validationIssues,
+    }
   }
 
   try {
@@ -385,6 +396,7 @@ export async function updatePageBlocks(pageId: string, blocks: CmsContentBlock[]
     return {
       ok: false,
       message: error instanceof Error ? error.message : "Unable to update page blocks.",
+      validationIssues: [],
     }
   }
 }

@@ -87,7 +87,7 @@ function CourseExplorer({ course }: { course: StudentCurriculumExplore["courses"
   const progress = course.totalConcepts ? course.masteredConcepts / course.totalConcepts : 0
 
   return (
-    <section className="space-y-4">
+    <section id={`course-${course.id}`} className="space-y-4 scroll-mt-20">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-primary">{course.units.length} units</p>
@@ -109,7 +109,8 @@ function CourseExplorer({ course }: { course: StudentCurriculumExplore["courses"
         {course.units.map((unit) => (
           <section
             key={unit.id}
-            className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-sm"
+            id={`unit-${unit.id}`}
+            className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-4 shadow-sm scroll-mt-20"
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>

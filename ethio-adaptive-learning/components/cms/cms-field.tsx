@@ -6,8 +6,8 @@ import { CmsReferencePicker } from "@/components/cms/cms-reference-picker"
 import type { CmsField, CmsReferenceOptions } from "@/lib/cms/types"
 
 const inputClassName =
-  "mt-2 w-full rounded-xl border border-outline-variant bg-surface-container-lowest px-4 py-3 text-sm text-on-surface outline-none transition-all placeholder:text-on-surface-variant/40 hover:border-outline focus:border-primary focus:ring-4 focus:ring-primary/10"
-const textareaClassName = `${inputClassName} min-h-32 resize-y leading-relaxed`
+  "mt-2 w-full rounded-[1.25rem] border border-outline-variant/60 bg-surface-container-lowest px-5 py-4 text-sm font-bold text-on-surface outline-none transition-all placeholder:text-on-surface-variant/20 hover:border-outline focus:border-primary/40 focus:ring-8 focus:ring-primary/5 shadow-sm"
+const textareaClassName = `${inputClassName} min-h-[160px] resize-y leading-relaxed font-medium`
 const selectClassName = `${inputClassName} cursor-pointer`
 
 export function CmsFieldInput({
@@ -49,24 +49,24 @@ export function CmsFieldInput({
   const isReadOnly = field.readOnly || (field.adminOnly && userRole !== "ADMIN")
 
   return (
-    <div className={`space-y-1 ${isLongField ? "lg:col-span-2" : ""}`}>
-      <div className="flex items-center justify-between">
+    <div className={`space-y-1.5 ${isLongField ? "lg:col-span-2" : ""}`}>
+      <div className="flex items-center justify-between px-1">
         <label 
           htmlFor={field.name}
-          className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant/80 px-1"
+          className="text-[11px] font-black uppercase tracking-[0.15em] text-on-surface-variant/70"
         >
           {field.label}
         </label>
         {isReadOnly && (
-          <span className="text-[9px] font-bold uppercase tracking-widest text-primary/60 px-2 py-0.5 rounded-md bg-primary/5 border border-primary/10">
-            Read Only
+          <span className="text-[9px] font-black uppercase tracking-widest text-primary/50 px-2 py-0.5 rounded-lg bg-primary/5 border border-primary/10">
+            System Managed
           </span>
         )}
       </div>
 
       {isReadOnly ? (
-        <div className="mt-2 rounded-xl border border-dashed border-outline-variant bg-surface-container px-4 py-3 text-sm text-on-surface-variant/70 min-h-[46px] flex items-center">
-          {toInputValue(value) || <span className="italic opacity-40">No value</span>}
+        <div className="mt-2 rounded-2xl border border-dashed border-outline-variant bg-surface-container-low px-4 py-3 text-sm text-on-surface-variant/60 min-h-[52px] flex items-center shadow-inner">
+          {toInputValue(value) || <span className="italic opacity-30">No value defined</span>}
           {/* Still include hidden input so the value persists on save if not changed */}
           <input type="hidden" name={field.name} id={field.name} value={toInputValue(value)} />
         </div>
@@ -75,7 +75,7 @@ export function CmsFieldInput({
       )}
       
       {field.description ? (
-        <p className="mt-1.5 px-1 text-[11px] leading-relaxed text-on-surface-variant/60">
+        <p className="mt-2 px-1 text-[11px] leading-relaxed text-on-surface-variant/40 font-medium italic">
           {field.description}
         </p>
       ) : null}

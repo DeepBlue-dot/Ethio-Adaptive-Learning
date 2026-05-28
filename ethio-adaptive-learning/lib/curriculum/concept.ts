@@ -244,6 +244,27 @@ export async function createConceptChunk(input: CreateConceptChunkInput) {
   const conceptId = requireId(input.conceptId, "Concept")
   const title = requireText(input.title, "Chunk title")
   const authorId = optionalId(input.authorId)
+  
+  let order = requirePositiveInteger(input.order, "Chunk order")
+  const existingOrder = await prisma.conceptChunk.findUnique({
+    where: {
+      conceptId_order: {
+        conceptId,
+        order,
+      },
+    },
+    select: { id: true },
+  })
+
+  if (existingOrder) {
+    const lastChunk = await prisma.conceptChunk.findFirst({
+      where: { conceptId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    })
+    order = (lastChunk?.order ?? 0) + 1
+  }
+
   const slug = await resolveConceptChunkSlug({
     conceptId,
     title,
@@ -256,7 +277,7 @@ export async function createConceptChunk(input: CreateConceptChunkInput) {
       slug,
       title,
       bodyMd: requireText(input.bodyMd, "Chunk body"),
-      order: requirePositiveInteger(input.order, "Chunk order"),
+      order,
       authorId,
     },
   })
@@ -301,6 +322,27 @@ export async function createWorkedExample(input: CreateWorkedExampleInput) {
   const conceptId = requireId(input.conceptId, "Concept")
   const title = requireText(input.title, "Worked example title")
   const authorId = optionalId(input.authorId)
+
+  let order = requirePositiveInteger(input.order, "Worked example order")
+  const existingOrder = await prisma.workedExample.findUnique({
+    where: {
+      conceptId_order: {
+        conceptId,
+        order,
+      },
+    },
+    select: { id: true },
+  })
+
+  if (existingOrder) {
+    const lastExample = await prisma.workedExample.findFirst({
+      where: { conceptId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    })
+    order = (lastExample?.order ?? 0) + 1
+  }
+
   const slug = await resolveWorkedExampleSlug({
     conceptId,
     title,
@@ -314,7 +356,7 @@ export async function createWorkedExample(input: CreateWorkedExampleInput) {
       title,
       problemMd: requireText(input.problemMd, "Worked example problem"),
       solutionMd: requireText(input.solutionMd, "Worked example solution"),
-      order: requirePositiveInteger(input.order, "Worked example order"),
+      order,
       authorId,
     },
   })

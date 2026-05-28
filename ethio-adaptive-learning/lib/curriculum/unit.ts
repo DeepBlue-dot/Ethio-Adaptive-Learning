@@ -13,7 +13,29 @@ import {
 export async function createUnit(input: CreateUnitInput) {
   const courseId = requireId(input.courseId, "Course")
   const title = requireText(input.title, "Unit title")
-  const order = requirePositiveInteger(input.order, "Unit order")
+  
+  // If the requested order is already taken, automatically pick the next available order
+  // to avoid unique constraint violations while maintaining a valid sequence.
+  let order = requirePositiveInteger(input.order, "Unit order")
+  const existingOrder = await prisma.unit.findUnique({
+    where: {
+      courseId_order: {
+        courseId,
+        order,
+      },
+    },
+    select: { id: true },
+  })
+
+  if (existingOrder) {
+    const lastUnit = await prisma.unit.findFirst({
+      where: { courseId },
+      orderBy: { order: "desc" },
+      select: { order: true },
+    })
+    order = (lastUnit?.order ?? 0) + 1
+  }
+
   const slug = await resolveUnitSlug({
     courseId,
     title,

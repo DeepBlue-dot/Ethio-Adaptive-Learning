@@ -37,7 +37,7 @@ export function AssetShelf({ children }: AssetShelfProps) {
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
             style={{ "--asset-shelf-offset": `${shelfSidebarOffset}px` } as React.CSSProperties}
             className={cn(
-              "absolute left-0 right-0 mx-auto w-full max-w-[min(1400px,calc(100vw-2rem))] lg:left-[var(--asset-shelf-offset)] lg:right-4 bg-surface border-t border-outline-variant shadow-[0_-8px_40px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-500 glass-panel pointer-events-auto",
+              "absolute bottom-0 left-0 right-0 mx-auto w-full max-w-[min(1400px,calc(100vw-2rem))] lg:left-[var(--asset-shelf-offset)] lg:right-4 bg-surface border-t border-outline-variant shadow-[0_-8px_40px_rgba(0,0,0,0.12)] flex flex-col transition-all duration-500 glass-panel pointer-events-auto",
               isExpanded ? "h-[80vh]" : "h-[400px]"
             )}
           >

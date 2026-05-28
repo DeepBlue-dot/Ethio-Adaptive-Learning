@@ -68,14 +68,18 @@ export function CmsForm({
           </div>
         ) : null}
 
-        <div className="space-y-12">
+        <div className="space-y-16">
           {Object.entries(fieldsBySection).map(([section, fields]) => (
-            <section key={section} className="rounded-[2rem] border border-outline-variant/60 bg-surface p-8 shadow-sm transition-all hover:shadow-md">
-              <div className="flex items-center gap-4">
-                <h2 className="text-[11px] font-bold uppercase tracking-[0.2em] text-primary/70">{section}</h2>
+            <section key={section} className="relative group">
+              <div className="flex items-center gap-6 mb-10">
+                <div className="size-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                   <div className="size-2 rounded-full bg-primary animate-pulse" />
+                </div>
+                <h2 className="text-sm font-black uppercase tracking-[0.3em] text-on-surface leading-none">{section}</h2>
                 <div className="h-px flex-1 bg-gradient-to-r from-outline-variant/60 to-transparent" />
               </div>
-              <div className="mt-8 grid gap-6 lg:grid-cols-2">
+              
+              <div className="grid gap-x-12 gap-y-10 lg:grid-cols-2">
                 {fields.map((field) =>
                   field.type === "embedded-list" ? (
                     <CmsRelationManager
@@ -107,16 +111,18 @@ export function CmsForm({
         </div>
 
         {/* Sticky Actions Bar - Uses sticky to avoid sidebar overlap and stay within content flow */}
-        <div className="sticky bottom-4 z-30 mt-12 flex items-center justify-between gap-4 rounded-3xl border border-outline-variant bg-surface/95 p-4 shadow-[0_8px_32px_rgba(0,0,0,0.12)] backdrop-blur-xl">
-          <PublicationControls
-            formId={formId}
-            hasDraft={item?.lifecycle?.hasDraft ?? false}
-            isPending={isPending}
-            isPublished={item?.lifecycle?.status === "PUBLISHED"}
-            label={definition.label}
-          />
-          <Button asChild variant="ghost" className="rounded-xl text-[10px] font-bold uppercase tracking-[0.15em] text-on-surface-variant hover:text-primary">
-            <a href={returnTo}>Cancel changes</a>
+        <div className="sticky bottom-6 z-30 mt-20 flex items-center justify-between gap-4 rounded-[2.5rem] border border-outline-variant/60 bg-surface/80 p-5 shadow-[0_12px_48px_rgba(0,0,0,0.12)] backdrop-blur-2xl">
+          <div className="flex-1">
+            <PublicationControls
+              formId={formId}
+              hasDraft={item?.lifecycle?.hasDraft ?? false}
+              isPending={isPending}
+              isPublished={item?.lifecycle?.status === "PUBLISHED"}
+              label={definition.label}
+            />
+          </div>
+          <Button asChild variant="ghost" className="h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest text-on-surface-variant hover:bg-surface-container-high transition-all">
+            <a href={returnTo}>Discard and Exit</a>
           </Button>
         </div>
       </form>

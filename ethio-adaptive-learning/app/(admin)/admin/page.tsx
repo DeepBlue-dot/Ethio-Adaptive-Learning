@@ -101,6 +101,11 @@ export default async function AdminPortalPage() {
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <ActionLink 
+                   href="/admin/studio/explorer" 
+                   title="Curriculum Explorer" 
+                   description="Browse and manage the full curriculum graph." 
+                 />
+                 <ActionLink 
                    href="/admin/studio/course/new" 
                    title="Create New Course" 
                    description="Add a top-level curriculum container." 
@@ -114,11 +119,6 @@ export default async function AdminPortalPage() {
                    href="/admin/resources" 
                    title="Upload Media" 
                    description="Add images or video embeds." 
-                 />
-                 <ActionLink 
-                   href="/admin/platform" 
-                   title="Manage Team" 
-                   description="Configure author permissions." 
                  />
               </div>
             </div>
