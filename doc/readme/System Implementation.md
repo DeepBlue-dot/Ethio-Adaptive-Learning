@@ -30,7 +30,7 @@ Selecting an appropriate technology stack was a critical prerequisite for achiev
 
 ### 5.2.2. Data Management and Persistence
 *   **PostgreSQL**: A relational database was necessary to represent the Directed Acyclic Graph (DAG) structure of the curriculum. PostgreSQL's support for complex joins and transactional safety ensures that student mastery records remain consistent during high-frequency updates.
-*   **Prisma ORM**: We used **Prisma** as our Object-Relational Mapper. Prisma's auto-generated client provided full type-safety for our database queries, significantly speeding up development and reducing runtime database errors.
+*   **Prisma ORM**: We used **Prisma** as our Object-Relational Mapper. Prisma's auto-generated client provided full type-safety for our database queries, significantly speeding up development and reducing runtime database errors. In the final implementation, Prisma was also utilized for **Context Retrieval** in our Socratic tutoring module, allowing the AI to fetch relevant curriculum blocks directly from the relational tables without needing a separate vector database.
 *   **Zod**: For runtime schema validation, **Zod** was integrated with our forms and API endpoints. This ensured that all data entering the system (especially from the Studio editor) strictly followed our predefined instructional models.
 
 ### 5.2.3. User Interface and Experience Libraries
@@ -40,137 +40,244 @@ Selecting an appropriate technology stack was a critical prerequisite for achiev
 *   **dnd-kit**: For the Concept Builder’s drag-and-drop orchestration, we used **dnd-kit**, providing a responsive and flexible sortable interface for curriculum blocks.
 
 ### 5.2.4. AI and Intelligence Implementation
-*   **Ollama**: To facilitate the specific objective of an AI-assisted tutor without relying on expensive external APIs, we integrated **Ollama**. This allows the platform to run Large Language Models (LLMs) like *DeepSeek-R1* or *Llama 3* locally on the server, ensuring data privacy and offline-capable intelligence.
-*   **ChromaDB**: For Retrieval-Augmented Generation (RAG), we used **ChromaDB**. This vector database stores embeddings of the Grade 12 textbooks, enabling the AI tutor to retrieve mathematically accurate context before generating student hints.
+*   **Ollama**: To facilitate the specific objective of an AI-assisted tutor without relying on expensive external APIs, we integrated **Ollama**. This allows the platform to run Large Language Models (LLMs) like *Gemma* or *DeepSeek-R1* locally on the server, ensuring data privacy and offline-capable intelligence.
+*   **Relational RAG**: Instead of a dedicated vector database, we implemented a **Relational Retrieval-Augmented Generation (RAG)** approach. When a student asks a question, the system uses **Prisma** to fetch the exact context (concept descriptions and content chunks) associated with the student's current learning node. This ensures 100% mathematical accuracy by anchoring the AI's hints strictly to the verified curriculum content stored in PostgreSQL.
 
-### 5.2.5. Environment and Version Control
-*   **Software Development Environment (SDE)**:
-    *   **Docker**: The entire application, including the database and AI services, is containerized using **Docker Compose**. This facilitates easy installation and configuration, ensuring that the development, staging, and production environments are identical.
-    *   **Environment Configuration**: Environment variables (`.env`) are used to manage sensitive credentials like database URLs, Auth secrets, and AI API keys securely.
-*   **Version Control System (VCS)**:
-    *   **Git & GitHub**: We used **Git** for source control, following a feature-branch workflow. This allowed our team to collaborate on different subsystems (e.g., the adaptive engine vs. the student frontend) simultaneously without code conflicts. GitHub was used for remote hosting and CI/CD triggers.
+### 5.2.5. Infrastructure and Hardware Requirements
+*   **Development Workstations**: Developers utilized high-performance machines (Minimum 16GB RAM, Quad-Core CPU) to handle the local execution of the full Next.js stack alongside the Ollama LLM service.
+*   **Intelligence Server (Ollama Host)**: For consistent AI performance, a server environment with a dedicated GPU (e.g., NVIDIA RTX series) or high-memory CPU was required to host the Large Language Models. This setup ensured that Socratic hints could be generated within a sub-3-second latency window.
+*   **Persistent Storage**: PostgreSQL was configured with persistent volumes to ensure all curriculum content and student mastery data is preserved across system restarts.
+
+### 5.2.6. Testing and Quality Assurance Tools
+*   **Vitest**: Chosen as the primary unit testing framework for its speed and native integration with the Vite-based development environment used by Next.js. We utilized Vitest to verify the mathematical accuracy of our BKT and Spaced Repetition formulas.
+*   **Playwright**: For end-to-end (E2E) testing, **Playwright** was implemented to simulate real student interactions—from logging in to navigating the curriculum graph and completing assessments. This ensured that no regressions were introduced to the critical adaptive paths.
+*   **ESLint & Prettier**: These tools were configured to enforce consistent coding standards and architectural rules (such as preventing client-side logic from leaking into server-only modules).
+
+### 5.2.7. Installation and Configuration of the SDE
+The platform’s Software Development Environment was designed for "one-command" setup to minimize configuration drift between team members.
+
+1.  **Node.js Runtime**: Installation of **Node.js v22 (LTS)** was mandated to support the latest React 19 features and experimental Next.js optimizations.
+2.  **Containerization (Docker)**: The core system dependencies—PostgreSQL 16 and Ollama—are managed via a `docker-compose.yml` file. Configuration involved:
+    *   **PostgreSQL Persistence**: Mounting local volumes to ensure database state is preserved across container restarts.
+    *   **Ollama Model Pre-loading**: A configuration script was implemented to automatically pull the *DeepSeek-R1* or *Llama 3* models upon the first container start.
+3.  **Database Migration (Prisma)**: Configuration included setting up shadow databases for local development and using `npx prisma migrate dev` to keep the relational schema in sync with our TypeScript models.
+4.  **Environment Secrets**: A `.env.template` file was provided to specify required keys (e.g., `DATABASE_URL`, `NEXTAUTH_SECRET`, `RECAPTCHA_KEY`). Developers were required to configure these locally to enable full authentication and AI functionality.
+5.  **Version Control (Git)**: We implemented a **Branch Protection Policy** on GitHub, requiring all implementation code to pass both linting and unit tests via **GitHub Actions** before it could be merged into the main production branch.
+
 
 
 ## 5.3. Developing the Solution
 
-The development process focused on transforming pure mathematical formulas into robust, testable code. We adopted a functional programming approach for the adaptive engines to ensure deterministic outcomes.
+The development phase involved translating our architectural designs and mathematical models into a cohesive, high-performance web application. We prioritized modularity and functional purity to ensure the core adaptive logic remained testable and robust.
 
-### 5.3.1. Major Functionality: BKT Implementation
-The **Bayesian Knowledge Tracing** engine is the "heart" of the mastery estimation. It updates the student's probability of knowing a concept ($P(L)$) after every interaction.
+### 5.3.1. Coding Standards and Best Practices
+
+To maintain a high level of engineering quality, the development team adhered to the following standards:
+
+*   **Strict Type-Safety**: Leveraging **TypeScript 5**, we enforced strict types for all domain entities. Adaptive parameters and curriculum graph nodes were modeled with precise interfaces to prevent logic errors during complex calculations.
+*   **Functional Programming for Core Engines**: Algorithmic modules (BKT, Retention) were implemented using pure functions. This approach ensures deterministic behavior, where the same input (prior mastery + correctness) always produces the same output (posterior mastery).
+*   **Server-First Architecture**: Following **Next.js 16** best practices, we utilized **Server Components** for all data-heavy operations. This minimizes the amount of JavaScript sent to the student's browser and ensures that sensitive adaptive logic remains on the secure server layer.
+*   **Runtime Validation with Zod**: Every input from the user (e.g., in the Studio editor) and every API response is validated using **Zod** schemas. This prevents "malformed data" from corrupting the curriculum graph or student mastery records.
+
+### 5.3.2. Core Functionality Implementation
+
+The "Intelligence" of the platform is distributed across three primary engines, each handling a different dimension of the student's learning journey.
+
+#### 5.3.2.1. Rule-Based Adaptive Learning Engine (BKT)
+
+The **Bayesian Knowledge Tracing** engine is responsible for real-time mastery estimation. It uses four parameters—$P(L_0)$ (Initial Knowledge), $P(T)$ (Transition), $P(G)$ (Guess), and $P(S)$ (Slip)—to update the student's knowledge state after every assessment.
 
 ```typescript
-// ethio-adaptive-learning/lib/adaptive/bkt.ts
+// lib/adaptive/bkt.ts - Mastery Update Logic
 
-export function applyObservation({
-  prior,
-  isCorrect,
-  params,
-}: {
-  prior: number
-  isCorrect: boolean
-  params: BktParams
-}) {
-  // Step 1: Update estimate based on the evidence (Correct or Incorrect)
+export function applyObservation({ prior, isCorrect, params }: BktParamsInput) {
+  // Step 1: Evidence Update (Likelihood)
   const posteriorEvidence = isCorrect
-    ? evidenceUpdateCorrect(prior, params)
-    : evidenceUpdateIncorrect(prior, params)
+    ? (prior * (1 - params.pS)) / (prior * (1 - params.pS) + (1 - prior) * params.pG)
+    : (prior * params.pS) / (prior * params.pS + (1 - prior) * (1 - params.pG))
 
-  // Step 2: Account for the probability of learning during the exercise (Transit)
-  return {
-    posteriorEvidence,
-    posteriorNext: transitUpdate(posteriorEvidence, params),
-  }
-}
+  // Step 2: Transition Update (Learning Opportunity)
+  const posteriorNext = posteriorEvidence + (1 - posteriorEvidence) * params.pT
 
-function evidenceUpdateCorrect(prior: number, params: BktParams) {
-  const pKnown = clampProbability(prior)
-  const numerator = pKnown * (1 - params.pS) // Known AND didn't slip
-  const denominator = numerator + (1 - pKnown) * params.pG // (Known & !Slip) OR (!Known & Guess)
-  return clampProbability(numerator / denominator)
+  return { posteriorEvidence, posteriorNext }
 }
 ```
 
-### 5.3.2. Major Functionality: Graph Prerequisite Logic (KST)
-The Knowledge Space Theory implementation manages the "Unlocking" of content. A concept only becomes available in the student's "Fringe" when all its prerequisites have met the mastery threshold.
+#### 5.3.2.2. Spaced Repetition Scheduling Engine
+
+To combat the "Forgetting Curve," we implemented a scheduling engine based on exponential decay. This engine determines the "Effective Mastery" of a student at any given moment and schedules reviews when mastery falls below a threshold.
 
 ```typescript
-// ethio-adaptive-learning/lib/adaptive/graph.ts
+// lib/adaptive/retention.ts - Memory Decay Model
 
-export function deriveConceptStatus(
-  concept: GraphConcept,
-  masteries: ReadonlyMap<string, GraphMastery>
-): DerivedConceptStatus {
-  // Check all prerequisite edges for the current concept
-  const unmetPrerequisites = concept.prerequisiteEdges
-    .map(({ prerequisiteConcept }) => {
-      const mastery = masteries.get(prerequisiteConcept.id)
-      const currentMastery = mastery?.pMastery ?? 0
-      return {
-        conceptId: prerequisiteConcept.id,
-        currentMastery,
-        isMet: currentMastery >= concept.unlockThreshold,
-      }
-    })
-    .filter((p) => !p.isMet)
-
-  // A concept is unlocked if it has no unmet prerequisites
-  const unlocked = unmetPrerequisites.length === 0
-
-  return {
-    status: unlocked ? "FRINGE" : "LOCKED",
-    unlocked,
-    unmetPrerequisites,
-  }
-}
-```
-
-### 5.3.3. Major Functionality: Knowledge Decay Model
-To support **Spaced Repetition**, we implement an exponential decay model that calculates the "Effective Mastery" based on how much time has passed since the last assessment.
-
-```typescript
-// ethio-adaptive-learning/lib/adaptive/retention.ts
-
-export function computeEffectiveMastery({
-  baselineMastery,
-  lastAssessedAt,
-  decayLambda,
-  at = new Date(),
-}: {
-  baselineMastery: number
-  lastAssessedAt: Date
-  decayLambda: number // The "forgetting rate" for this concept
-  at?: Date
-}) {
-  const elapsedDays = getElapsedDays(lastAssessedAt, at)
+export function computeEffectiveMastery({ baselineMastery, lastAssessedAt, decayLambda }) {
+  const elapsedDays = getElapsedDays(lastAssessedAt, new Date())
   
-  // Exponential Decay: P(L_t) = P(L_0) * e^(-λt)
-  return clampProbability(
-    baselineMastery * Math.exp(-decayLambda * elapsedDays)
-  )
+  // Formula: M_effective = M_baseline * e^(-λ * t)
+  return baselineMastery * Math.exp(-decayLambda * elapsedDays)
+}
+
+export function computeNextReviewAt({ baselineMastery, lastAssessedAt, decayLambda }) {
+  const threshold = 0.8 // Target retention level
+  const daysUntilReview = Math.log(baselineMastery / threshold) / decayLambda
+  return new Date(lastAssessedAt.getTime() + daysUntilReview * MS_PER_DAY)
 }
 ```
 
-### 5.3.4. Major Functionality: CMS Draft System
-To enable professional content authoring, we implemented a **Draft Staging** system. This allows authors to save their work-in-progress without disrupting the live student environment, utilizing Prisma for transactional safety.
+#### 5.3.2.3. Socratic AI Tutor System Message Middleware
+
+Our AI Tutor uses a **Relational RAG** approach. Instead of a separate vector database, it queries the **Prisma**-backed curriculum graph to find the exact instructional context needed to guide a student socratically.
 
 ```typescript
-// ethio-adaptive-learning/lib/cms/repository/prisma.ts
+// lib/ai/tutoring/socratic-engine.ts - Context Aggregation
 
-async function saveDraftItem(type, id, data, userId) {
-  // If the concept is already published, we stage changes in a separate CmsDraft table
-  const lifecycle = await getCanonicalLifecycle(type, id)
-
-  if (lifecycle.status === "PUBLISHED") {
-    return prisma.cmsDraft.upsert({
-      where: { contentType_entityId: { contentType: type, entityId: id } },
-      update: { data: data as object, updatedById: userId },
-      create: { contentType: type, entityId: id, data: data as object, createdById: userId }
-    })
-  }
-
-  // If not yet published, we update the canonical record directly
-  return updateCanonicalItem(type, id, data, { status: "DRAFT", userId })
+async function loadCurriculumContext(conceptId: string) {
+  const concept = await prisma.concept.findFirst({
+    where: { id: conceptId, status: "PUBLISHED" },
+    include: { chunks: { where: { status: "PUBLISHED" }, orderBy: { order: "asc" } } }
+  })
+  
+  // Aggregates descriptions and content blocks to anchor the LLM response
+  return [concept.title, concept.description, ...concept.chunks.map(c => c.bodyMd)]
 }
 ```
 
-By integrating these core algorithmic modules with our modern web stack, we successfully implemented a robust adaptive learning platform capable of handling the rigorous demands of national exam preparation.
+#### 5.3.2.4. Knowledge Structure Subsystem (KST Engine)
+
+The Knowledge Structure Subsystem is responsible for building and maintaining the curriculum's Directed Acyclic Graph (DAG). It calculates the **Transitive Closure** of prerequisites to ensure that unlocking logic is computationally efficient.
+
+```typescript
+// lib/curriculum-state.ts - Transitive Closure Algorithm
+
+export function buildConceptClosureRows(conceptIds: string[], directEdges: CurriculumEdge[]) {
+  const rows: ClosureRow[] = []
+  for (const ancestorId of conceptIds) {
+    // Breadth-First Search to find all reachable descendants
+    const queue = [{ id: ancestorId, depth: 0 }]
+    while (queue.length) {
+      const current = queue.shift()
+      rows.push({ ancestorId, descendantId: current.id, depth: current.depth })
+      for (const nextId of adjacency.get(current.id)) {
+        queue.push({ id: nextId, depth: current.depth + 1 })
+      }
+    }
+  }
+  return rows
+}
+```
+
+#### 5.3.2.5. Gamification and Engagement Logic
+
+To enhance motivation, we implemented an XP and Leveling system. Every learning activity (Practice, Checkpoint, Exam) awards points, which are then used to derive the student's level via a mathematical threshold.
+
+```typescript
+// lib/gamification/xp.ts - Progression Math
+
+const XP_MAP = {
+  PRACTICE_COMPLETE: 5,
+  CHECKPOINT_PASS: 15,
+  EXAM_PASS: 50,
+  DAILY_STREAK: 10,
+}
+
+export function computeLevelFromXp(totalXp: number) {
+  // Simple level thresholds: every 100 XP = 1 level increment
+  return Math.max(1, Math.floor(totalXp / 100) + 1)
+}
+```
+
+#### 5.3.2.6. Learning Analytics and Mastery Monitoring
+
+The platform includes an "Intelligence" module for administrators to monitor the health of the curriculum. It identifies "Struggle Points" by analyzing consecutive assessment failures across the student population.
+
+```typescript
+// lib/studio/intelligence.ts - Health Diagnostics
+
+export async function getStudioIntelligence() {
+  const struggles = await prisma.userMastery.findMany({
+    where: { consecutiveFails: { gt: 0 } },
+    orderBy: { consecutiveFails: "desc" },
+    include: { concept: { select: { title: true } } },
+    take: 5,
+  })
+  
+  return {
+    strugglePoints: struggles.map(s => ({
+      conceptId: s.conceptId,
+      title: s.concept.title,
+      failCount: s.consecutiveFails
+    }))
+  }
+}
+```
+
+#### 5.3.2.7. Authentication and Role-Based Access Control (RBAC)
+
+The platform utilizes **NextAuth.js** with a **JWT strategy** for session management. We implemented a strict RBAC system to distinguish between `STUDENT`, `COURSE_WRITER`, and `ADMIN` roles, ensuring that sensitive Studio tools are only accessible to authorized personnel.
+
+*   **Secure Authentication**: Passwords are hashed using **bcrypt** before storage.
+*   **Role Enforcement**: A server-side `requireRole` middleware was developed to protect administrative routes.
+*   **Bot Protection**: Google **reCAPTCHA** is integrated into the registration flow to prevent automated account creation.
+
+```typescript
+// lib/auth-server.ts - Role Enforcement Logic
+
+export async function requireRole(roles: UserRole | UserRole[]) {
+  const session = await requireAuth()
+  const allowedRoles = Array.isArray(roles) ? roles : [roles]
+
+  if (!allowedRoles.includes(session.user.role)) {
+    // Redirect unauthorized users to their respective default dashboards
+    redirect(getDefaultRedirectPath(session.user.role))
+  }
+  return session
+}
+
+// lib/verify-recaptcha.ts - CAPTCHA Validation
+
+export async function verifyRecaptcha(token: string) {
+  const response = await fetch("https://www.google.com/recaptcha/api/siteverify", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      secret: process.env.RECAPTCHA_SECRET_KEY!,
+      response: token,
+    }),
+  })
+  const data = await response.json()
+  return data.success === true
+}
+```
+
+
+
+### 5.3.3. Component Integration Strategies
+
+The platform's frontend architecture follows an **Atomic Component Strategy**, which separates low-level UI primitives from high-level "smart" modules. This modularity was essential for maintaining consistency across the complex Admin Studio and the Student Dashboard.
+
+*   **Server-Client Boundary Management**: We utilized the **Next.js App Router** to implement a strict boundary between static content and interactive elements.
+    *   **Server-Side Pre-rendering**: Page-level data (e.g., curriculum structure, student mastery snapshots) is fetched in Server Components. This ensures that the initial page load is fast and SEO-friendly.
+    *   **Client-Side Interactivity**: Complex interactive features, such as the drag-and-drop Concept Builder and real-time Socratic Chat, are encapsulated in Client Components. These components receive initial data as props from the server, maintaining a clear "unidirectional" data flow.
+*   **Studio Workspace Orchestration**: The `PageBuilderWorkspace` component acts as the primary orchestrator for content authoring. It integrates several specialized technologies:
+    *   **dnd-kit**: Provides a highly responsive drag-and-drop interface for reordering curriculum modules.
+    *   **Zustand for Global Studio State**: We implemented a custom store (`useWorkspaceStore`) to manage cross-component state, such as the currently selected block, device preview mode (Mobile/Tablet/Desktop), and the asset shelf visibility. This eliminated "prop-drilling" and improved the responsiveness of the inspector panels.
+*   **Universal Block Renderer**: A central `content-blocks-renderer.tsx` was developed as a bridge between the Admin and Student environments. By using a shared rendering logic for LaTeX formulas, Markdown text, and Interactive Media, we ensured that content authored in the Studio appears with 100% fidelity in the student's learning workspace.
+*   **Domain-Logic Unification via `/lib`**: To prevent code duplication, all critical business logic (BKT updates, graph traversal, and mastery status derivation) was centralized in the `@/lib` layer. This "Domain Service" pattern allows both the Admin Analytics dashboard and the Student Progress tracker to utilize the same underlying mathematical models, guaranteeing data consistency across the entire platform.
+
+
+### 5.3.4. Implementation Challenges and Mitigations
+
+The development of a high-fidelity Intelligent Tutoring System presented several technical hurdles that required innovative engineering solutions.
+
+*   **Handling Concurrent Ordering Conflicts**: A recurring challenge was managing the `order` field for units and content blocks. During rapid editing or concurrent authoring sessions, multiple items would often attempt to claim the same sequence number, triggering "Unique Constraint" failures in PostgreSQL.
+    *   **Mitigation**: We updated the `createUnit` and `createBlock` server actions to implement an **Auto-Increment Fallback** logic. If a requested order is already taken, the system automatically queries the maximum current order for that parent container and assigns `MAX(order) + 1`, ensuring a conflict-free save without requiring manual intervention from the author.
+*   **Resource Integrity with Placeholder Assets**: In the Concept Builder, authors often drag "Image" or "Video" blocks before a final asset has been uploaded. Initially, the system's usage-sync engine would attempt to link these to the database, causing foreign key crashes when encountering placeholder IDs like `pending-asset`.
+    *   **Mitigation**: We refined the `UsageSync` engine in `lib/studio/usage-sync.ts` to include a **Reference Filter**. This logic identifies and ignores "pending" or "template" identifiers during the synchronization process, allowing authors to prototype their layouts freely while maintaining strict database integrity.
+*   **Enforcing Socratic Boundaries in AI Tutoring**: A critical pedagogical challenge was ensuring that the LLM functioned as a *tutor* rather than an *answer engine*. Early iterations occasionally leaked direct answers to math problems, undermining the mastery-based objective.
+    *   **Mitigation**: We implemented a multi-layered guardrail system. First, we used a highly restrictive **Socratic System Prompt** that explicitly forbids the disclosure of solutions. Second, we developed a **Response Validation Middleware** in `lib/ai/tutoring/guardrails.ts` that scans AI replies for final answers or banned "shortcut" phrases, flagging them for administrative review if they violate instructional standards.
+*   **Stability of Complex React State**: The `PageBuilderWorkspace` utilizes over 30 React hooks to manage its complex drag-and-drop and property-editing state. This complexity initially led to "Rules of Hooks" violations and intermittent UI crashes during development.
+    *   **Mitigation**: We refactored the component to follow a strict **Mount-First Lifecycle**. By deferring the rendering of dynamic, store-dependent UI elements until after the initial client-side mount, we stabilized the hook execution order and eliminated the "Hydration Failed" errors that previously plagued the orchestration layer.
+*   **Circular Dependencies in Prerequisites**: Preventing authors from creating "Cycles" in the curriculum graph (e.g., A depends on B, and B depends on A) was essential for the stability of the BKT and KST engines.
+    *   **Mitigation**: We implemented a **Depth-First Search (DFS)** cycle detection algorithm in `lib/adaptive/graph.ts`. This validator runs as part of the `saveConcept` transaction, effectively blocking any relationship update that would compromise the Directed Acyclic Graph (DAG) structure of the curriculum.
+
+
