@@ -5,6 +5,7 @@
   "concepts": [
     "concepts/limits/concept.json",
     "concepts/differentiation/concept.json",
-    "concepts/applications-of-derivatives/concept.json"
+    "concepts/applications-of-derivatives/concept.json",
+    "concepts/integration/concept.json"
   ]
 }
