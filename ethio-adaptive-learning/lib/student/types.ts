@@ -263,6 +263,7 @@ export type StudentConceptDetail = {
     practiceAccuracy: number
     averageTimePerQuestion: number
     recentActivityFeed: Array<{
+      id: string
       activityType: string
       isCorrect: boolean | null
       timestamp: string

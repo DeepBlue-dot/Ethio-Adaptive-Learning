@@ -1,8 +1,17 @@
-import { subDays, addMinutes, startOfDay, addDays, isSameDay } from "date-fns"
+import { subDays, addMinutes, startOfDay, addDays, isSameDay, differenceInDays } from "date-fns"
 import { SIMULATION_DAYS, PRACTICE_PER_SESSION, XP_MAP } from "./constants.mjs"
 import { clamp, getConceptBktParams, applyObservation } from "./bkt-utils.mjs"
 
-export async function simulateActivity(prisma, students, conceptIds) {
+/**
+ * Computes the "Effective Mastery" using exponential decay.
+ * This mirrors the logic in the platform's Retention Engine.
+ */
+function computeEffectiveMastery(baseline, lambda, elapsedDays) {
+  if (!elapsedDays || elapsedDays <= 0) return baseline
+  return clamp(baseline * Math.exp(-lambda * elapsedDays), 0, 1)
+}
+
+export async function simulateActivity(prisma, students, conceptIds, { admin, writers } = {}) {
   console.info(`--- Launching Adaptive Simulation Engine (${SIMULATION_DAYS} Days) ---`)
   
   const concepts = await prisma.concept.findMany({
@@ -13,42 +22,111 @@ export async function simulateActivity(prisma, students, conceptIds) {
   const now = new Date()
   const startDate = startOfDay(subDays(now, SIMULATION_DAYS))
   
-  // Simulation State
-  const masteryMap = new Map() // key: `${userId}:${conceptId}`, value: { pL, correctCount, consecutiveFails, totalXP }
-  const interactionHistory = [] // To finalize streaks later
+  // Persistent Simulation State (across 30 days)
+  const masteryMap = new Map() // key: `${userId}:${conceptId}`, value: { pL, lastAssessedAt, totalXP, consecutiveFails }
+  const studentStreaks = new Map() // key: userId, value: currentStreak
+  const interactionHistory = [] // Log of (userId, date)
 
   for (let d = 0; d < SIMULATION_DAYS; d++) {
     const currentDate = addDays(startDate, d)
+    const isFirstHalf = d < (SIMULATION_DAYS / 2)
     console.info(`  [DAY ${d+1}] ${currentDate.toDateString()}`)
 
-    for (const student of students) {
-      // Deterministic but persona-based login
-      const sessionProb = student.persona === 'ACHIEVER' ? 0.8 : student.persona === 'STRUGGLER' ? 0.4 : 0.6
-      if (Math.random() > sessionProb) continue
+    // --- 1. ADMINISTRATIVE PULSE ---
+    // Simulate content updates or system audits
+    if (Math.random() < 0.15 && writers?.length) {
+      const writer = writers[Math.floor(Math.random() * writers.length)]
+      const targetConcept = concepts[Math.floor(Math.random() * concepts.length)]
+      await prisma.activityLog.create({
+        data: {
+          userId: writer.id,
+          action: "UPDATE",
+          contentType: "concept",
+          entityId: targetConcept.id,
+          entityTitle: targetConcept.title,
+          createdAt: addMinutes(currentDate, 540) // 9:00 AM
+        }
+      })
+    }
 
-      interactionHistory.push({ userId: student.id, date: currentDate })
-      const sessionStartTime = addMinutes(currentDate, 480 + Math.random() * 600) // Between 8AM and 6PM
+    if (Math.random() < 0.05 && admin) {
+      await prisma.activityLog.create({
+        data: {
+          userId: admin.id,
+          action: "PUBLISH",
+          contentType: "course",
+          entityId: concepts[0].unitId, // Just a placeholder entity
+          entityTitle: "Grade 12 Curriculum Audit",
+          createdAt: addMinutes(currentDate, 600) // 10:00 AM
+        }
+      })
+    }
+
+    // --- 2. STUDENT LEARNING LOOP ---
+    for (const student of students) {
+      const currentStreak = studentStreaks.get(student.id) ?? 0
       
-      // Work on 1-2 concepts per session
-      const activeConcepts = concepts.sort(() => 0.5 - Math.random()).slice(0, 2)
+      // PERSONA LOGIC: Achievers and high-streak students log in more often
+      let sessionProb = student.persona === 'ACHIEVER' ? 0.85 : student.persona === 'STRUGGLER' ? 0.4 : 0.6
+      if (currentStreak >= 3) sessionProb = clamp(sessionProb + 0.15, 0, 0.95)
+      
+      if (Math.random() > sessionProb) {
+        studentStreaks.set(student.id, 0) // Streak broken
+        continue
+      }
+
+      // Record Activity for Streak tracking
+      interactionHistory.push({ userId: student.id, date: currentDate })
+      studentStreaks.set(student.id, currentStreak + 1)
+      
+      const sessionStartTime = addMinutes(currentDate, 480 + Math.random() * 600) // 8AM - 6PM
+      
+      // Determine session focus: Random concepts + those needing REVIEW
+      const studentMasteries = Array.from(masteryMap.entries())
+        .filter(([k]) => k.startsWith(student.id))
+        .map(([k, v]) => ({ conceptId: k.split(':')[1], ...v }))
+
+      // IDENTIFY RETENTION NEEDS
+      const conceptsNeedingReview = studentMasteries
+        .filter(m => {
+          const concept = concepts.find(c => c.id === m.conceptId)
+          const daysElapsed = differenceInDays(currentDate, m.lastAssessedAt)
+          const effective = computeEffectiveMastery(m.pL, concept?.decayLambda ?? 0.05, daysElapsed)
+          return m.pL > 0.8 && effective < 0.8 // Mastery is high, but retention dropped
+        })
+        .map(m => concepts.find(c => c.id === m.conceptId))
+
+      const activeConcepts = [...conceptsNeedingReview]
+      if (activeConcepts.length < 2) {
+        // Add random fresh concepts to the session
+        const fresh = concepts
+          .filter(c => !activeConcepts.find(ac => ac.id === c.id))
+          .sort(() => 0.5 - Math.random())
+          .slice(0, 2 - activeConcepts.length)
+        activeConcepts.push(...fresh)
+      }
 
       for (const concept of activeConcepts) {
-        if (concept.questions.length === 0) continue
+        if (!concept || concept.questions.length === 0) continue
         
         const bktParams = getConceptBktParams(concept)
         const key = `${student.id}:${concept.id}`
-        let state = masteryMap.get(key) ?? { pL: bktParams.pLo, correctCount: 0, consecutiveFails: 0, totalXP: 0 }
+        let state = masteryMap.get(key) ?? { pL: bktParams.pLo, lastAssessedAt: currentDate, totalXP: 0, consecutiveFails: 0 }
 
-        // Decide Pathway: LEARN (guided) vs CHALLENGE (direct assessment)
-        // High achievers or speedsters might try to challenge more often
-        const challengeProb = student.persona === 'ACHIEVER' ? 0.3 : student.persona === 'SPEEDSTER' ? 0.4 : 0.1
-        const isChallengePath = Math.random() < challengeProb && state.pL < 0.8
+        // --- RETENTION LOGIC: Decay pL before starting ---
+        const daysSinceLast = differenceInDays(currentDate, state.lastAssessedAt)
+        state.pL = computeEffectiveMastery(state.pL, concept.decayLambda, daysSinceLast)
+
+        // Decide Pathway
+        const isReviewSession = conceptsNeedingReview.find(c => c?.id === concept.id)
+        const challengeProb = student.persona === 'ACHIEVER' ? 0.35 : student.persona === 'SPEEDSTER' ? 0.5 : 0.1
+        const isChallengePath = !isReviewSession && Math.random() < challengeProb && state.pL < 0.75
 
         if (isChallengePath) {
-          // --- PATHWAY B: CHALLENGE PATH ---
-          const examTime = addMinutes(sessionStartTime, 15)
-          const score = clamp(state.pL + (Math.random() * 0.25 - 0.1))
-          const isPassed = score > 0.85 // Challenge exams are slightly harder to "pass" diagnostic
+          // --- CHALLENGE PATH ---
+          const examTime = addMinutes(sessionStartTime, 20)
+          const score = clamp(state.pL + (Math.random() * 0.3 - 0.1))
+          const isPassed = score > 0.85
 
           await prisma.interactionLog.create({
             data: {
@@ -65,68 +143,99 @@ export async function simulateActivity(prisma, students, conceptIds) {
               userId: student.id,
               conceptId: concept.id,
               pathway: "CHALLENGE",
-              questionIds: concept.questions.slice(0, 10).map(q => q.id),
+              questionIds: concept.questions.slice(0, 8).map(q => q.id),
               score,
               isPassed,
-              questionCount: Math.min(concept.questions.length, 10),
-              correctCount: Math.floor(score * Math.min(concept.questions.length, 10)),
+              questionCount: Math.min(concept.questions.length, 8),
+              correctCount: Math.floor(score * 8),
               createdAt: examTime,
               completedAt: examTime
             }
           })
 
-          state.totalXP += isPassed ? XP_MAP.EXAM_PASS * 1.5 : XP_MAP.EXAM_FAIL
-          if (isPassed) {
-            state.pL = clamp(0.92 + Math.random() * 0.05)
-          } else {
-            state.pL = clamp(state.pL + 0.05) // Minor learning even from failure
-            state.consecutiveFails++
-          }
+          state.totalXP += isPassed ? XP_MAP.EXAM_PASS : XP_MAP.EXAM_FAIL
+          state.pL = isPassed ? clamp(0.93 + Math.random() * 0.05) : clamp(state.pL + 0.05)
+          state.lastAssessedAt = examTime
         } else {
-          // --- PATHWAY A: INSTRUCTIONAL PATH ---
+          // --- INSTRUCTIONAL / REVIEW PATH ---
           
-          // 1. CONTENT READ
+          // 1. CONTENT ENGAGEMENT
           const readTime = addMinutes(sessionStartTime, 5)
           await prisma.interactionLog.create({
             data: {
               userId: student.id,
               conceptId: concept.id,
-              activityType: "CONTENT_READ",
+              activityType: isReviewSession ? "CONTENT_REVIEW" : "CONTENT_READ",
               createdAt: readTime
             }
           })
           state.totalXP += XP_MAP.CONTENT_READ
-          state.pL = clamp(state.pL + 0.05) // Reading content helps slightly
+          state.pL = clamp(state.pL + 0.02)
 
-          // 2. PRACTICE LOOP
-          const practiceCount = Math.floor(PRACTICE_PER_SESSION * (0.8 + Math.random() * 0.4))
+          // 2. SOCRATIC AI INTERACTION (Simulated)
+          // Average of 1 AI interaction every 4 instructional sessions
+          if (Math.random() < 0.25) {
+            const aiTime = addMinutes(readTime, 10)
+            const session = await prisma.tutorSession.create({
+              data: {
+                userId: student.id,
+                conceptId: concept.id,
+                createdAt: aiTime
+              }
+            })
+
+            // Multi-turn interaction
+            const turnCount = 1 + Math.floor(Math.random() * 3)
+            for (let t = 0; t < turnCount; t++) {
+              const interactionTime = addMinutes(aiTime, t * 2)
+              
+              // Student Query
+              await prisma.tutorMessage.create({
+                data: {
+                  sessionId: session.id,
+                  role: "STUDENT",
+                  content: "How does the Power Rule apply to negative exponents?",
+                  timestamp: interactionTime
+                }
+              })
+
+              // AI Response (Occasionally Flagged)
+              const isFlagged = Math.random() < 0.1
+              await prisma.tutorMessage.create({
+                data: {
+                  sessionId: session.id,
+                  role: "AI",
+                  content: isFlagged ? "The answer is exactly 5." : "Think about what happens to the sign when you subtract one.",
+                  timestamp: addMinutes(interactionTime, 1),
+                  isFlagged,
+                  flagReason: isFlagged ? "Direct answer leak detected" : null
+                }
+              })
+              
+              await prisma.interactionLog.create({
+                data: {
+                  userId: student.id,
+                  conceptId: concept.id,
+                  activityType: "SOCRATIC_HINT_USED",
+                  createdAt: interactionTime
+                }
+              })
+              state.totalXP += XP_MAP.SOCRATIC_HINT_USED
+            }
+          }
+
+          // 3. PRACTICE LOOP
+          const practiceCount = isReviewSession ? 3 : Math.floor(PRACTICE_PER_SESSION * (0.8 + Math.random() * 0.5))
           for (let p = 0; p < practiceCount; p++) {
-            const interactionTime = addMinutes(readTime, 5 + p * 4)
+            const interactionTime = addMinutes(readTime, 15 + p * 5)
             const question = concept.questions[Math.floor(Math.random() * concept.questions.length)]
             
             let pCorrect = state.pL * (1 - bktParams.pS) + (1 - state.pL) * bktParams.pG
-            if (student.persona === 'ACHIEVER') pCorrect = clamp(pCorrect + 0.15)
-            if (student.persona === 'STRUGGLER') pCorrect = clamp(pCorrect - 0.1)
+            if (student.persona === 'ACHIEVER') pCorrect = clamp(pCorrect + 0.2)
+            if (student.persona === 'STRUGGLER') pCorrect = clamp(pCorrect - 0.15)
 
             const isCorrect = Math.random() < pCorrect
-            
-            // Randomly use hints for strugglers
-            const usedHint = !isCorrect && student.persona === 'STRUGGLER' && Math.random() > 0.5
-            if (usedHint) {
-               await prisma.interactionLog.create({
-                 data: {
-                   userId: student.id,
-                   conceptId: concept.id,
-                   activityType: "SOCRATIC_HINT_USED",
-                   createdAt: interactionTime
-                 }
-               })
-               state.totalXP += XP_MAP.SOCRATIC_HINT_USED
-            }
-
-            const responseTime = isCorrect 
-              ? 3000 + Math.random() * 10000 
-              : 8000 + Math.random() * 25000
+            const responseTime = isCorrect ? 5000 + Math.random() * 15000 : 10000 + Math.random() * 40000
 
             await prisma.interactionLog.create({
               data: {
@@ -146,7 +255,7 @@ export async function simulateActivity(prisma, students, conceptIds) {
                 conceptId: concept.id,
                 questionId: question.id,
                 isCorrect,
-                selectedAnswer: isCorrect ? question.correctAnswer : "Distractor",
+                selectedAnswer: isCorrect ? question.correctAnswer : "Miscalculation",
                 createdAt: interactionTime,
                 completedAt: interactionTime
               }
@@ -154,8 +263,9 @@ export async function simulateActivity(prisma, students, conceptIds) {
 
             const update = applyObservation({ prior: state.pL, isCorrect, params: bktParams })
             state.pL = update.posteriorNext
+            state.lastAssessedAt = interactionTime
+            
             if (isCorrect) {
-              state.correctCount++
               state.consecutiveFails = 0
               state.totalXP += XP_MAP.PRACTICE_CORRECT
             } else {
@@ -164,40 +274,10 @@ export async function simulateActivity(prisma, students, conceptIds) {
             }
           }
 
-          // 3. CHECKPOINT (Trigger if pL improved)
-          if (state.pL > 0.6 && state.pL < 0.9) {
-             const cpTime = addMinutes(sessionStartTime, 45)
-             const isPass = Math.random() < (state.pL + 0.1)
-             
-             await prisma.interactionLog.create({
-               data: {
-                 userId: student.id,
-                 conceptId: concept.id,
-                 activityType: "CHECKPOINT_QUESTION",
-                 isCorrect: isPass,
-                 createdAt: cpTime
-               }
-             })
-
-             await prisma.checkpointAttempt.create({
-               data: {
-                 userId: student.id,
-                 conceptId: concept.id,
-                 questionId: concept.questions[0].id,
-                 isCorrect: isPass,
-                 createdAt: cpTime,
-                 completedAt: cpTime
-               }
-             })
-             
-             state.totalXP += isPass ? XP_MAP.CHECKPOINT_PASS : XP_MAP.CHECKPOINT_FAIL
-             if (isPass) state.pL = clamp(state.pL + 0.1)
-          }
-
-          // 4. MASTERY EXAM (Trigger if high mastery)
-          if (state.pL > 0.82) {
+          // 4. CHECKPOINT OR MASTERY (If pL is high enough)
+          if (!isReviewSession && state.pL > 0.85) {
              const examTime = addMinutes(sessionStartTime, 60)
-             const score = clamp(state.pL + (Math.random() * 0.15 - 0.05))
+             const score = clamp(state.pL + (Math.random() * 0.2 - 0.05))
              const isPassed = score > 0.8
 
              await prisma.interactionLog.create({
@@ -226,7 +306,8 @@ export async function simulateActivity(prisma, students, conceptIds) {
              })
 
              state.totalXP += isPassed ? XP_MAP.EXAM_PASS : XP_MAP.EXAM_FAIL
-             if (isPassed) state.pL = clamp(state.pL + 0.05, 0, 0.995)
+             if (isPassed) state.pL = clamp(state.pL + 0.08, 0, 0.999)
+             state.lastAssessedAt = examTime
           }
         }
 
@@ -239,14 +320,17 @@ export async function simulateActivity(prisma, students, conceptIds) {
   console.info("--- Consolidating Mastery States ---")
   for (const [key, state] of masteryMap.entries()) {
     const [userId, conceptId] = key.split(':')
+    const concept = concepts.find(c => c.id === conceptId)
     
+    // Compute FINAL decay until the actual 'now'
+    const daysSinceFinalAssessed = differenceInDays(now, state.lastAssessedAt)
+    const finalEffectiveMastery = computeEffectiveMastery(state.pL, concept?.decayLambda ?? 0.05, daysSinceFinalAssessed)
+
     let status = "IN_PROGRESS"
-    if (state.pL >= 0.9) status = "MASTERED"
-    else if (state.pL < 0.25) status = "FRINGE"
-    
-    // Simulate natural decay/review need for some mastered concepts
-    if (status === "MASTERED" && Math.random() < 0.2) {
-      status = "REVIEW_NEEDED"
+    if (state.pL >= 0.9) {
+      status = finalEffectiveMastery < 0.8 ? "REVIEW_NEEDED" : "MASTERED"
+    } else if (state.pL < 0.2) {
+      status = "FRINGE"
     }
 
     if (state.consecutiveFails >= 4) status = "REVIEW_NEEDED"
@@ -256,7 +340,8 @@ export async function simulateActivity(prisma, students, conceptIds) {
       update: {
         pMastery: state.pL,
         status,
-        lastAssessedAt: now,
+        lastAssessedAt: state.lastAssessedAt,
+        nextReviewAt: status === "MASTERED" ? addDays(state.lastAssessedAt, 7) : null,
         consecutiveFails: state.consecutiveFails
       },
       create: {
@@ -264,14 +349,15 @@ export async function simulateActivity(prisma, students, conceptIds) {
         conceptId,
         pMastery: state.pL,
         status,
-        lastAssessedAt: now,
+        lastAssessedAt: state.lastAssessedAt,
         unlockedAt: startDate,
+        nextReviewAt: status === "MASTERED" ? addDays(state.lastAssessedAt, 7) : null,
         consecutiveFails: state.consecutiveFails
       }
     })
   }
 
-  // 5. FINALIZE PROFILES (XP, Levels, Streaks)
+  // 5. FINALIZE PROFILES
   console.info("--- Calculating Gamification Meta-Data ---")
   for (const student of students) {
     const studentInteractions = interactionHistory.filter(h => h.userId === student.id)
@@ -282,7 +368,6 @@ export async function simulateActivity(prisma, students, conceptIds) {
     const totalXP = studentMasteries.reduce((sum, m) => sum + m.totalXP, 0)
     const currentLevel = Math.floor(Math.sqrt(totalXP / 100)) + 1
     
-    // Calculate Streak
     let streak = 0
     let checkDate = startOfDay(now)
     while (true) {

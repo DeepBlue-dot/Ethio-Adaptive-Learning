@@ -1,0 +1,128 @@
+[
+  {
+    "slug": "prob-discrete-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Which of the following is a continuous random variable?",
+    "correctAnswer": "The weight of a student",
+    "distractors": [
+      "Number of cars in a lot",
+      "Number of heads in 10 flips",
+      "Number of pages in a book"
+    ],
+    "hintText": "Continuous variables can have decimals and any value in a range.",
+    "explanation": "Weight is measured, not counted, and can take any value (e.g., 55.4 kg)."
+  },
+  {
+    "slug": "prob-sum-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "The sum of all probabilities in a discrete probability distribution must equal:",
+    "correctAnswer": "1",
+    "distractors": [
+      "0",
+      "100",
+      "0.5"
+    ],
+    "hintText": "Total probability is always certain.",
+    "explanation": "By definition, the sum of probabilities for all possible outcomes is 1."
+  },
+  {
+    "slug": "prob-binomial-mean-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "In a binomial distribution with $n = 50$ and $p = 0.2$, what is the mean?",
+    "correctAnswer": "10",
+    "distractors": [
+      "20",
+      "5",
+      "40"
+    ],
+    "hintText": "$\\mu = np$.",
+    "explanation": "$50 \\times 0.2 = 10$."
+  },
+  {
+    "slug": "prob-normal-empirical-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "In a normal distribution, what percentage of data falls within 1 standard deviation of the mean?",
+    "correctAnswer": "68%",
+    "distractors": [
+      "95%",
+      "50%",
+      "99.7%"
+    ],
+    "hintText": "This is part of the Empirical Rule.",
+    "explanation": "Approximately 68% of observations fall within $\\mu \\pm \\sigma$."
+  },
+  {
+    "slug": "prob-z-score-less-than-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "If a Z-score is 0, what is the probability of a value being less than this score?",
+    "correctAnswer": "0.5",
+    "distractors": [
+      "1",
+      "0",
+      "0.84"
+    ],
+    "hintText": "$Z=0$ is the mean.",
+    "explanation": "A normal distribution is symmetrical. Exactly half (0.5) of the data is below the mean."
+  },
+  {
+    "slug": "prob-checkpoint-binomial-formula",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Find the probability of getting exactly 2 heads in 3 flips of a fair coin.",
+    "correctAnswer": "0.375",
+    "distractors": [
+      "0.5",
+      "0.25",
+      "0.75"
+    ],
+    "hintText": "Use $\\binom{n}{k} p^k (1-p)^{n-k}$. Here $\\binom{3}{2}=3$.",
+    "explanation": "$3 \\times (0.5)^2 \\times (0.5)^1 = 3 \\times 0.25 \\times 0.5 = 0.375$."
+  },
+  {
+    "slug": "prob-checkpoint-normal-symmetry",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "If $P(Z > 1) = 0.1587$, find $P(Z < -1)$.",
+    "correctAnswer": "0.1587",
+    "distractors": [
+      "0.8413",
+      "0.5",
+      "0.3174"
+    ],
+    "hintText": "Normal distributions are perfectly symmetrical.",
+    "explanation": "Due to symmetry, the area in the upper tail is equal to the area in the lower tail."
+  },
+  {
+    "slug": "prob-exam-normal-calc",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Exam scores are normally distributed with $\\mu=70$ and $\\sigma=10$. What score corresponds to a Z-score of 1.5?",
+    "correctAnswer": "85",
+    "distractors": [
+      "80",
+      "71.5",
+      "90"
+    ],
+    "hintText": "$x = \\mu + Z\\sigma$.",
+    "explanation": "$70 + (1.5 \\times 10) = 70 + 15 = 85$."
+  },
+  {
+    "slug": "prob-exam-binomial-logic",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Which condition is NOT required for a Binomial distribution?",
+    "correctAnswer": "The sample size must be larger than 30",
+    "distractors": [
+      "Fixed number of trials",
+      "Two possible outcomes",
+      "Trials are independent"
+    ],
+    "hintText": "Think about the 'BINS' criteria.",
+    "explanation": "Binomial distributions can work with any fixed $n$. The '30' rule applies to the Central Limit Theorem, not the definition of Binomial."
+  }
+]

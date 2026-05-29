@@ -1,0 +1,36 @@
+{
+  "slug": "coordinate-geometry",
+  "title": "Coordinate Geometry",
+  "description": "Master the distance formula, section formula, and the equations of lines and circles in a 2D plane.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.1,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.03,
+  "prerequisites": [
+    "functions-and-graphs/linear-functions"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Distance Formula"
+    },
+    {
+      "type": "paragraph",
+      "text": "The distance $d$ between two points $(x_1, y_1)$ and $(x_2, y_2)$ is given by: \n\n$$d = \\sqrt{(x_2 - x_1)^2 + (y_2 - y_1)^2}$$"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Equations of Circles"
+    },
+    {
+      "type": "paragraph",
+      "text": "A circle with center $(h, k)$ and radius $r$ has the equation: \n\n$$(x - h)^2 + (y - k)^2 = r^2$$"
+    }
+  ]
+}

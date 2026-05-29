@@ -1,0 +1,36 @@
+{
+  "slug": "probability-distributions",
+  "title": "Probability Distributions",
+  "description": "Explore discrete and continuous probability distributions, including Binomial and Normal distributions.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.15,
+  "pT": 0.12,
+  "pG": 0.22,
+  "pS": 0.1,
+  "decayLambda": 0.04,
+  "prerequisites": [
+    "statistics-and-probability/descriptive-statistics"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Discrete vs. Continuous"
+    },
+    {
+      "type": "paragraph",
+      "text": "A **Discrete** variable has countable outcomes (like counting heads in coin flips), while a **Continuous** variable can take any value in a range (like height or time)."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Normal Distribution"
+    },
+    {
+      "type": "paragraph",
+      "text": "The bell-shaped curve represents the Normal Distribution. It is symmetrical about the mean and follows the **68-95-99.7 rule**."
+    }
+  ]
+}

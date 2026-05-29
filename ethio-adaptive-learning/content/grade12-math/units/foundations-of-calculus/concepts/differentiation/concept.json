@@ -1,0 +1,58 @@
+{
+  "slug": "differentiation",
+  "title": "Differentiation",
+  "description": "Learn the fundamental rules of finding derivatives, including the power rule, sum rule, and constant multiple rule.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.1,
+  "pT": 0.15,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.05,
+  "prerequisites": [
+    "foundations-of-calculus/limits"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Concept of a Derivative"
+    },
+    {
+      "type": "paragraph",
+      "text": "The derivative of a function $f(x)$ at a point $x$ measures the instantaneous rate of change of the function with respect to $x$. Geometrically, it represents the slope of the tangent line to the curve at that point."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "The Power Rule"
+    },
+    {
+      "type": "paragraph",
+      "text": "One of the most useful rules in differentiation is the **Power Rule**: \\n\\n$$\\frac{d}{dx} x^n = nx^{n-1}$$\\n\\nThis applies to any real number $n$."
+    }
+  ],
+  "chunks": [
+    {
+      "slug": "derivative-definition",
+      "title": "Formal Definition of Derivative",
+      "order": 1,
+      "file": "chunks/definition.md"
+    },
+    {
+      "slug": "basic-rules",
+      "title": "Basic Differentiation Rules",
+      "order": 2,
+      "file": "chunks/basic-rules.md"
+    }
+  ],
+  "workedExamples": [
+    {
+      "slug": "power-rule-example",
+      "title": "Applying the Power Rule",
+      "order": 1,
+      "file": "worked-examples/power-rule.md"
+    }
+  ]
+}

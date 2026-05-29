@@ -1,0 +1,36 @@
+{
+  "slug": "trigonometric-functions",
+  "title": "Trigonometric Functions",
+  "description": "Understand sine, cosine, and tangent functions, their graphs, identities, and applications in solving triangles.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.85,
+  "pLo": 0.1,
+  "pT": 0.12,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.04,
+  "prerequisites": [
+    "geometry-and-trigonometry/coordinate-geometry"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Unit Circle"
+    },
+    {
+      "type": "paragraph",
+      "text": "In a unit circle (radius = 1), the coordinates of any point $P(x, y)$ on the circle are $(\\cos\\theta, \\sin\\theta)$, where $\\theta$ is the angle from the positive x-axis."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Fundamental Identities"
+    },
+    {
+      "type": "paragraph",
+      "text": "The Pythagorean Identity: \n\n$$\\sin^2\\theta + \\cos^2\\theta = 1$$"
+    }
+  ]
+}

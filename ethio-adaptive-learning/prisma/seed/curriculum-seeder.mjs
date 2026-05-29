@@ -213,6 +213,72 @@ export async function enrichImportedMathContent({ prisma, assetsByPublicId, conc
       }
     })
   }
+
+  const diffConceptId = conceptIdsByReference["foundations-of-calculus/differentiation"]
+  if (diffConceptId) {
+    await prisma.concept.update({
+      where: { id: diffConceptId },
+      data: {
+        contentBlocks: [
+          {
+            id: "diff-hero",
+            type: "image",
+            assetId: assetsByPublicId["math-ref-001"].id,
+            alt: "Tangent line visual",
+            caption: "The slope of this tangent line is exactly what a derivative calculates."
+          },
+          {
+            id: "diff-video",
+            type: "video",
+            url: assetsByPublicId["math-video-001"].url,
+            videoId: assetsByPublicId["math-video-001"].videoId,
+            caption: "Visualizing the power rule"
+          }
+        ]
+      }
+    })
+  }
+
+  const statsConceptId = conceptIdsByReference["statistics-and-probability/descriptive-statistics"]
+  if (statsConceptId) {
+    await prisma.concept.update({
+      where: { id: statsConceptId },
+      data: {
+        contentBlocks: [
+          {
+            id: "stats-intro",
+            type: "paragraph",
+            title: "Summarizing data",
+            text: "Instead of looking at thousands of numbers, we use single values like the Mean to understand the 'center' of our data."
+          },
+          {
+            id: "stats-sim",
+            type: "phet",
+            assetId: assetsByPublicId["math-sim-001"].id,
+            title: "Explore mean and median"
+          }
+        ]
+      }
+    })
+  }
+
+  const probConceptId = conceptIdsByReference["statistics-and-probability/probability-distributions"]
+  if (probConceptId) {
+    await prisma.concept.update({
+      where: { id: probConceptId },
+      data: {
+        contentBlocks: [
+          {
+            id: "prob-normal-visual",
+            type: "image",
+            assetId: assetsByPublicId["math-ref-001"].id,
+            alt: "Normal distribution curve",
+            caption: "The Normal distribution is the foundation of inferential statistics."
+          }
+        ]
+      }
+    })
+  }
 }
 
 export async function seedDemoCourses({ prisma, assetsByPublicId, writerId }) {

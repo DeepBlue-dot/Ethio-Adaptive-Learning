@@ -1,0 +1,72 @@
+[
+  {
+    "slug": "coord-distance-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the distance between $(0,0)$ and $(3,4)$.",
+    "correctAnswer": "5",
+    "distractors": [
+      "7",
+      "25",
+      "12"
+    ],
+    "hintText": "Use the distance formula: $\\sqrt{3^2 + 4^2}$.",
+    "explanation": "Distance = $\\sqrt{9 + 16} = \\sqrt{25} = 5$."
+  },
+  {
+    "slug": "coord-midpoint-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the midpoint between $(2, 4)$ and $(6, 8)$?",
+    "correctAnswer": "$(4, 6)$",
+    "distractors": [
+      "$(8, 12)$",
+      "$(2, 2)$",
+      "$(5, 5)$"
+    ],
+    "hintText": "Average the x-coordinates and y-coordinates.",
+    "explanation": "$x = (2+6)/2 = 4$; $y = (4+8)/2 = 6$."
+  },
+  {
+    "slug": "coord-circle-center-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Identify the center of the circle $(x - 3)^2 + (y + 5)^2 = 16$.",
+    "correctAnswer": "$(3, -5)$",
+    "distractors": [
+      "$(-3, 5)$",
+      "$(3, 5)$",
+      "$(16, 16)$"
+    ],
+    "hintText": "Compare with $(x-h)^2 + (y-k)^2 = r^2$.",
+    "explanation": "Here $h = 3$ and $k = -5$."
+  },
+  {
+    "slug": "coord-circle-radius-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "What is the radius of the circle $x^2 + y^2 - 4x + 6y - 3 = 0$?",
+    "correctAnswer": "$\\sqrt{16} = 4$",
+    "distractors": [
+      "3",
+      "16",
+      "$\\sqrt{3}$"
+    ],
+    "hintText": "Complete the square for x and y.",
+    "explanation": "$(x-2)^2 - 4 + (y+3)^2 - 9 - 3 = 0 \\implies (x-2)^2 + (y+3)^2 = 16$."
+  },
+  {
+    "slug": "coord-exam-tangent",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "A circle $(x-1)^2 + (y-2)^2 = 25$ is tangent to a line. If the distance from center to line is 5, the line is a:",
+    "correctAnswer": "Tangent",
+    "distractors": [
+      "Secant",
+      "Chord",
+      "Diameter"
+    ],
+    "hintText": "If distance from center equals radius, the line is tangent.",
+    "explanation": "Radius is $\\sqrt{25}=5$. Since distance = radius, it is a tangent."
+  }
+]

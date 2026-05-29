@@ -1,0 +1,72 @@
+[
+  {
+    "slug": "trig-sine-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the value of $\\sin(90^\\circ)$?",
+    "correctAnswer": "1",
+    "distractors": [
+      "0",
+      "-1",
+      "0.5"
+    ],
+    "hintText": "Recall the unit circle coordinates at $90^\\circ$.",
+    "explanation": "At $90^\\circ$ (or $\\pi/2$), the y-coordinate is 1."
+  },
+  {
+    "slug": "trig-period-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the period of the function $f(x) = \\cos(x)$?",
+    "correctAnswer": "$2\\pi$",
+    "distractors": [
+      "$\\pi$",
+      "$\\pi/2$",
+      "4$\\pi$"
+    ],
+    "hintText": "How long until the graph repeats itself?",
+    "explanation": "The standard cosine function completes one cycle in $2\\pi$ radians."
+  },
+  {
+    "slug": "trig-identity-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Simplify $\\sin^2(x) + \\cos^2(x)$.",
+    "correctAnswer": "1",
+    "distractors": [
+      "0",
+      "$\\tan^2(x)$",
+      "2"
+    ],
+    "hintText": "This is the Pythagorean Identity.",
+    "explanation": "By definition on the unit circle, $x^2 + y^2 = 1$ means $\\cos^2\\theta + \\sin^2\\theta = 1$."
+  },
+  {
+    "slug": "trig-amplitude-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "What is the amplitude of $y = 3\\sin(2x)$?",
+    "correctAnswer": "3",
+    "distractors": [
+      "2",
+      "6",
+      "1.5"
+    ],
+    "hintText": "Look at the coefficient in front of the sine function.",
+    "explanation": "Amplitude is the absolute value of the coefficient $A$ in $y = A\\sin(Bx)$."
+  },
+  {
+    "slug": "trig-exam-equation",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Solve for $x$ in $[0, 2\\pi]$: $2\\sin(x) - 1 = 0$.",
+    "correctAnswer": "$\\pi/6$ and $5\\pi/6$",
+    "distractors": [
+      "$\\pi/3$ and $2\\pi/3$",
+      "$\\pi/6$ and $7\\pi/6$",
+      "$\\pi/2$"
+    ],
+    "hintText": "Isolate $\\sin(x)$ to get $\\sin(x) = 1/2$.",
+    "explanation": "Sine is $1/2$ at $30^\\circ$ ($\\pi/6$) and $150^\\circ$ ($5\\pi/6$)."
+  }
+]

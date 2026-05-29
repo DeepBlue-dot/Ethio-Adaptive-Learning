@@ -1,0 +1,128 @@
+[
+  {
+    "slug": "diff-power-simple-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the derivative of $f(x) = x^5$.",
+    "correctAnswer": "$5x^4$",
+    "distractors": [
+      "$x^4$",
+      "$5x^6$",
+      "$4x^5$"
+    ],
+    "hintText": "Use the Power Rule: $\\frac{d}{dx} x^n = nx^{n-1}$.",
+    "explanation": "Applying the power rule to $x^5$, the exponent $5$ moves to the front and decreases by $1$. Result: $5x^4$."
+  },
+  {
+    "slug": "diff-power-constant-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find $\\frac{d}{dx} (3x^2)$.",
+    "correctAnswer": "$6x$",
+    "distractors": [
+      "$3x$",
+      "$6x^2$",
+      "$2x$"
+    ],
+    "hintText": "Multiply the constant by the power.",
+    "explanation": "Using the constant multiple rule and power rule: $3 \\times 2x^{2-1} = 6x$."
+  },
+  {
+    "slug": "diff-sum-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find $f'(x)$ if $f(x) = x^3 + 4x + 7$.",
+    "correctAnswer": "$3x^2 + 4$",
+    "distractors": [
+      "$3x^2 + 4x$",
+      "$x^2 + 4$",
+      "$3x^2 + 4 + 7$"
+    ],
+    "hintText": "The derivative of a constant is zero.",
+    "explanation": "$\\frac{d}{dx}x^3 = 3x^2$, $\\frac{d}{dx}4x = 4$, and $\\frac{d}{dx}7 = 0$. Combining them gives $3x^2 + 4$."
+  },
+  {
+    "slug": "diff-negative-power-practice-4",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find the derivative of $g(x) = x^{-2}$.",
+    "correctAnswer": "$-2x^{-3}$",
+    "distractors": [
+      "$-2x^{-1}$",
+      "$2x^{-3}$",
+      "$x^{-3}$"
+    ],
+    "hintText": "Remember that $n-1$ for $-2$ is $-3$.",
+    "explanation": "Applying power rule: $-2 \\times x^{-2-1} = -2x^{-3}$."
+  },
+  {
+    "slug": "diff-root-practice-5",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find $\\frac{dy}{dx}$ for $y = \\sqrt{x}$.",
+    "correctAnswer": "$\\frac{1}{2\\sqrt{x}}$",
+    "distractors": [
+      "$\\frac{1}{2}x$",
+      "$x^{1/2}$",
+      "$\\frac{1}{x}$"
+    ],
+    "hintText": "Rewrite $\\sqrt{x}$ as $x^{1/2}$.",
+    "explanation": "$\\frac{d}{dx}x^{1/2} = \\frac{1}{2}x^{-1/2} = \\frac{1}{2\\sqrt{x}}$."
+  },
+  {
+    "slug": "diff-checkpoint-polynomial",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "What is the derivative of $f(x) = \\frac{1}{2}x^4 - 5x + \\pi$?",
+    "correctAnswer": "$2x^3 - 5$",
+    "distractors": [
+      "$2x^3 - 5x$",
+      "$4x^3 - 5$",
+      "$2x^3 - 5 + 1$"
+    ],
+    "hintText": "The derivative of $\\pi$ is 0 because $\\pi$ is a constant.",
+    "explanation": "$\\frac{1}{2} \\times 4x^3 = 2x^3$. The derivative of $-5x$ is $-5$. The derivative of $\\pi$ is $0$."
+  },
+  {
+    "slug": "diff-checkpoint-tangent-slope",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Find the slope of the tangent line to $y = x^2$ at $x = 3$.",
+    "correctAnswer": "$6$",
+    "distractors": [
+      "$9$",
+      "$3$",
+      "$2$"
+    ],
+    "hintText": "First find the derivative $y'$, then substitute $x=3$.",
+    "explanation": "The derivative is $y' = 2x$. At $x = 3$, $y' = 2(3) = 6$."
+  },
+  {
+    "slug": "diff-exam-multi-rule",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Calculate $f'(x)$ where $f(x) = \\frac{x^2 + 4x + 4}{x}$.",
+    "correctAnswer": "$1 - \\frac{4}{x^2}$",
+    "distractors": [
+      "$2x + 4$",
+      "$x + 4 + \\frac{4}{x}$",
+      "$1 + \\frac{4}{x^2}$"
+    ],
+    "hintText": "Simplify the expression by dividing every term by $x$ first.",
+    "explanation": "Simplify: $f(x) = \\frac{x^2}{x} + \\frac{4x}{x} + \\frac{4}{x} = x + 4 + 4x^{-1}$. Differentiating gives $1 + 0 - 4x^{-2} = 1 - \\frac{4}{x^2}$."
+  },
+  {
+    "slug": "diff-exam-physics-context",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "The position of a particle is given by $s(t) = 5t^2 - 2t + 10$. Find its velocity at $t = 2$.",
+    "correctAnswer": "$18$",
+    "distractors": [
+      "$26$",
+      "$20$",
+      "$10$"
+    ],
+    "hintText": "Velocity is the derivative of position with respect to time.",
+    "explanation": "$v(t) = s'(t) = 10t - 2$. At $t = 2$, $v(2) = 10(2) - 2 = 20 - 2 = 18$."
+  }
+]

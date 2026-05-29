@@ -1,42 +1,212 @@
 [
   {
-    "slug": "identify-parabola-practice",
+    "slug": "quad-vertex-practice-1",
     "usage": "PRACTICE",
     "difficulty": "EASY",
-    "content": "What is the shape of the graph of a quadratic function?",
-    "correctAnswer": "Parabola",
-    "distractors": ["Line", "Circle", "Hyperbola"],
-    "hintText": "Think about the graph of `y = x^2`.",
-    "explanation": "Quadratic functions graph as parabolas."
+    "content": "Find the vertex of $f(x) = (x - 2)^2 + 5$.",
+    "correctAnswer": "$(2, 5)$",
+    "distractors": [
+      "$(-2, 5)$",
+      "$(2, -5)$",
+      "$(5, 2)$"
+    ],
+    "hintText": "In vertex form $y = a(x - h)^2 + k$, the vertex is $(h, k)$.",
+    "explanation": "Here $h = 2$ and $k = 5$."
   },
   {
-    "slug": "factor-basic-quadratic-checkpoint",
+    "slug": "quad-roots-factored-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What are the roots of $y = (x + 3)(x - 4)$?",
+    "correctAnswer": "$-3$ and $4$",
+    "distractors": [
+      "$3$ and $-4$",
+      "$3$ and $4$",
+      "$-3$ and $-4$"
+    ],
+    "hintText": "Set each factor to zero.",
+    "explanation": "$x + 3 = 0 \\implies x = -3$; $x - 4 = 0 \\implies x = 4$."
+  },
+  {
+    "slug": "quad-direction-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Does $y = -2x^2 + 4x + 1$ open upwards or downwards?",
+    "correctAnswer": "Downwards",
+    "distractors": [
+      "Upwards",
+      "To the left",
+      "To the right"
+    ],
+    "hintText": "Look at the sign of the $x^2$ coefficient ($a$).",
+    "explanation": "Since $a = -2$ (negative), the parabola opens downwards."
+  },
+  {
+    "slug": "quad-y-intercept-practice-4",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the $y$-intercept of $y = 3x^2 - 5x + 7$.",
+    "correctAnswer": "$7$",
+    "distractors": [
+      "$3$",
+      "$-5$",
+      "$0$"
+    ],
+    "hintText": "Set $x = 0$.",
+    "explanation": "$y = 3(0)^2 - 5(0) + 7 = 7$."
+  },
+  {
+    "slug": "quad-discriminant-calc-practice-5",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Calculate the discriminant of $x^2 + 4x + 4 = 0$.",
+    "correctAnswer": "$0$",
+    "distractors": [
+      "$16$",
+      "$-16$",
+      "$8$"
+    ],
+    "hintText": "$D = b^2 - 4ac$.",
+    "explanation": "$4^2 - 4(1)(4) = 16 - 16 = 0$."
+  },
+  {
+    "slug": "quad-real-roots-practice-6",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "How many real roots does $x^2 + 2x + 5 = 0$ have?",
+    "correctAnswer": "None",
+    "distractors": [
+      "One",
+      "Two",
+      "Infinitely many"
+    ],
+    "hintText": "Calculate the discriminant $D$.",
+    "explanation": "$D = 2^2 - 4(1)(5) = 4 - 20 = -16$. Since $D < 0$, there are no real roots."
+  },
+  {
+    "slug": "quad-axis-symmetry-practice-7",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find the axis of symmetry for $y = x^2 - 6x + 8$.",
+    "correctAnswer": "$x = 3$",
+    "distractors": [
+      "$x = -3$",
+      "$x = 6$",
+      "$y = 3$"
+    ],
+    "hintText": "Use $x = -b / 2a$.",
+    "explanation": "$x = -(-6) / (2 \\times 1) = 6 / 2 = 3$."
+  },
+  {
+    "slug": "quad-stretch-practice-8",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Compared to $y = x^2$, is $y = 0.5x^2$ wider or narrower?",
+    "correctAnswer": "Wider",
+    "distractors": [
+      "Narrower",
+      "The same",
+      "Shifted left"
+    ],
+    "hintText": "If $|a| < 1$, the parabola is wider.",
+    "explanation": "$0.5 < 1$, so it grows more slowly, making it wider."
+  },
+  {
+    "slug": "quad-vertex-from-standard-checkpoint",
     "usage": "CHECKPOINT",
     "difficulty": "MEDIUM",
-    "content": "Factor `x^2 - 5x + 6`.",
-    "correctAnswer": "(x - 2)(x - 3)",
-    "distractors": ["(x + 2)(x + 3)", "x(x - 5) + 6", "(x - 1)(x - 6)"],
-    "hintText": "Look for two numbers whose product is `6` and sum is `-5`.",
-    "explanation": "The numbers are `-2` and `-3`, so the factorization is `(x - 2)(x - 3)`."
+    "content": "Find the vertex of $y = x^2 - 4x + 7$.",
+    "correctAnswer": "$(2, 3)$",
+    "distractors": [
+      "$(2, 7)$",
+      "$(-2, 19)$",
+      "$(4, 7)$"
+    ],
+    "hintText": "Find $x = -b/2a$ first, then plug it into the equation for $y$.",
+    "explanation": "$x = 4 / 2 = 2$. $y = 2^2 - 4(2) + 7 = 4 - 8 + 7 = 3$."
   },
   {
-    "slug": "factor-basic-quadratic-exam",
-    "usage": "EXAM",
-    "difficulty": "HARD",
-    "content": "Factor `x^2 - 5x + 6` completely.",
-    "correctAnswer": "(x - 2)(x - 3)",
-    "distractors": ["(x + 2)(x + 3)", "(x - 1)(x - 6)", "x(x - 5) + 6"],
-    "hintText": "Use two numbers whose product is `6` and sum is `-5`.",
-    "explanation": "The correct factorization is `(x - 2)(x - 3)`."
+    "slug": "quad-nature-roots-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "If $D = 25$ for a quadratic equation, the roots are:",
+    "correctAnswer": "Real, distinct, and rational",
+    "distractors": [
+      "Real and equal",
+      "Non-real complex",
+      "Real and irrational"
+    ],
+    "hintText": "$25$ is a perfect square.",
+    "explanation": "Since $D > 0$ and is a perfect square, roots are real, different, and rational."
   },
   {
-    "slug": "read-vertex-exam",
+    "slug": "quad-form-conversion-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Complete the square for $x^2 + 6x$.",
+    "correctAnswer": "$(x + 3)^2 - 9$",
+    "distractors": [
+      "$(x + 3)^2 + 9$",
+      "$(x + 6)^2 - 36$",
+      "$(x + 6)^2 + 36$"
+    ],
+    "hintText": "Take half of $6$, square it, and subtract it.",
+    "explanation": "$(x + 3)^2 = x^2 + 6x + 9$, so $x^2 + 6x = (x + 3)^2 - 9$."
+  },
+  {
+    "slug": "quad-modeling-area-exam",
     "usage": "EXAM",
     "difficulty": "HARD",
-    "content": "What is the vertex of `y = (x - 1)^2 + 2`?",
-    "correctAnswer": "(1, 2)",
-    "distractors": ["(-1, 2)", "(1, -2)", "(2, 1)"],
-    "hintText": "Read the translation directly from vertex form.",
-    "explanation": "In `y = (x - h)^2 + k`, the vertex is `(h, k)`."
+    "content": "A rectangle has a perimeter of $20$m. What is the maximum area it can have?",
+    "correctAnswer": "$25$ $m^2$",
+    "distractors": [
+      "$100$ $m^2$",
+      "$20$ $m^2$",
+      "$24$ $m^2$"
+    ],
+    "hintText": "A square maximizes area for a fixed perimeter.",
+    "explanation": "Side $= 20/4 = 5$. Area $= 5^2 = 25$."
+  },
+  {
+    "slug": "quad-exam-projectile",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "The height of a ball is $h(t) = -5t^2 + 20t$. At what time does it reach maximum height?",
+    "correctAnswer": "$2$ seconds",
+    "distractors": [
+      "$4$ seconds",
+      "$20$ seconds",
+      "$0$ seconds"
+    ],
+    "hintText": "The maximum occurs at the vertex ($x = -b/2a$).",
+    "explanation": "$t = -20 / (2 \\times -5) = -20 / -10 = 2$."
+  },
+  {
+    "slug": "quad-exam-intersection",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Find the $x$-values where $y = x^2$ and $y = x + 2$ intersect.",
+    "correctAnswer": "$-1$ and $2$",
+    "distractors": [
+      "$1$ and $-2$",
+      "$0$ and $2$",
+      "$-1$ and $-2$"
+    ],
+    "hintText": "Set $x^2 = x + 2$ and solve the quadratic.",
+    "explanation": "$x^2 - x - 2 = 0 \\implies (x - 2)(x + 1) = 0$. So $x = 2, -1$."
+  },
+  {
+    "slug": "quad-exam-parameters",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "For what value of $k$ does $x^2 + kx + 9 = 0$ have exactly one real root?",
+    "correctAnswer": "$\\pm 6$",
+    "distractors": [
+      "$3$",
+      "$9$",
+      "$\\pm 3$"
+    ],
+    "hintText": "Set the discriminant $D = 0$.",
+    "explanation": "$k^2 - 4(1)(9) = 0 \\implies k^2 = 36 \\implies k = \\pm 6$."
   }
 ]

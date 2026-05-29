@@ -1,0 +1,36 @@
+{
+  "slug": "integration",
+  "title": "Integration",
+  "description": "Understand integration as the reverse process of differentiation and as a tool for finding areas under curves.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.1,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.05,
+  "prerequisites": [
+    "foundations-of-calculus/differentiation"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Indefinite Integral"
+    },
+    {
+      "type": "paragraph",
+      "text": "If $F'(x) = f(x)$, then $\\int f(x)dx = F(x) + C$, where $C$ is the constant of integration."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Integration of Power Functions"
+    },
+    {
+      "type": "paragraph",
+      "text": "The power rule for integration: \n\n$$\\int x^n dx = \\frac{x^{n+1}}{n+1} + C, \\quad (n \\neq -1)$$"
+    }
+  ]
+}

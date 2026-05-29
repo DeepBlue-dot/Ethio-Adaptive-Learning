@@ -1,0 +1,128 @@
+[
+  {
+    "slug": "stats-mean-simple-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Calculate the mean of the dataset: 4, 8, 6, 10.",
+    "correctAnswer": "7",
+    "distractors": [
+      "6",
+      "8",
+      "7.5"
+    ],
+    "hintText": "Mean = $\\frac{\\sum x}{n}$.",
+    "explanation": "Sum = $4 + 8 + 6 + 10 = 28$. Count = $4$. Mean = $28 / 4 = 7$."
+  },
+  {
+    "slug": "stats-median-even-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the median of 3, 1, 9, 7?",
+    "correctAnswer": "5",
+    "distractors": [
+      "4",
+      "7",
+      "5.5"
+    ],
+    "hintText": "Sort the data first.",
+    "explanation": "Sorted: 1, 3, 7, 9. The middle two are 3 and 7. Median = $(3+7)/2 = 5$."
+  },
+  {
+    "slug": "stats-range-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the range of the set: 12, 5, 18, 2, 22.",
+    "correctAnswer": "20",
+    "distractors": [
+      "22",
+      "18",
+      "10"
+    ],
+    "hintText": "Range = Max - Min.",
+    "explanation": "$22 - 2 = 20$."
+  },
+  {
+    "slug": "stats-mode-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the mode: 2, 3, 2, 5, 8, 2, 3.",
+    "correctAnswer": "2",
+    "distractors": [
+      "3",
+      "5",
+      "No mode"
+    ],
+    "hintText": "The mode is the most frequent number.",
+    "explanation": "2 appears 3 times, which is more than any other number."
+  },
+  {
+    "slug": "stats-sd-conceptual-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "If all numbers in a dataset are the same, what is the standard deviation?",
+    "correctAnswer": "0",
+    "distractors": [
+      "1",
+      "The number itself",
+      "Undefined"
+    ],
+    "hintText": "SD measures spread. If they are all the same, is there spread?",
+    "explanation": "Since there is no variation from the mean, the standard deviation is 0."
+  },
+  {
+    "slug": "stats-checkpoint-weighted-mean",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "A student scores 80 on a test (weight 40%) and 90 on a project (weight 60%). Calculate the final grade.",
+    "correctAnswer": "86",
+    "distractors": [
+      "85",
+      "84",
+      "88"
+    ],
+    "hintText": "Weighted Mean = $\\sum (w \\cdot x) / \\sum w$.",
+    "explanation": "$(80 \\times 0.4) + (90 \\times 0.6) = 32 + 54 = 86$."
+  },
+  {
+    "slug": "stats-checkpoint-variance",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "If the standard deviation of a dataset is 4, what is the variance?",
+    "correctAnswer": "16",
+    "distractors": [
+      "2",
+      "8",
+      "12"
+    ],
+    "hintText": "Variance is the square of the standard deviation.",
+    "explanation": "$4^2 = 16$."
+  },
+  {
+    "slug": "stats-exam-grouped-mean",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "In a frequency table, the sum of $f \\cdot x$ is 450 and the sum of frequencies is 50. Find the mean.",
+    "correctAnswer": "9",
+    "distractors": [
+      "45",
+      "5",
+      "50"
+    ],
+    "hintText": "$\\bar{x} = \\frac{\\sum f x}{\\sum f}$.",
+    "explanation": "$450 / 50 = 9$."
+  },
+  {
+    "slug": "stats-exam-z-score-intro",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "A value of 15 comes from a distribution with mean 10 and SD 2.5. What is its Z-score?",
+    "correctAnswer": "2",
+    "distractors": [
+      "1.5",
+      "2.5",
+      "5"
+    ],
+    "hintText": "$Z = \\frac{x - \\mu}{\\sigma}$.",
+    "explanation": "$(15 - 10) / 2.5 = 5 / 2.5 = 2$."
+  }
+]

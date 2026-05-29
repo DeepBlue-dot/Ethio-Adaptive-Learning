@@ -5,6 +5,11 @@
   "overview": "overview.md",
   "contentBlocks": [
     {
+      "id": "quad-mastery-snippet",
+      "type": "snippet",
+      "slug": "mastery-formula"
+    },
+    {
       "id": "quadratic-content-heading",
       "type": "heading",
       "level": 2,
@@ -15,6 +20,17 @@
       "type": "paragraph",
       "title": "Core idea",
       "text": "Quadratic expressions can reveal different information depending on the form. Factored form shows roots, vertex form shows the turning point, and standard form helps compare coefficients."
+    },
+    {
+      "id": "quad-sim",
+      "type": "phet",
+      "assetId": "math-sim-quadratic",
+      "title": "Explore quadratic intercepts"
+    },
+    {
+      "id": "quad-formula-para",
+      "type": "paragraph",
+      "text": "To find the roots of any quadratic $ax^2 + bx + c = 0$, we use: \\n\\n$$x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$$\\n\\nThe term $b^2 - 4ac$ is called the **discriminant** ($D$)."
     }
   ],
   "unlockThreshold": 0.9,

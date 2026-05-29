@@ -1,0 +1,9 @@
+{
+  "slug": "geometry-and-trigonometry",
+  "title": "Geometry and Trigonometry",
+  "order": 4,
+  "concepts": [
+    "concepts/coordinate-geometry/concept.json",
+    "concepts/trigonometric-functions/concept.json"
+  ]
+}

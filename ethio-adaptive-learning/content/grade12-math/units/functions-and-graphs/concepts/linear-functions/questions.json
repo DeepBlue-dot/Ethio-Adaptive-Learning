@@ -3,50 +3,210 @@
     "slug": "identify-slope-practice",
     "usage": "PRACTICE",
     "difficulty": "EASY",
-    "content": "If `f(x) = 2x + 3`, what is the slope of the line?",
+    "content": "If $f(x) = 2x + 3$, what is the slope of the line?",
     "correctAnswer": "2",
-    "distractors": ["3", "-2", "5"],
-    "hintText": "The slope is the coefficient of `x`.",
-    "explanation": "In slope-intercept form, the coefficient of `x` is the slope."
+    "distractors": [
+      "3",
+      "-2",
+      "5"
+    ],
+    "hintText": "The slope is the coefficient of $x$.",
+    "explanation": "In slope-intercept form, the coefficient of $x$ is the slope."
   },
   {
     "slug": "compare-linear-rates-practice",
     "usage": "PRACTICE",
     "difficulty": "MEDIUM",
-    "content": "Which function has the greater rate of change: `f(x) = 4x - 1` or `g(x) = 2x + 9`?",
-    "correctAnswer": "f(x) = 4x - 1",
-    "distractors": ["g(x) = 2x + 9", "They have the same rate", "Cannot be determined"],
-    "hintText": "Compare the coefficients of `x`.",
-    "explanation": "`f` has slope `4` and `g` has slope `2`, so `f` has the greater rate of change."
+    "content": "Which function has the greater rate of change: $f(x) = 4x - 1$ or $g(x) = 2x + 9$?",
+    "correctAnswer": "$f(x) = 4x - 1$",
+    "distractors": [
+      "$g(x) = 2x + 9$",
+      "They have the same rate",
+      "Cannot be determined"
+    ],
+    "hintText": "Compare the coefficients of $x$.",
+    "explanation": "$f$ has slope $4$ and $g$ has slope $2$, so $f$ has the greater rate of change."
+  },
+  {
+    "slug": "parallel-slope-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "What is the slope of a line parallel to $y = -5x + 8$?",
+    "correctAnswer": "$-5$",
+    "distractors": [
+      "$5$",
+      "$1/5$",
+      "$-1/5$"
+    ],
+    "hintText": "Parallel lines have the same slope.",
+    "explanation": "Since parallel lines never meet, they must have the exact same steepness (slope)."
+  },
+  {
+    "slug": "perpendicular-slope-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find the slope of a line perpendicular to $y = \\frac{2}{3}x - 4$.",
+    "correctAnswer": "$-\\frac{3}{2}$",
+    "distractors": [
+      "$\\frac{2}{3}$",
+      "$\\frac{3}{2}$",
+      "$-\\frac{2}{3}$"
+    ],
+    "hintText": "Perpendicular slopes are negative reciprocals.",
+    "explanation": "Flip the fraction and change the sign: $\\frac{2}{3} \\to -\\frac{3}{2}$."
+  },
+  {
+    "slug": "horizontal-line-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the slope of the horizontal line $y = 7$?",
+    "correctAnswer": "$0$",
+    "distractors": [
+      "$1$",
+      "$7$",
+      "Undefined"
+    ],
+    "hintText": "How much does $y$ change as $x$ increases?",
+    "explanation": "A horizontal line has no vertical change, so the slope is 0."
+  },
+  {
+    "slug": "vertical-line-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "What is the slope of the vertical line $x = -2$?",
+    "correctAnswer": "Undefined",
+    "distractors": [
+      "$0$",
+      "$-2$",
+      "$1$"
+    ],
+    "hintText": "Can you divide by zero change in $x$?",
+    "explanation": "Vertical lines have zero horizontal change. Division by zero is undefined."
+  },
+  {
+    "slug": "point-slope-conversion-practice",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Convert $y - 4 = 2(x + 1)$ to slope-intercept form.",
+    "correctAnswer": "$y = 2x + 6$",
+    "distractors": [
+      "$y = 2x + 4$",
+      "$y = 2x + 2$",
+      "$y = 2x + 5$"
+    ],
+    "hintText": "Distribute the $2$ and add $4$ to both sides.",
+    "explanation": "$y - 4 = 2x + 2 \\implies y = 2x + 6$."
+  },
+  {
+    "slug": "intercept-from-eq-practice",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the $y$-intercept of $3x + y = 12$.",
+    "correctAnswer": "$12$",
+    "distractors": [
+      "$3$",
+      "$4$",
+      "$-3$"
+    ],
+    "hintText": "Set $x = 0$ and solve for $y$.",
+    "explanation": "$3(0) + y = 12 \\implies y = 12$."
   },
   {
     "slug": "identify-intercept-checkpoint",
     "usage": "CHECKPOINT",
     "difficulty": "MEDIUM",
-    "content": "If `f(x) = 2x + 3`, what is the `y`-intercept?",
+    "content": "If $f(x) = 2x + 3$, what is the $y$-intercept?",
     "correctAnswer": "3",
-    "distractors": ["2", "-3", "5"],
-    "hintText": "The intercept is the constant term in `f(x) = mx + b`.",
-    "explanation": "The line crosses the `y`-axis at the constant term, so the intercept is `3`."
+    "distractors": [
+      "2",
+      "-3",
+      "5"
+    ],
+    "hintText": "The intercept is the constant term in $f(x) = mx + b$.",
+    "explanation": "The line crosses the $y$-axis at the constant term, so the intercept is $3$."
   },
   {
     "slug": "build-linear-equation-checkpoint",
     "usage": "CHECKPOINT",
     "difficulty": "MEDIUM",
-    "content": "A line has slope `-3` and y-intercept `5`. Which equation matches it?",
-    "correctAnswer": "y = -3x + 5",
-    "distractors": ["y = 5x - 3", "y = 3x + 5", "y = -5x + 3"],
-    "hintText": "Use `y = mx + b`.",
-    "explanation": "With slope `m = -3` and intercept `b = 5`, the equation is `y = -3x + 5`."
+    "content": "A line has slope $-3$ and y-intercept $5$. Which equation matches it?",
+    "correctAnswer": "$y = -3x + 5$",
+    "distractors": [
+      "$y = 5x - 3$",
+      "$y = 3x + 5$",
+      "$y = -5x + 3$"
+    ],
+    "hintText": "Use $y = mx + b$.",
+    "explanation": "With slope $m = -3$ and intercept $b = 5$, the equation is $y = -3x + 5$."
+  },
+  {
+    "slug": "slope-from-two-points-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Find the slope of the line passing through $(1, 2)$ and $(3, 10)$.",
+    "correctAnswer": "$4$",
+    "distractors": [
+      "$2$",
+      "$8$",
+      "$0.5$"
+    ],
+    "hintText": "Use $m = \\frac{y_2 - y_1}{x_2 - x_1}$.",
+    "explanation": "$(10 - 2) / (3 - 1) = 8 / 2 = 4$."
   },
   {
     "slug": "evaluate-linear-function-exam",
     "usage": "EXAM",
     "difficulty": "MEDIUM",
-    "content": "Find the value of `f(2)` when `f(x) = 2x + 3`.",
+    "content": "Find the value of $f(2)$ when $f(x) = 2x + 3$.",
     "correctAnswer": "7",
-    "distractors": ["5", "4", "6"],
-    "hintText": "Substitute `2` for `x`.",
-    "explanation": "Substituting gives `f(2) = 2(2) + 3 = 7`."
+    "distractors": [
+      "5",
+      "4",
+      "6"
+    ],
+    "hintText": "Substitute $2$ for $x$.",
+    "explanation": "Substituting gives $f(2) = 2(2) + 3 = 7$."
+  },
+  {
+    "slug": "linear-modeling-exam",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "A taxi charges a base fee of $10$ plus $2$ per km. If the total fare is $30$, how many km was the trip?",
+    "correctAnswer": "$10$",
+    "distractors": [
+      "$20$",
+      "$15$",
+      "$8$"
+    ],
+    "hintText": "Solve $2x + 10 = 30$.",
+    "explanation": "$2x = 20 \\implies x = 10$."
+  },
+  {
+    "slug": "linear-inequality-exam",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "For which values of $x$ is $3x - 5 > 7$?",
+    "correctAnswer": "$x > 4$",
+    "distractors": [
+      "$x < 4$",
+      "$x > 2/3$",
+      "$x < -4$"
+    ],
+    "hintText": "Treat the inequality like an equation.",
+    "explanation": "$3x > 12 \\implies x > 4$."
+  },
+  {
+    "slug": "linear-system-exam",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Where do the lines $y = x + 1$ and $y = -x + 5$ intersect?",
+    "correctAnswer": "$(2, 3)$",
+    "distractors": [
+      "$(3, 2)$",
+      "$(1, 2)$",
+      "$(4, 5)$"
+    ],
+    "hintText": "Set the equations equal to each other.",
+    "explanation": "$x + 1 = -x + 5 \\implies 2x = 4 \\implies x = 2$. Then $y = 2 + 1 = 3$."
   }
 ]

@@ -1004,6 +1004,7 @@ export async function getStudentConceptDetail(
       },
       take: 5,
       select: {
+        id: true,
         activityType: true,
         isCorrect: true,
         createdAt: true,
@@ -1194,6 +1195,7 @@ export async function getStudentConceptDetail(
     analyticsSnapshot: {
       ...analytics,
       recentActivityFeed: recentActivity.map((activity) => ({
+        id: activity.id.toString(),
         activityType: activity.activityType,
         isCorrect: activity.isCorrect,
         timestamp: activity.createdAt.toISOString(),

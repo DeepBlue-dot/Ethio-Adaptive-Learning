@@ -1,0 +1,34 @@
+{
+  "slug": "descriptive-statistics",
+  "title": "Descriptive Statistics",
+  "description": "Learn how to summarize and describe the features of a dataset using measures of central tendency and dispersion.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.75,
+  "pLo": 0.2,
+  "pT": 0.1,
+  "pG": 0.25,
+  "pS": 0.1,
+  "decayLambda": 0.03,
+  "prerequisites": [],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Central Tendency"
+    },
+    {
+      "type": "paragraph",
+      "text": "Measures of central tendency help us find the 'middle' or 'typical' value of a dataset. The most common measures are the **Mean**, **Median**, and **Mode**."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Measures of Dispersion"
+    },
+    {
+      "type": "paragraph",
+      "text": "Dispersion describes how spread out the data is. Key measures include the **Range**, **Variance**, and **Standard Deviation**."
+    }
+  ]
+}

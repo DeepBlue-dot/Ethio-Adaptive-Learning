@@ -1,0 +1,10 @@
+{
+  "slug": "statistics-and-probability",
+  "title": "Statistics and Probability",
+  "order": 3,
+  "concepts": [
+    "concepts/descriptive-statistics/concept.json",
+    "concepts/probability-distributions/concept.json",
+    "concepts/probability-theory/concept.json"
+  ]
+}

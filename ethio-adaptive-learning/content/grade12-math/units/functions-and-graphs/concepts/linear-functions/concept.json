@@ -5,6 +5,11 @@
   "overview": "overview.md",
   "contentBlocks": [
     {
+      "id": "linear-mastery-snippet",
+      "type": "snippet",
+      "slug": "mastery-formula"
+    },
+    {
       "id": "linear-content-heading",
       "type": "heading",
       "level": 2,
@@ -15,6 +20,12 @@
       "type": "paragraph",
       "title": "Core idea",
       "text": "A linear function has a constant rate of change. The coefficient of x tells you how quickly the output changes, and the constant term tells you where the line begins on the y-axis."
+    },
+    {
+      "id": "linear-sim",
+      "type": "phet",
+      "assetId": "math-sim-001",
+      "title": "Explore slope and intercept"
     },
     {
       "id": "linear-content-video",

@@ -202,7 +202,7 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
               <div className="space-y-3">
                 {concept.analyticsSnapshot.recentActivityFeed.map((activity) => (
                   <div
-                    key={`${activity.activityType}-${activity.timestamp}`}
+                    key={activity.id}
                     className="rounded-lg border border-outline-variant/50 p-3 text-sm"
                   >
                     <p className="font-semibold text-on-surface">{activity.activityType.replaceAll("_", " ")}</p>

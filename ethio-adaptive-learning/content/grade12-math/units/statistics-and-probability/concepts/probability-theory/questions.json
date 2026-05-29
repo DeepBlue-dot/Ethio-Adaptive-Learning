@@ -1,0 +1,100 @@
+[
+  {
+    "slug": "prob-complement-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "If the probability of rain is $0.3$, what is the probability of no rain?",
+    "correctAnswer": "$0.7$",
+    "distractors": [
+      "$0.3$",
+      "$1.0$",
+      "$0.5$"
+    ],
+    "hintText": "Use the complement rule: $P(A') = 1 - P(A)$.",
+    "explanation": "$1 - 0.3 = 0.7$."
+  },
+  {
+    "slug": "prob-independent-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Events $A$ and $B$ are independent. If $P(A) = 0.5$ and $P(B) = 0.4$, find $P(A \\cap B)$.",
+    "correctAnswer": "$0.2$",
+    "distractors": [
+      "$0.9$",
+      "$0.1$",
+      "$0.5$"
+    ],
+    "hintText": "For independent events, $P(A \\cap B) = P(A) \\times P(B)$.",
+    "explanation": "$0.5 \\times 0.4 = 0.2$."
+  },
+  {
+    "slug": "prob-mutually-exclusive-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "If $A$ and $B$ are mutually exclusive, what is $P(A \\cap B)$?",
+    "correctAnswer": "$0$",
+    "distractors": [
+      "$1$",
+      "$0.5$",
+      "$P(A) + P(B)$"
+    ],
+    "hintText": "Mutually exclusive means they cannot happen at the same time.",
+    "explanation": "By definition, the intersection of mutually exclusive events is the empty set, with probability 0."
+  },
+  {
+    "slug": "prob-conditional-practice-4",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find $P(A|B)$ if $P(A \\cap B) = 0.15$ and $P(B) = 0.5$.",
+    "correctAnswer": "$0.3$",
+    "distractors": [
+      "$0.65$",
+      "$0.075$",
+      "$0.1$"
+    ],
+    "hintText": "Use $P(A|B) = \\frac{P(A \\cap B)}{P(B)}$.",
+    "explanation": "$0.15 / 0.5 = 0.3$."
+  },
+  {
+    "slug": "prob-union-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Find $P(A \\cup B)$ if $P(A) = 0.6$, $P(B) = 0.3$, and $P(A \\cap B) = 0.1$.",
+    "correctAnswer": "$0.8$",
+    "distractors": [
+      "$0.9$",
+      "$1.0$",
+      "$0.7$"
+    ],
+    "hintText": "Use the addition rule: $P(A \\cup B) = P(A) + P(B) - P(A \\cap B)$.",
+    "explanation": "$0.6 + 0.3 - 0.1 = 0.8$."
+  },
+  {
+    "slug": "prob-exam-venn",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "In a group of $100$ students, $60$ like math, $40$ like science, and $20$ like both. What is the probability a random student likes NEITHER?",
+    "correctAnswer": "$0.2$",
+    "distractors": [
+      "$0.8$",
+      "$0.1$",
+      "$0$"
+    ],
+    "hintText": "Find the union first, then find the complement.",
+    "explanation": "Union (Math OR Science) $= 60 + 40 - 20 = 80$. Neither $= 100 - 80 = 20$. Probability $= 20/100 = 0.2$."
+  },
+  {
+    "slug": "prob-exam-conditional-logic",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "If $P(A) = 0.4$, $P(B) = 0.5$ and $P(A \\cup B) = 0.7$, are $A$ and $B$ independent?",
+    "correctAnswer": "Yes",
+    "distractors": [
+      "No",
+      "Not enough info",
+      "Only if mutually exclusive"
+    ],
+    "hintText": "Calculate $P(A \\cap B)$ using the addition rule, then check if it equals $P(A) \\times P(B)$.",
+    "explanation": "$P(A \\cap B) = 0.4 + 0.5 - 0.7 = 0.2$. Since $P(A) \\times P(B) = 0.4 \\times 0.5 = 0.2$, they are independent."
+  }
+]

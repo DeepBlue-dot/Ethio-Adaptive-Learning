@@ -1,0 +1,72 @@
+[
+  {
+    "slug": "integ-power-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Evaluate $\\int x^2 dx$.",
+    "correctAnswer": "$\\frac{x^3}{3} + C$",
+    "distractors": [
+      "$2x + C$",
+      "$3x^3 + C$",
+      "$\\frac{x^2}{2} + C$"
+    ],
+    "hintText": "Use the power rule for integration: $\\frac{x^{n+1}}{n+1}$.",
+    "explanation": "$n=2 \\implies \\frac{x^{2+1}}{2+1} = \\frac{x^3}{3}$."
+  },
+  {
+    "slug": "integ-constant-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Evaluate $\\int 5 dx$.",
+    "correctAnswer": "$5x + C$",
+    "distractors": [
+      "$5 + C$",
+      "$0$",
+      "$x^5 + C$"
+    ],
+    "hintText": "The integral of a constant $k$ is $kx$.",
+    "explanation": "Integrating 5 with respect to x gives 5x plus the constant of integration."
+  },
+  {
+    "slug": "integ-sum-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Evaluate $\\int (2x + 3) dx$.",
+    "correctAnswer": "$x^2 + 3x + C$",
+    "distractors": [
+      "$2x^2 + 3x + C$",
+      "$x^2 + C$",
+      "$2 + C$"
+    ],
+    "hintText": "Integrate each term separately.",
+    "explanation": "$\\int 2x dx = x^2$; $\\int 3 dx = 3x$."
+  },
+  {
+    "slug": "integ-definite-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Evaluate $\\int_0^1 2x dx$.",
+    "correctAnswer": "1",
+    "distractors": [
+      "0",
+      "2",
+      "0.5"
+    ],
+    "hintText": "Find the antiderivative and evaluate at 1 and 0.",
+    "explanation": "$[x^2]_0^1 = 1^2 - 0^2 = 1$."
+  },
+  {
+    "slug": "integ-exam-area",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "Find the area under the curve $y = x^2$ from $x = 0$ to $x = 3$.",
+    "correctAnswer": "9",
+    "distractors": [
+      "3",
+      "27",
+      "4.5"
+    ],
+    "hintText": "Calculate the definite integral $\\int_0^3 x^2 dx$.",
+    "explanation": "$[x^3/3]_0^3 = 27/3 - 0 = 9$."
+  }
+]

@@ -58,7 +58,7 @@ async function main() {
     }
   })
 
-  await simulateActivity(prisma, students, conceptIds)
+  await simulateActivity(prisma, students, conceptIds, { admin, writers })
   
   console.info("--- FINALIZING AUDIT ---")
   await prisma.activityLog.createMany({

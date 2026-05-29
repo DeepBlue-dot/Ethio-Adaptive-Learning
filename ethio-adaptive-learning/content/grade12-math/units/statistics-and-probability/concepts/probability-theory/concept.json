@@ -1,0 +1,36 @@
+{
+  "slug": "probability-theory",
+  "title": "Probability Theory",
+  "description": "Master the laws of probability, including independent events, conditional probability, and Bayes' Theorem.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.15,
+  "pT": 0.1,
+  "pG": 0.25,
+  "pS": 0.1,
+  "decayLambda": 0.04,
+  "prerequisites": [
+    "statistics-and-probability/descriptive-statistics"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Laws of Probability"
+    },
+    {
+      "type": "paragraph",
+      "text": "Probability measures the likelihood of an event occurring. For any event $A$, $0 \\le P(A) \\le 1$. The complement rule states that $P(A') = 1 - P(A)$."
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Conditional Probability"
+    },
+    {
+      "type": "paragraph",
+      "text": "The probability of event $A$ occurring given that $B$ has already occurred is: \\n\\n$$P(A|B) = \\frac{P(A \\cap B)}{P(B)}$$"
+    }
+  ]
+}

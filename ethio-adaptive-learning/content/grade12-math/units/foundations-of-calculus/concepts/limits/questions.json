@@ -5,7 +5,11 @@
     "difficulty": "MEDIUM",
     "content": "For `f(x) = x^2`, what value does the function approach as `x` approaches `2`?",
     "correctAnswer": "4",
-    "distractors": ["2", "0", "8"],
+    "distractors": [
+      "2",
+      "0",
+      "8"
+    ],
     "hintText": "The function is continuous, so direct substitution works.",
     "explanation": "Because `f(x) = x^2` is continuous, the limit is `2^2 = 4`."
   },
@@ -15,7 +19,11 @@
     "difficulty": "EASY",
     "content": "Find `\\lim_{x \\to 5} (x + 4)`.",
     "correctAnswer": "9",
-    "distractors": ["5", "4", "1"],
+    "distractors": [
+      "5",
+      "4",
+      "1"
+    ],
     "hintText": "This is a continuous function.",
     "explanation": "Substitute `x = 5`: `5 + 4 = 9`."
   },
@@ -25,7 +33,11 @@
     "difficulty": "MEDIUM",
     "content": "Find `\\lim_{x \\to 1} (3x^2 - 2x + 6)`.",
     "correctAnswer": "7",
-    "distractors": ["6", "5", "9"],
+    "distractors": [
+      "6",
+      "5",
+      "9"
+    ],
     "hintText": "Use direct substitution for a polynomial.",
     "explanation": "`3(1)^2 - 2(1) + 6 = 3 - 2 + 6 = 7`."
   },
@@ -35,7 +47,11 @@
     "difficulty": "HARD",
     "content": "Find `\\lim_{x \\to 2} x^2`.",
     "correctAnswer": "4",
-    "distractors": ["2", "0", "8"],
+    "distractors": [
+      "2",
+      "0",
+      "8"
+    ],
     "hintText": "Substitute `2` into the expression because the function is continuous.",
     "explanation": "Because `x^2` is continuous, the limit at `x = 2` is `2^2 = 4`."
   }

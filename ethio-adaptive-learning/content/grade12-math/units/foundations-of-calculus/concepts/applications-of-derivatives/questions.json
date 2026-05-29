@@ -1,0 +1,100 @@
+[
+  {
+    "slug": "apps-stationary-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Where is the stationary point of $f(x) = x^2 - 4x$?",
+    "correctAnswer": "$x = 2$",
+    "distractors": [
+      "$x = 4$",
+      "$x = 0$",
+      "$x = -2$"
+    ],
+    "hintText": "Solve $f'(x) = 0$.",
+    "explanation": "$f'(x) = 2x - 4$. Setting $2x - 4 = 0$ gives $x = 2$."
+  },
+  {
+    "slug": "apps-increasing-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "On which interval is $f(x) = 3x^2$ increasing?",
+    "correctAnswer": "$x > 0$",
+    "distractors": [
+      "$x < 0$",
+      "All real numbers",
+      "Never"
+    ],
+    "hintText": "A function increases when its derivative is positive ($f'(x) > 0$).",
+    "explanation": "$f'(x) = 6x$. $6x > 0$ when $x > 0$."
+  },
+  {
+    "slug": "apps-nature-practice-3",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "If $f''(x) > 0$ at a stationary point, that point is a:",
+    "correctAnswer": "Local minimum",
+    "distractors": [
+      "Local maximum",
+      "Point of inflection",
+      "Asymptote"
+    ],
+    "hintText": "Recall the second derivative test.",
+    "explanation": "A positive second derivative means the curve is concave up, so the stationary point is a minimum."
+  },
+  {
+    "slug": "apps-inflection-practice-4",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find the $x$-coordinate of the point of inflection for $f(x) = x^3 - 3x^2$.",
+    "correctAnswer": "$1$",
+    "distractors": [
+      "$0$",
+      "$2$",
+      "$3$"
+    ],
+    "hintText": "Solve $f''(x) = 0$.",
+    "explanation": "$f'(x) = 3x^2 - 6x$, $f''(x) = 6x - 6$. $6x - 6 = 0 \\implies x = 1$."
+  },
+  {
+    "slug": "apps-checkpoint-stationary",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "Find the coordinates of the stationary point for $y = x^2 + 10x$.",
+    "correctAnswer": "$(-5, -25)$",
+    "distractors": [
+      "$(5, 75)$",
+      "$(-5, 0)$",
+      "$(0, 0)$"
+    ],
+    "hintText": "Find $x$ where $y'=0$, then plug $x$ into the original $y$.",
+    "explanation": "$y' = 2x + 10 = 0 \\implies x = -5$. $y = (-5)^2 + 10(-5) = 25 - 50 = -25$."
+  },
+  {
+    "slug": "apps-exam-optimization",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "The sum of two numbers is $20$. Find the numbers if their product is a maximum.",
+    "correctAnswer": "$10$ and $10$",
+    "distractors": [
+      "$5$ and $15$",
+      "$8$ and $12$",
+      "$0$ and $20$"
+    ],
+    "hintText": "Let the numbers be $x$ and $20-x$. Maximize $P(x) = x(20-x)$.",
+    "explanation": "$P'(x) = 20 - 2x = 0 \\implies x = 10$. Both numbers are 10."
+  },
+  {
+    "slug": "apps-exam-velocity",
+    "usage": "EXAM",
+    "difficulty": "HARD",
+    "content": "When is a particle at rest if its position is $s(t) = t^2 - 6t + 5$?",
+    "correctAnswer": "$t = 3$",
+    "distractors": [
+      "$t = 6$",
+      "$t = 0$",
+      "$t = 5$"
+    ],
+    "hintText": "A particle is at rest when its velocity (derivative of position) is 0.",
+    "explanation": "$v(t) = s'(t) = 2t - 6$. $2t - 6 = 0 \\implies t = 3$."
+  }
+]

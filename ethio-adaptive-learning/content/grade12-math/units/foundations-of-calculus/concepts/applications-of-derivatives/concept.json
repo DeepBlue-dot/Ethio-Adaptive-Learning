@@ -1,0 +1,51 @@
+{
+  "slug": "applications-of-derivatives",
+  "title": "Applications of Derivatives",
+  "description": "Learn how to use derivatives to find stationary points, determine intervals of increase and decrease, and solve optimization problems.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.1,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.05,
+  "prerequisites": [
+    "foundations-of-calculus/differentiation"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Stationary Points"
+    },
+    {
+      "type": "paragraph",
+      "text": "A stationary point occurs where the derivative of a function is zero: $f'(x) = 0$. These points can be local maxima, local minima, or points of inflection."
+    },
+    {
+      "id": "deriv-sim",
+      "type": "phet",
+      "assetId": "math-sim-derivative",
+      "title": "Calculus Grapher"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "Optimization"
+    },
+    {
+      "type": "paragraph",
+      "text": "Optimization involves finding the maximum or minimum value of a function within a given domain, which is a key application in physics and economics."
+    }
+  ],
+  "chunks": [],
+  "workedExamples": [
+    {
+      "slug": "finding-maxima",
+      "title": "Finding a local maximum",
+      "order": 1,
+      "file": "worked-examples/maxima.md"
+    }
+  ]
+}
