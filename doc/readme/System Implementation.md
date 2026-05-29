@@ -144,21 +144,39 @@ async function loadCurriculumContext(conceptId: string) {
 
 #### 5.3.2.4. Knowledge Structure Subsystem (KST Engine)
 
-The Knowledge Structure Subsystem is responsible for building and maintaining the curriculum's Directed Acyclic Graph (DAG). It calculates the **Transitive Closure** of prerequisites to ensure that unlocking logic is computationally efficient.
+The Knowledge Structure Subsystem is responsible for building and maintaining the curriculum's **Directed Acyclic Graph (DAG)**. Based on **Knowledge Space Theory (KST)**, it ensures that students progress through concepts in a pedagogically sound sequence.
+
+*   **Graph Basis**: Every concept is a node, and every prerequisite is a directed edge. To enable high-performance unlocking logic, we avoid recursive queries at runtime by maintaining a **Transitive Closure** of the graph.
+*   **Transitive Closure Algorithm**: We implemented a specialized **Breadth-First Search (BFS)** algorithm that maps every concept to every reachable ancestor and descendant. This mapping is stored in the `ConceptClosure` table, effectively acting as a materialized view of the entire prerequisite lineage.
+*   **Performance Strategy**: By pre-calculating the closure, we can resolve multi-level prerequisite trees (e.g., "Concept C needs B, which needs A") in a single, non-recursive database query. This ensures sub-100ms response times for the student's curriculum map, even as the number of Grade 12 concepts grows.
 
 ```typescript
 // lib/curriculum-state.ts - Transitive Closure Algorithm
 
 export function buildConceptClosureRows(conceptIds: string[], directEdges: CurriculumEdge[]) {
+  // 1. Build adjacency list for efficient traversal
+  const adjacency = new Map<string, string[]>()
+  for (const edge of directEdges) {
+    const dependents = adjacency.get(edge.prerequisiteConceptId) ?? []
+    dependents.push(edge.dependentConceptId)
+    adjacency.set(edge.prerequisiteConceptId, dependents)
+  }
+
   const rows: ClosureRow[] = []
   for (const ancestorId of conceptIds) {
-    // Breadth-First Search to find all reachable descendants
+    // 2. BFS to map all reachable descendants and their relative depth
+    const visitedDepths = new Map<string, number>([[ancestorId, 0]])
     const queue = [{ id: ancestorId, depth: 0 }]
+    
     while (queue.length) {
-      const current = queue.shift()
-      rows.push({ ancestorId, descendantId: current.id, depth: current.depth })
-      for (const nextId of adjacency.get(current.id)) {
-        queue.push({ id: nextId, depth: current.depth + 1 })
+      const current = queue.shift()!
+      rows.push({ ancestorConceptId: ancestorId, descendantConceptId: current.id, depth: current.depth })
+      
+      for (const nextId of adjacency.get(current.id) ?? []) {
+        if (!visitedDepths.has(nextId) || visitedDepths.get(nextId)! > current.depth + 1) {
+          visitedDepths.set(nextId, current.depth + 1)
+          queue.push({ id: nextId, depth: current.depth + 1 })
+        }
       }
     }
   }
@@ -166,25 +184,80 @@ export function buildConceptClosureRows(conceptIds: string[], directEdges: Curri
 }
 ```
 
-#### 5.3.2.5. Gamification and Engagement Logic
-
-To enhance motivation, we implemented an XP and Leveling system. Every learning activity (Practice, Checkpoint, Exam) awards points, which are then used to derive the student's level via a mathematical threshold.
+*   **Unlocking Logic**: The engine determines if a concept is in the **FRINGE** state (ready for learning) by filtering the ancestor map against the `UserMastery` table. A concept is only unlocked if every ancestor in its prerequisite path has met the required mastery threshold.
 
 ```typescript
-// lib/gamification/xp.ts - Progression Math
+// lib/curriculum-state.ts - Status Derivation
 
-const XP_MAP = {
-  PRACTICE_COMPLETE: 5,
-  CHECKPOINT_PASS: 15,
-  EXAM_PASS: 50,
-  DAILY_STREAK: 10,
-}
+export function deriveConceptStatusFromClosure({ concept, masteryByConceptId, ancestors }) {
+  // Find all prerequisites that have not yet met the unlock threshold
+  const unmetPrerequisites = ancestors
+    .map(ancestor => ({
+      ...ancestor,
+      currentMastery: masteryByConceptId.get(ancestor.conceptId)?.pMastery ?? 0
+    }))
+    .filter(p => p.currentMastery < concept.unlockThreshold)
 
-export function computeLevelFromXp(totalXp: number) {
-  // Simple level thresholds: every 100 XP = 1 level increment
-  return Math.max(1, Math.floor(totalXp / 100) + 1)
+  // A concept is unlocked if all its prerequisite nodes are mastered
+  const unlocked = unmetPrerequisites.length === 0
+  return { 
+    status: unlocked ? "FRINGE" : "LOCKED", 
+    unlocked, 
+    unmetPrerequisites 
+  }
 }
 ```
+
+
+#### 5.3.2.5. Gamification and Engagement Logic
+
+To address the specific objective of enhancing student engagement, we implemented a comprehensive gamification layer that uses behavioral mechanics to incentivize daily learning habits and active participation.
+
+*   **XP Reward System**: Learning activities are mapped to specific Experience Point (XP) values. We distinguish between "Passive" consumption (e.g., reading content) and "Active" mastery (e.g., passing a high-stakes exam).
+
+```typescript
+// lib/gamification/xp.ts - Reward Map
+
+const XP_MAP = {
+  CONTENT_READ: 2,          // Passive consumption
+  SOCRATIC_HINT_USED: 1,    // Encourages AI interaction
+  PRACTICE_COMPLETE: 5,     // Standard learning loop
+  CHECKPOINT_PASS: 15,      // Formative assessment success
+  EXAM_PASS: 50,            // Summative mastery milestone
+  DAILY_STREAK: 10,         // Consistency reward
+}
+```
+
+*   **Leveling Progression**: The platform uses a linear leveling formula ($Level = \lfloor TotalXP \div 100 \rfloor + 1$). This ensures that students receive frequent, predictable feedback on their growth, particularly during the early stages of their exam preparation.
+*   **Daily Streak Engine**: To combat the "forgetting curve," we implemented a daily activity tracker. The engine uses UTC date math to determine if a student is continuing a streak, already recorded for the day, or has missed a day (resulting in a streak reset).
+
+```typescript
+// lib/gamification/streak.ts - Consistency Tracking
+
+export async function recordDailyActivity(userId: string) {
+  const profile = await prisma.userProfile.findUnique({ where: { userId } })
+  const lastLogin = profile?.lastLogin ?? new Date(0)
+  
+  // Normalize dates to start of day for comparison
+  const today = new Date().setHours(0,0,0,0)
+  const yesterday = new Date(Date.now() - MS_PER_DAY).setHours(0,0,0,0)
+  const lastActivity = new Date(lastLogin).setHours(0,0,0,0)
+
+  if (lastActivity === yesterday) {
+    // Continuing streak: Increment and reward
+    return prisma.userProfile.update({
+      where: { userId },
+      data: { dailyStreak: { increment: 1 }, totalXP: { increment: XP_MAP.DAILY_STREAK } }
+    })
+  } else if (lastActivity < yesterday) {
+    // Missed a day: Reset streak to 1
+    return prisma.userProfile.update({ where: { userId }, data: { dailyStreak: 1 } })
+  }
+}
+```
+
+*   **Milestone Badges**: An idempotent "Check-and-Award" pattern is used to grant badges for XP thresholds (Bronze: 500 XP, Silver: 1500 XP, Gold: 5000 XP) and long-term consistency (7-day and 30-day streaks). Awarded badges are persisted in the `ActivityLog` to ensure they are only granted once.
+
 
 #### 5.3.2.6. Learning Analytics and Mastery Monitoring
 

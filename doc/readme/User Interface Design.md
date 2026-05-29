@@ -71,44 +71,58 @@ The platform’s visual identity is designed to be modern, professional, and acc
 
 ## 5. Administrative and Content Authoring UI
 
-The administrator and course writer interface, known as **EthioPrep Studio**, is designed as a professional content production suite. It prioritizes data visibility and efficient curriculum orchestration.
+The administrator and course writer interface, known as **EthioPrep Studio**, is designed as a professional content production suite. It prioritizes data visibility, rapid orchestration, and a premium "Mission Control" aesthetic.
 
-### 5.1. Studio Portal (The Control Center)
-The top-level entry for staff, providing a high-level overview of system health.
-*   **Module Navigation**: Uses high-fidelity `ModuleCard` components for broad navigation to Curriculum, Intelligence, Assets, and Governance.
-*   **System Status**: A real-time heartbeat indicator showing the status of the adaptive engine and server infrastructure.
-*   **Quick Actions**: A dedicated grid for common tasks (e.g., "Write Assessment", "Upload Media") to bypass deep navigation.
+### 5.1. Studio Portal (The Launchpad)
+The top-level entry for staff, providing a high-level overview of system status and modular navigation.
+*   **Hero / System Pulse**: Features a real-time heartbeat indicator showing system operational status and a personalized greeting.
+*   **Modular Navigation**: Utilizes high-fidelity `ModuleCard` components for broad navigation to the platform's core subsystems:
+    *   **Curriculum**: The gateway to the Studio and curriculum orchestration.
+    *   **Intelligence**: Real-time pedagogical health and adaptive engine diagnostics.
+    *   **Asset Library**: Centralized repository for all instructional media.
+    *   **Governance**: Oversight for compliance, audit trails, and security.
+*   **Quick Actions**: A dedicated grid for bypassing deep navigation to perform common tasks (e.g., "Create New Course", "Write Assessment").
 
-### 5.2. Curriculum Explorer
-A dedicated tool for managing the platform's knowledge graph.
-*   **Visual Tree Hierarchy**: An interactive, nested list of Courses, Units, and Concepts.
-*   **Direct CRUD Access**: Integrated buttons within the tree to add or remove nodes at any level (Course, Unit, or Concept).
-*   **Status Synchronization**: Real-time badges showing the publication state (Draft vs. Live) of every node in the graph.
+### 5.2. Studio & Curriculum Orchestration
+The primary workspace for developing and maintaining the Grade 12 curriculum graph.
+*   **Studio Dashboard (Production Pipeline)**:
+    *   **Publishing Pulse**: Advanced data visualizations showing concept maturity, content density, and draft velocity.
+    *   **Course Project Cards**: Detailed tracking for each subject, showing publication percentages and author activity.
+*   **Curriculum Explorer**:
+    *   **Interactive Tree**: A nested, visual representation of the Course → Unit → Concept hierarchy.
+    *   **Direct Actions**: Integrated buttons for managing nodes (Add/Remove) directly from the map.
+*   **Concept Builder (WYSIWYG Editor)**:
+    *   **Modular Canvas**: A drag-and-drop workspace for building lessons with interactive blocks (LaTeX, Simulations, Media).
+    *   **Responsive Multi-Preview**: Instantly toggle between Desktop, Tablet, and Mobile views to ensure content fidelity.
+    *   **Block Inspector**: Contextual property panels for fine-tuning adaptive BKT parameters and pedagogical metadata.
 
-### 5.3. Studio Dashboard (Production Pipeline)
-The workspace for active course development.
-*   **Publishing Pulse**: Visualizes concept maturity, content density, and draft velocity across all courses.
-*   **Project Cards**: High-density cards for each course showing its completion percentage, last activity, and primary author.
-*   **Control Center**: A specialized panel for each course providing direct access to the Concept Builder and Review Queue.
+### 5.3. Intelligence & Quality Engine
+A data-driven module for analyzing learning effectiveness and curriculum integrity.
+*   **Global Pulse**: High-level signals for active learners, average mastery trends, and curriculum integrity scores.
+*   **Actionable Workspaces**:
+    *   **Question Analytics**: Deep-dive into EHSLCE question success rates and discrimination indexes.
+    *   **Calibration Lab**: Technical interface for fine-tuning BKT priors based on live student performance data.
+    *   **Automated Auditing**: Identifies "Orphan Nodes" and "Struggle Points" where students are consistently failing.
 
-### 5.4. Concept Builder (The Authoring Engine)
-A state-of-the-art, block-based visual editor.
-*   **Concept Canvas**: A "What-You-See-Is-What-You-Get" (WYSIWYG) editing area where authors can drag and drop instructional modules.
-*   **Module Library**: A sliding shelf providing access to various content types:
-    *   **Text/Markdown**: For instructional narrative.
-    *   **LaTeX**: For mathematical formulas and equations.
-    *   **Interactive Simulations**: Integration with PhET labs.
-    *   **Media Assets**: Image and YouTube video embeds.
-*   **Block Inspector**: A context-aware sidebar that appears when a module is selected, allowing for precise control over adaptive parameters, hierarchy levels, and styling.
-*   **Responsive Previews**: A one-click toggle to simulate how content will appear on Mobile, Tablet, and Desktop devices.
+### 5.4. Resource & Asset Management
+A unified hub for managing instructional assets and reusable content snippets.
+*   **Unified Browser**: A high-performance grid for filtering and searching through images, video embeds, and text modules.
+*   **Bulk Operations**: A floating action bar for performing massive publication or deletion tasks across the library.
+*   **Resource Inspector**: A specialized sidebar for editing asset metadata and viewing usage cross-references.
+
+### 5.5. Platform & Infrastructure Governance
+Tools for managing the platform's technical foundation.
+*   **User & Role Management**: Advanced RBAC (Role-Based Access Control) interface for managing staff permissions and student accounts.
+*   **API & Security**: Control center for managing system secrets, security policies, and third-party integrations.
+*   **Regional Configuration**: Manages Grade 12 curriculum standards and regional localization settings.
 
 ---
 
-## 6. Implementation of Design Patterns
+## 6. Design Systems and Patterns
 
-The UI utilizes several advanced frontend patterns:
-*   **Glassmorphism**: Extensive use of semi-transparent surfaces with backdrop-blur effects to create a layered, "Mission Control" aesthetic.
-*   **Optimistic UI**: Server Actions are paired with local state updates to provide instant feedback during content authoring and mastery updates.
-*   **Hydration Safety**: A `Mount-First` rendering pattern is used in complex Studio components to ensure stable transitions between server-side pre-rendering and client-side interactivity.
-*   **Spring Animations**: All UI interactions (opening sidebars, dragging blocks, updating progress) use spring physics for a premium, tactile feel.
+The platform utilizes several advanced frontend patterns to maintain its premium feel:
+*   **Glassmorphism**: Semi-transparent, blurred layers (using `backdrop-blur`) to create depth and focus.
+*   **Atomic Components**: Consistent use of reusable primitives (`MasteryBar`, `StatusBadge`, `ActionLink`) across both Student and Admin domains.
+*   **Fluid Motion**: Leveraging **Framer Motion** for spring-based physics, staggered list entries, and micro-interactions that provide tactile feedback.
+*   **Mount-First Lifecycle**: Prevents hydration mismatches in complex interactive components by stabilizing the React tree before rendering dynamic elements.
 
