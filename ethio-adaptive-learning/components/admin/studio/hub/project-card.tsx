@@ -9,7 +9,6 @@ import {
   User,
   MoreVertical
 } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { type ProjectStats } from "@/lib/studio/builder-data"
 
 export function ProjectCard({ project }: { project: ProjectStats }) {

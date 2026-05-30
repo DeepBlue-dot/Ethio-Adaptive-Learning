@@ -10,13 +10,13 @@ import CtaFooter from '@/components/landing/cta-footer';
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-emerald-50/20 dark:from-slate-950 dark:via-slate-900/50 dark:to-slate-900/30 text-on-background font-body-md antialiased overflow-x-hidden relative">
+    <main className="min-h-screen bg-linear-to-br from-slate-50 via-blue-50/30 to-emerald-50/20 dark:from-slate-950 dark:via-slate-900/50 dark:to-slate-900/30 text-on-background font-body-md antialiased overflow-x-hidden relative">
       {/* Animated Background Elements */}
       <div className="fixed inset-0 pointer-events-none -z-10">
         {/* Large animated gradient blobs */}
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-400/10 to-blue-600/5 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-400/10 to-emerald-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-1/2 left-1/3 w-[300px] h-[300px] bg-gradient-to-r from-purple-400/5 to-pink-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+        <div className="absolute top-0 right-0 w-125 h-125 bg-linear-to-br from-blue-400/10 to-blue-600/5 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-0 left-0 w-100 h-100 bg-linear-to-tr from-emerald-400/10 to-emerald-600/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-1/2 left-1/3 w-75 h-75 bg-linear-to-r from-purple-400/5 to-pink-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
         
         {/* Floating dots grid */}
         <div className="absolute inset-0 opacity-30 dark:opacity-20">

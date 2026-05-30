@@ -155,7 +155,7 @@ export function RegisterForm() {
       ) : null}
 
       <Button
-        className="h-11 w-full rounded-xl text-sm bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg transform transition-all hover:scale-105"
+        className="h-11 w-full rounded-xl text-sm bg-linear-to-r from-blue-600 to-emerald-500 text-white shadow-lg transform transition-all hover:scale-105"
         type="submit"
         disabled={isPending}
       >

@@ -86,7 +86,7 @@ export function CmsList({
 
       <div className="rounded-[2rem] border border-border bg-slate-50 p-6 space-y-6">
         <div className="flex flex-wrap items-center gap-6">
-          <form onSubmit={handleSearch} className="relative flex-1 min-w-[300px]">
+          <form onSubmit={handleSearch} className="relative flex-1 min-w-75">
             <Search className="absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
@@ -222,7 +222,7 @@ export function CmsList({
                     >
                       <CheckSquare className="size-4" />
                     </button>
-                    <div className="flex-1 min-w-[280px]">
+                    <div className="flex-1 min-w-70">
                       <div className="flex flex-wrap items-center gap-3">
                         <Link 
                           href={`/admin/studio/${definition.key}/${item.id}`}

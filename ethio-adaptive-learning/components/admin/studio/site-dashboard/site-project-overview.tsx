@@ -2,7 +2,6 @@
 
 import Link from "next/link"
 import { ArrowUpRight, Eye, FilePlus2, RadioTower, Sparkles, LayoutGrid, Target, Zap } from "lucide-react"
-import { motion } from "framer-motion"
 
 import type { AwaitedSiteProjectData } from "./types"
 import { SiteProjectCard } from "./site-project-dashboard"

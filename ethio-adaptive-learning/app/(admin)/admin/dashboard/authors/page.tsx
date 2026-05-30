@@ -32,7 +32,7 @@ export default async function AuthorFeedbackPage() {
                      </div>
                   </div>
                   <div className="text-right">
-                     <p className="text-sm font-black text-on-surface truncate max-w-[200px]">{log.entityTitle || "Untitled"}</p>
+                     <p className="text-sm font-black text-on-surface truncate max-w-50">{log.entityTitle || "Untitled"}</p>
                      <p className="text-[10px] text-on-surface-variant opacity-40 font-medium italic">{formatDistanceToNow(new Date(log.createdAt))} ago</p>
                   </div>
                </div>

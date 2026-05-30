@@ -9,7 +9,6 @@ import {
   BookOpen, 
   Plus, 
   Search,
-  MoreVertical,
   Trash2,
   Edit,
   ExternalLink,
@@ -245,7 +244,7 @@ function CourseExplorerItem({
             transition={{ duration: 0.4, ease: [0.23, 1, 0.32, 1] }}
             className="pl-12 relative space-y-2 overflow-hidden"
           >
-            <div className="absolute left-6 top-0 bottom-8 w-px bg-gradient-to-b from-primary/20 to-transparent" />
+            <div className="absolute left-6 top-0 bottom-8 w-px bg-linear-to-b from-primary/20 to-transparent" />
             
             <div className="pt-2 pb-4 space-y-2">
               {course.units.map((unit) => (

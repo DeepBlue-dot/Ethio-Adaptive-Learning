@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useMemo, useRef, useEffect } from "react"
-import { Search, X, Check, ChevronDown, Database, Layers3, Lightbulb, Box } from "lucide-react"
+import { Search, X, Check, ChevronDown, Box } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
 import { cn } from "@/lib/utils"
@@ -136,7 +136,7 @@ export function CmsReferencePicker({
             initial={{ opacity: 0, y: 10, scale: 0.98 }}
             animate={{ opacity: 1, y: 4, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.98 }}
-            className="absolute z-50 w-full rounded-[2rem] border border-outline-variant bg-surface shadow-[0_12px_48px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col max-h-[400px]"
+            className="absolute z-50 w-full rounded-[2rem] border border-outline-variant bg-surface shadow-[0_12px_48px_rgba(0,0,0,0.15)] overflow-hidden flex flex-col max-h-100"
           >
             {/* Search Input */}
             <div className="p-4 border-b border-outline-variant/60 bg-surface-container-low/40 shrink-0">
