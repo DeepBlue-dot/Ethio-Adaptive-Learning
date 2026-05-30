@@ -3,6 +3,7 @@
 import { CmsFieldErrors } from "@/components/cms/cms-feedback"
 import { CmsContentBlockEditor } from "@/components/cms/cms-content-block-editor"
 import { CmsReferencePicker } from "@/components/cms/cms-reference-picker"
+import { MediaPreview } from "@/components/admin/studio/modules/media-preview"
 import type { CmsField, CmsReferenceOptions } from "@/lib/cms/types"
 
 const inputClassName =
@@ -16,6 +17,7 @@ export function CmsFieldInput({
   referenceOptions,
   userRole,
   value,
+  data = {},
   onChange,
 }: {
   errors?: Record<string, string[]>
@@ -23,6 +25,7 @@ export function CmsFieldInput({
   referenceOptions: CmsReferenceOptions
   userRole: string
   value: unknown
+  data?: Record<string, unknown>
   onChange?: (value: unknown) => void
 }) {
   if (field.type === "hidden" || field.formHidden || field.type === "embedded-list") {
@@ -32,6 +35,22 @@ export function CmsFieldInput({
   // Admin-only fields are hidden for non-admins
   if (field.adminOnly && userRole !== "ADMIN") {
     return null
+  }
+
+  if (field.type === "preview") {
+    return (
+      <div className="lg:col-span-2 space-y-3">
+        <label className="text-[11px] font-black uppercase tracking-[0.15em] text-on-surface-variant/70 px-1">
+          High-Fidelity Preview
+        </label>
+        <MediaPreview
+          kind={String(data.kind || "")}
+          url={String(data.url || "")}
+          publicId={String(data.publicId || "")}
+          title={String(data.title || "")}
+        />
+      </div>
+    )
   }
 
   if (field.type === "content-blocks") {

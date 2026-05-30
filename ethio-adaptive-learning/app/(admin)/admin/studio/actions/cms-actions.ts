@@ -47,34 +47,27 @@ export async function saveCmsItem(
 
   const data = result.data as Record<string, unknown>
   const id = textField(formData, "id") || null
-  const intent = textField(formData, "intent") ?? "publish"
   const returnTo = getReturnTo(formData, `/admin/studio/${definition.key}`)
   const lastUpdatedAtValue = textField(formData, "lastUpdatedAt")
   const lastUpdatedAt = lastUpdatedAtValue ? Number(lastUpdatedAtValue) : undefined
   const contentType = definition.key
 
   try {
-    let mutationResult
-    if (intent === "publish") {
-      mutationResult = await publishItem(contentType, id, data, userId, lastUpdatedAt)
+    const mutationResult = await publishItem(contentType, id, data, userId, lastUpdatedAt)
 
-      if (!id) {
-        redirect(await buildEditorRedirectPath(contentType, mutationResult.entity.id, returnTo, "Published."))
-      }
-    } else {
-      mutationResult = await saveDraftItem(contentType, id, data, userId, lastUpdatedAt)
-
-      if (!id) {
-        redirect(await buildEditorRedirectPath(contentType, mutationResult.entity.id, returnTo, "Draft saved."))
-      }
+    if (!id) {
+      redirect(await buildEditorRedirectPath(contentType, mutationResult.entity.id, returnTo, "Saved."))
     }
 
     revalidateCmsPaths(mutationResult.revalidationPaths)
     return {
       ok: true,
-      message: intent === "publish" ? "Published successfully." : "Draft saved.",
+      message: "Saved successfully.",
       fieldErrors: {},
       statusCode: 200,
+      updatedAt: mutationResult.entity.lifecycle?.updatedAt ? new Date(mutationResult.entity.lifecycle.updatedAt).getTime() : undefined,
+      entityId: mutationResult.entity.id,
+      status: mutationResult.entity.lifecycle?.status,
     }
   } catch (error) {
     if (error instanceof Error && error.message === "NEXT_REDIRECT") {

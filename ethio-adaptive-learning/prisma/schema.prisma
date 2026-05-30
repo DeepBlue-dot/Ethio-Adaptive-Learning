@@ -259,21 +259,6 @@ model Question {
   @@index([status])
 }
 
-model CmsDraft {
-  id          String   @id @default(cuid())
-  contentType String
-  entityId    String
-  data        Json
-  createdById String?
-  updatedById String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([contentType, entityId])
-  @@index([contentType])
-  @@index([updatedAt])
-}
-
 model MediaAsset {
   id              String               @id @default(cuid())
   kind            MediaAssetKind

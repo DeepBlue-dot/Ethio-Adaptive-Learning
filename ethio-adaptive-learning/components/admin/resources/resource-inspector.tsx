@@ -47,6 +47,9 @@ export function ResourceInspector({ resourceId, onClose }: ResourceInspectorProp
   const [copiedId, setCopiedId] = useState(false)
   const [isFullScreen, setIsFullScreen] = useState(false)
 
+  // Track previous resourceId to detect changes during render
+  const [prevResourceId, setPrevResourceId] = useState<string | null>(null)
+
   // Editing state
   const [isSaving, setIsSaving] = useState(false)
   const [editValues, setEditValues] = useState<{ title: string, alt: string, caption: string }>({
@@ -55,11 +58,20 @@ export function ResourceInspector({ resourceId, onClose }: ResourceInspectorProp
     caption: ""
   })
 
-  const handleFetchResource = useCallback(async () => {
-    if (!resourceId) return
+  // Synchronously reset state when resourceId changes (React-recommended pattern)
+  if (resourceId !== prevResourceId) {
+    setPrevResourceId(resourceId)
+    setResource(null)
+    setUsage([])
+    setActiveTab("edit")
+    setIsLoading(false)
+    setIsScanningUsage(false)
+  }
+
+  const handleFetchResource = useCallback(async (id: string) => {
     setIsLoading(true)
     try {
-      const result = await getResourceById(resourceId)
+      const result = await getResourceById(id)
       if (result.ok && result.resource) {
         const res = result.resource as ResourceItem
         setResource(res)
@@ -74,14 +86,11 @@ export function ResourceInspector({ resourceId, onClose }: ResourceInspectorProp
     } finally {
       setIsLoading(false)
     }
-  }, [resourceId])
+  }, [])
 
   useEffect(() => {
     if (resourceId) {
-      handleFetchResource()
-    } else {
-      setResource(null)
-      setUsage([])
+      handleFetchResource(resourceId)
     }
   }, [resourceId, handleFetchResource])
 
@@ -100,11 +109,10 @@ export function ResourceInspector({ resourceId, onClose }: ResourceInspectorProp
     }
   }
 
-  const handleScanUsage = useCallback(async () => {
-    if (!resourceId) return
+  const handleScanUsage = useCallback(async (id: string) => {
     setIsScanningUsage(true)
     try {
-      const result = await getResourceUsage(resourceId)
+      const result = await getResourceUsage(id)
       if (result.ok && result.usage) {
         setUsage(result.usage)
       }
@@ -113,13 +121,13 @@ export function ResourceInspector({ resourceId, onClose }: ResourceInspectorProp
     } finally {
       setIsScanningUsage(false)
     }
-  }, [resourceId])
+  }, [])
 
   useEffect(() => {
-    if (resourceId && activeTab === "usage") {
-      handleScanUsage()
+    if (resourceId && activeTab === "usage" && usage.length === 0 && !isScanningUsage) {
+      handleScanUsage(resourceId)
     }
-  }, [resourceId, activeTab, handleScanUsage])
+  }, [resourceId, activeTab, usage.length, isScanningUsage, handleScanUsage])
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text)

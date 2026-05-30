@@ -92,11 +92,17 @@ export const mediaAssetDefinition = {
   },
   fields: [
     {
+      name: "media_preview",
+      label: "Preview",
+      type: "preview",
+      section: "Resource Preview",
+    },
+    {
       name: "kind",
       label: "Media kind",
       type: "select",
       required: true,
-      section: "Media",
+      section: "Configuration",
       options: Object.values(MediaAssetKind).map((kind) => ({
         label: kind === "YOUTUBE_EMBED" ? "YouTube embed" : kind === "PHET_SIMULATION" ? "PhET simulation" : "Cloudinary image",
         value: kind,
@@ -106,61 +112,76 @@ export const mediaAssetDefinition = {
       name: "title",
       label: "Title",
       type: "text",
-      section: "Media",
+      section: "Configuration",
+      placeholder: "e.g., Quadratic Formula visual",
     },
     {
       name: "url",
-      label: "URL",
+      label: "Resource URL",
       type: "text",
-      section: "Media",
+      section: "Configuration",
+      placeholder: "YouTube or Simulation URL",
+      visibleIf: { field: "kind", operator: "ne", value: "IMAGE" },
     },
     {
       name: "publicId",
       label: "Cloudinary public ID",
       type: "text",
-      section: "Image metadata",
+      section: "Cloudinary Mapping",
+      placeholder: "e.g., samples/animals/cat",
+      visibleIf: { field: "kind", operator: "eq", value: "IMAGE" },
     },
     {
       name: "alt",
-      label: "Alt text",
+      label: "Accessibility Alt Text",
       type: "textarea",
-      section: "Image metadata",
+      section: "Cloudinary Mapping",
+      visibleIf: { field: "kind", operator: "eq", value: "IMAGE" },
+      description: "Describe the image for screen readers.",
     },
     {
       name: "caption",
-      label: "Caption",
+      label: "Display Caption",
       type: "textarea",
-      section: "Media",
+      section: "Configuration",
+      placeholder: "Shown below the asset in lessons",
     },
     {
       name: "width",
-      label: "Width",
+      label: "Width (px)",
       type: "number",
-      section: "Image metadata",
+      section: "Image Metadata",
+      visibleIf: { field: "kind", operator: "eq", value: "IMAGE" },
     },
     {
       name: "height",
-      label: "Height",
+      label: "Height (px)",
       type: "number",
-      section: "Image metadata",
+      section: "Image Metadata",
+      visibleIf: { field: "kind", operator: "eq", value: "IMAGE" },
     },
     {
       name: "bytes",
-      label: "Bytes",
+      label: "File Size (bytes)",
       type: "number",
-      section: "Image metadata",
+      section: "Image Metadata",
+      visibleIf: { field: "kind", operator: "eq", value: "IMAGE" },
+      readOnly: true,
     },
     {
       name: "videoId",
       label: "YouTube video ID",
       type: "text",
-      section: "YouTube metadata",
+      section: "YouTube Auto-Metadata",
+      visibleIf: { field: "kind", operator: "eq", value: "YOUTUBE_EMBED" },
+      readOnly: true,
     },
     {
       name: "thumbnailUrl",
       label: "Thumbnail URL",
       type: "text",
-      section: "YouTube metadata",
+      section: "YouTube Auto-Metadata",
+      visibleIf: { field: "kind", operator: "eq", value: "YOUTUBE_EMBED" },
     },
   ],
   listFields: [
@@ -176,10 +197,6 @@ export const mediaAssetDefinition = {
   getTitle: (entity) => String(entity.data.title ?? entity.data.videoId ?? entity.data.publicId ?? entity.title),
   getSubtitle: (entity) => String(entity.data.caption ?? ""),
   getStatus: (entity) => {
-    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
-      return "PUBLISHED + DRAFT"
-    }
-
     return entity.lifecycle?.status ?? null
   },
   getRevalidationPaths: ({ id }) => [

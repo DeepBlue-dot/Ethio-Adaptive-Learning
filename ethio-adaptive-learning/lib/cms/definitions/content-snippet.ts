@@ -29,29 +29,33 @@ export const contentSnippetDefinition = {
   fields: [
     {
       name: "title",
-      label: "Title",
+      label: "Snippet Title",
       type: "text",
       required: true,
-      section: "Identity",
+      section: "Identification",
+      placeholder: "e.g., Socratic Mastery Formula",
     },
     {
       name: "slug",
-      label: "Slug",
+      label: "System Identifier (Slug)",
       type: "text",
-      section: "Identity",
+      section: "Identification",
+      placeholder: "mastery-formula",
+      description: "Unique string used to reference this snippet in lessons.",
     },
     {
       name: "contentBlocks",
-      label: "Reusable content",
+      label: "Modular Content Blocks",
       type: "content-blocks",
-      section: "Content",
+      section: "Lesson Workspace",
+      description: "Design the reusable instructional content here. Changes will reflect everywhere this snippet is used.",
     },
     {
       name: "authorId",
-      label: "Author",
+      label: "Assigned Author",
       type: "reference",
       referenceTo: "author",
-      section: "Governance",
+      section: "Governance & Metadata",
     },
   ],
   listFields: [
@@ -71,10 +75,6 @@ export const contentSnippetDefinition = {
   getTitle: (entity) => String(entity.data.title ?? entity.title),
   getSubtitle: (entity) => String(entity.data.slug ?? ""),
   getStatus: (entity) => {
-    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
-      return "PUBLISHED + DRAFT"
-    }
-
     return entity.lifecycle?.status ?? null
   },
   getRevalidationPaths: ({ id }) => [

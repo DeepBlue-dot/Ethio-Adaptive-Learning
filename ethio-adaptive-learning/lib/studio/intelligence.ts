@@ -56,13 +56,13 @@ export async function getStudioIntelligence(): Promise<StudioIntelligence> {
   ])
 
   // 2. Content Inventory
-  const [courseCount, conceptCount, questionCount, publishedCount, draftCount] = await Promise.all([
+  const [courseCount, conceptCount, questionCount, publishedCount] = await Promise.all([
     prisma.course.count(),
     prisma.concept.count(),
     prisma.question.count(),
     prisma.concept.count({ where: { status: "PUBLISHED" } }),
-    prisma.cmsDraft.count({ where: { contentType: "concept" } }),
   ])
+  const draftCount = 0
 
   // 3. Health Diagnostics
   const orphans = await prisma.concept.findMany({

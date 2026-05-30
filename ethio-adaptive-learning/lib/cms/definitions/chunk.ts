@@ -80,10 +80,6 @@ export const chunkDefinition = {
   getTitle: (entity) => String(entity.data.title ?? entity.title),
   getSubtitle: (entity) => String(entity.data.conceptLabel ?? ""),
   getStatus: (entity) => {
-    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
-      return "PUBLISHED + DRAFT"
-    }
-
     return entity.lifecycle?.status ?? null
   },
   getRevalidationPaths: ({ id }) => [

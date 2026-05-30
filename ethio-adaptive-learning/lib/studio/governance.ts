@@ -10,16 +10,14 @@ export type GovernanceStats = {
 
 export async function getGovernanceSummary(): Promise<GovernanceStats> {
   const oneDayAgo = subDays(new Date(), 1)
-  
-  const [activeWriters, pendingReviews, totalActivity24h] = await Promise.all([
+  const [activeWriters, totalActivity24h] = await Promise.all([
     prisma.user.count({ where: { role: { in: ["ADMIN", "COURSE_WRITER"] } } }),
-    prisma.cmsDraft.count(),
     prisma.activityLog.count({ where: { createdAt: { gte: oneDayAgo } } })
   ])
 
   return {
     activeWriters,
-    pendingReviews,
+    pendingReviews: 0,
     totalActivity24h,
     securityAlerts: 0 
   }
@@ -38,9 +36,7 @@ export async function getDetailedActivityLog(limit = 50) {
 }
 
 export async function getReviewQueue() {
-  return prisma.cmsDraft.findMany({
-    orderBy: { updatedAt: "desc" },
-  })
+  return []
 }
 
 export async function getGovernanceUsers() {

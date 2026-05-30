@@ -230,7 +230,7 @@ export function CmsList({
                         >
                           {item.title}
                         </Link>
-                        <LifecycleBadge label={item.status || "UNKNOWN"} hasDraft={item.lifecycle?.hasDraft} />
+                        <LifecycleBadge label={item.status || "UNKNOWN"} />
                       </div>
                       
                       <div className="mt-4 flex flex-wrap gap-x-6 gap-y-3">
@@ -302,28 +302,22 @@ function QuickActions({ item, definition }: { item: CmsEntity, definition: CmsSe
   )
 }
 
-function LifecycleBadge({ label, hasDraft }: { label: string, hasDraft?: boolean }) {
+function LifecycleBadge({ label }: { label: string }) {
   const colors = {
     DRAFT: "bg-slate-100 text-slate-700",
     PUBLISHED: "bg-emerald-100 text-emerald-700",
     UNPUBLISHED: "bg-rose-100 text-rose-700",
+    "PUBLISHED + DRAFT": "bg-amber-100 text-amber-700",
   }
 
   return (
-    <div className="flex gap-2">
-      <span
-        className={`rounded-full px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] ${
-          colors[label as keyof typeof colors] || "bg-secondary text-secondary-foreground"
-        }`}
-      >
-        {label}
-      </span>
-      {hasDraft && (
-        <span className="rounded-full bg-amber-100 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-amber-700">
-          HAS DRAFT
-        </span>
-      )}
-    </div>
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] ${
+        colors[label as keyof typeof colors] || "bg-secondary text-secondary-foreground"
+      }`}
+    >
+      {label}
+    </span>
   )
 }
 

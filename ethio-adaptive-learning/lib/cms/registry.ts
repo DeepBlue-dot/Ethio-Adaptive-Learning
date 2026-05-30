@@ -37,7 +37,6 @@ export function normalizeCmsContentTypeKey(value: string): CmsContentTypeKey {
 export function toSerializableContentType(definition: CmsContentType): CmsSerializableContentType {
   return {
     key: definition.key,
-    aliases: definition.aliases,
     label: definition.label,
     pluralLabel: definition.pluralLabel,
     description: definition.description,

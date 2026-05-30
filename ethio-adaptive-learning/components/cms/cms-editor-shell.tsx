@@ -48,11 +48,6 @@ export function CmsEditorShell({
             {item?.lifecycle ? (
               <div className="mt-4 flex flex-wrap gap-2">
                 <LifecycleBadge label={item.lifecycle.status} />
-                {item.lifecycle.hasDraft ? (
-                  <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-bold uppercase tracking-[0.2em] text-amber-700">
-                    UNSAVED DRAFT
-                  </span>
-                ) : null}
               </div>
             ) : null}
           </div>

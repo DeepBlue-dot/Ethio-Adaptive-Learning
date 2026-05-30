@@ -19,6 +19,9 @@ export type CmsActionState = {
   message: string | null
   statusCode: number | null
   fieldErrors: CmsFieldErrors
+  updatedAt?: number
+  entityId?: string
+  status?: string
 }
 
 export const initialCmsActionState: CmsActionState = {
@@ -50,13 +53,22 @@ export type CmsFieldType =
   | "embedded-list"
   | "content-blocks"
   | "hidden"
+  | "preview"
 
 export type CmsFieldOption = {
   label: string
   value: string
 }
 
-export type CmsEmbeddedField = Omit<CmsField, "embeddedFields" | "referenceTo">
+export type CmsEmbeddedField = Omit<CmsField, "embeddedFields" | "referenceTo" | "visibleIf">
+
+export type CmsVisibilityOperator = "eq" | "ne" | "in" | "nin"
+
+export type CmsVisibilityCondition = {
+  field: string
+  operator: CmsVisibilityOperator
+  value: unknown
+}
 
 export type CmsField = {
   name: string
@@ -77,6 +89,7 @@ export type CmsField = {
   min?: number
   max?: number
   step?: number
+  visibleIf?: CmsVisibilityCondition
 }
 
 export type CmsRelation = {
@@ -119,7 +132,6 @@ export type CmsPublicationStatus = "DRAFT" | "PUBLISHED" | "UNPUBLISHED"
 
 export type CmsLifecycle = {
   status: CmsPublicationStatus
-  hasDraft: boolean
   publishedAt?: string | Date | null
   publishedById?: string | null
   unpublishedAt?: string | Date | null
@@ -175,7 +187,12 @@ export type CmsEditorModel = {
   returnTo: string
 }
 
-export type CmsSerializableContentType = Omit<CmsContentType, "schema" | "getTitle" | "getSubtitle" | "getStatus" | "getRevalidationPaths">
+export type CmsSerializableContentType = Omit<
+  CmsContentType,
+  "schema" | "getTitle" | "getSubtitle" | "getStatus" | "getRevalidationPaths"
+>
+
+
 
 export type CmsRepository = {
   createItem: (type: CmsContentTypeKey, data: unknown) => Promise<CmsEntity>

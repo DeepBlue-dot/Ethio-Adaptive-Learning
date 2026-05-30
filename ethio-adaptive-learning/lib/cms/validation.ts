@@ -56,7 +56,7 @@ export function parseCmsFormData<TInput>(
   if (parsed.success) {
     return {
       success: true,
-      data: parsed.data,
+      data: parsed.data as TInput,
     }
   }
 

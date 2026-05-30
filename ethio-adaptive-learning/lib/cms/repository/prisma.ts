@@ -41,77 +41,29 @@ export const prismaCmsRepository: CmsRepository = {
     return getRequiredCmsItem(type, id)
   },
   async saveDraftItem(type, id, data, userId, lastUpdatedAt) {
+    // In direct-update model, saveDraftItem behaves like updateItem.
+    // It updates the main record immediately.
     if (!id) {
       const result = await createCanonicalItem(type, data, {
-        status: "DRAFT",
+        status: "PUBLISHED",
         userId,
       })
       return getRequiredCmsItem(type, result.id)
     }
 
     await assertNoConflict(type, id, lastUpdatedAt)
-    const lifecycle = await getCanonicalLifecycle(type, id)
-
-    if (lifecycle.status === "PUBLISHED") {
-      await prisma.cmsDraft.upsert({
-        where: {
-          contentType_entityId: {
-            contentType: type,
-            entityId: id,
-          },
-        },
-        update: {
-          data: data as object,
-          updatedById: userId,
-        },
-        create: {
-          contentType: type,
-          entityId: id,
-          data: data as object,
-          createdById: userId,
-          updatedById: userId,
-        },
-      })
-      return getRequiredCmsItem(type, id)
-    }
-
     await updateCanonicalItem(type, id, data, {
-      status: lifecycle.status,
+      status: "PUBLISHED",
       userId,
     })
     return getRequiredCmsItem(type, id)
   },
   async publishItem(type, id, data, userId, lastUpdatedAt) {
-    if (id) {
-      await assertNoConflict(type, id, lastUpdatedAt)
-    }
-
-    const result = id
-      ? await updateCanonicalItem(type, id, data, {
-          status: "PUBLISHED",
-          userId,
-        })
-      : await createCanonicalItem(type, data, {
-          status: "PUBLISHED",
-          userId,
-        })
-
-    await prisma.cmsDraft.deleteMany({
-      where: {
-        contentType: type,
-        entityId: result.id,
-      },
-    })
-    return getRequiredCmsItem(type, result.id)
+    // In direct-update model, publishItem is identical to saveDraftItem.
+    return this.saveDraftItem!(type, id, data, userId, lastUpdatedAt)
   },
   async unpublishItem(type, id, userId) {
     await setPublicationState(type, id, "UNPUBLISHED", userId)
-    await prisma.cmsDraft.deleteMany({
-      where: {
-        contentType: type,
-        entityId: id,
-      },
-    })
     return getRequiredCmsItem(type, id)
   },
   async deleteItem(type, id) {
@@ -125,12 +77,6 @@ export const prismaCmsRepository: CmsRepository = {
       throw new Error("Published content must be unpublished before it can be deleted.")
     }
 
-    await prisma.cmsDraft.deleteMany({
-      where: {
-        contentType: type,
-        entityId: id,
-      },
-    })
     await deleteCanonicalItem(type, id)
 
     return entity
@@ -360,13 +306,11 @@ function publicationStateData(status: CmsPublicationStatus, userId: string | nul
 }
 
 async function listCmsItems(type: CmsContentTypeKey, filter: CmsListFilter = {}) {
-  const items = await listBaseCmsItems(type, filter)
-  return withDraftOverlays(type, items)
+  return listBaseCmsItems(type, filter)
 }
 
 async function getCmsItem(type: CmsContentTypeKey, id: string) {
-  const entity = await getBaseCmsItem(type, id)
-  return entity ? withDraftOverlay(type, entity) : null
+  return getBaseCmsItem(type, id)
 }
 
 async function getRequiredCmsItem(type: CmsContentTypeKey, id: string) {
@@ -1219,57 +1163,6 @@ async function getReferenceOptions(type: CmsContentTypeKey, id?: string): Promis
   return referenceOptions
 }
 
-async function withDraftOverlays(type: CmsContentTypeKey, items: CmsEntity[]) {
-  if (!items.length) {
-    return items
-  }
-
-  const drafts = await prisma.cmsDraft.findMany({
-    where: {
-      contentType: type,
-      entityId: {
-        in: items.map((item) => item.id),
-      },
-    },
-  })
-  const draftByEntityId = new Map(drafts.map((draft) => [draft.entityId, draft.data]))
-
-  return items.map((item) => overlayDraft(item, draftByEntityId.get(item.id)))
-}
-
-async function withDraftOverlay(type: CmsContentTypeKey, item: CmsEntity) {
-  const draft = await prisma.cmsDraft.findUnique({
-    where: {
-      contentType_entityId: {
-        contentType: type,
-        entityId: item.id,
-      },
-    },
-  })
-
-  return overlayDraft(item, draft?.data)
-}
-
-function overlayDraft(item: CmsEntity, draftData: unknown): CmsEntity {
-  if (!draftData || typeof draftData !== "object" || Array.isArray(draftData)) {
-    return item
-  }
-
-  return {
-    ...item,
-    lifecycle: item.lifecycle
-      ? {
-          ...item.lifecycle,
-          hasDraft: true,
-        }
-      : undefined,
-    data: {
-      ...item.data,
-      ...(draftData as Record<string, unknown>),
-    },
-  }
-}
-
 async function getCanonicalLifecycle(type: CmsContentTypeKey, id: string): Promise<CmsLifecycle> {
   const entity = await getBaseCmsItem(type, id)
 
@@ -1290,7 +1183,7 @@ function getLifecycle(record: {
 }): CmsLifecycle {
   return {
     status: record.status,
-    hasDraft: false,
+    
     publishedAt: record.publishedAt,
     publishedById: record.publishedById,
     unpublishedAt: record.unpublishedAt,

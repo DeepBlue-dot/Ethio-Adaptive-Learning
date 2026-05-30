@@ -87,10 +87,6 @@ export const courseDefinition = {
   getTitle: (entity) => String(entity.data.title ?? entity.title),
   getSubtitle: (entity) => String(entity.data.slug ?? ""),
   getStatus: (entity) => {
-    if (entity.lifecycle?.hasDraft && entity.lifecycle.status === "PUBLISHED") {
-      return "PUBLISHED + DRAFT"
-    }
-
     return entity.lifecycle?.status ?? null
   },
   getRevalidationPaths: () => ["/admin/dashboard", "/admin/studio", "/admin/studio/course", "/concepts"],
