@@ -42,14 +42,16 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <nav className="text-sm text-on-surface-variant">
-        <Link className="hover:text-primary" href="/student">
+      <nav className="text-sm text-on-surface-variant flex items-center gap-2">
+        <Link className="hover:text-primary transition font-medium" href="/student">
           Dashboard
         </Link>
-        <span className="px-2">/</span>
-        <span>{concept.course.title}</span>
-        <span className="px-2">/</span>
-        <span>{concept.unit.title}</span>
+        <span className="opacity-40">/</span>
+        <Link className="hover:text-primary transition font-medium" href="/student/curriculum">
+          Curriculum
+        </Link>
+        <span className="opacity-40">/</span>
+        <span className="font-bold text-on-surface">{concept.title}</span>
       </nav>
 
       <section className="rounded-lg border border-outline-variant/50 bg-surface-container-lowest p-5 shadow-sm">
@@ -154,9 +156,22 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
               </div>
             </div>
             {locked ? (
-              <div className="mt-4 flex gap-3 rounded-lg border border-outline-variant/50 p-4 text-sm text-on-surface-variant">
-                <LockKeyhole className="mt-1 size-4 shrink-0" />
-                Complete prerequisite concepts to open the learning fork.
+              <div className="mt-4 flex flex-col gap-3 rounded-lg border border-outline-variant/50 bg-muted/20 p-4 text-sm">
+                <div className="flex items-start gap-3 text-on-surface-variant font-medium">
+                   <LockKeyhole className="mt-0.5 size-4 shrink-0" />
+                   <span>The following prerequisites must be mastered to unlock this concept:</span>
+                </div>
+                <div className="flex flex-wrap gap-2 pl-7">
+                  {concept.unmetPrerequisites.map((p) => (
+                    <Link
+                      key={p.conceptId}
+                      href={`/student/concept/${p.conceptId}`}
+                      className="rounded-md bg-outline-variant/30 px-2.5 py-1 text-xs font-bold text-on-surface hover:bg-outline-variant/50 transition"
+                    >
+                      {p.title}
+                    </Link>
+                  ))}
+                </div>
               </div>
             ) : null}
           </Panel>
@@ -165,9 +180,15 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
             {concept.prerequisiteConcepts.length ? (
               <div className="grid gap-3 md:grid-cols-2">
                 {concept.prerequisiteConcepts.map((prerequisite) => (
-                  <div key={prerequisite.id} className="rounded-lg border border-outline-variant/50 p-3">
+                  <Link
+                    key={prerequisite.id}
+                    href={`/student/concept/${prerequisite.id}`}
+                    className="group rounded-lg border border-outline-variant/50 p-3 transition hover:border-primary/40 hover:bg-muted/30"
+                  >
                     <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm font-semibold text-on-surface">{prerequisite.title}</p>
+                      <p className="text-sm font-semibold text-on-surface group-hover:text-primary">
+                        {prerequisite.title}
+                      </p>
                       <StatusBadge status={prerequisite.status} />
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-on-surface-variant">
@@ -175,7 +196,7 @@ export default async function StudentConceptPage({ params }: ConceptPageProps) {
                       <span>{formatPercent(prerequisite.pMastery)}</span>
                     </div>
                     <MasteryBar className="mt-2" value={prerequisite.pMastery} />
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

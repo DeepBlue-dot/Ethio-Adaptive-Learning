@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "vector-magnitude-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the magnitude of the vector $\\mathbf{v} = 3\\mathbf{i} + 4\\mathbf{j}$.",
+    "correctAnswer": "5",
+    "distractors": [
+      "7",
+      "25",
+      "12"
+    ],
+    "hintText": "Use $|\\mathbf{v}| = \\sqrt{a^2 + b^2}$.",
+    "explanation": "$\\sqrt{3^2 + 4^2} = \\sqrt{25} = 5$."
+  },
+  {
+    "slug": "vector-dot-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find the dot product of $\\mathbf{u} = \\langle 1, 2 \\rangle$ and $\\mathbf{v} = \\langle 3, -1 \\rangle$.",
+    "correctAnswer": "1",
+    "distractors": [
+      "5",
+      "7",
+      "-1"
+    ],
+    "hintText": "Multiply components and sum: $u_1v_1 + u_2v_2$.",
+    "explanation": "$(1 \\times 3) + (2 \\times -1) = 3 - 2 = 1$."
+  },
+  {
+    "slug": "vector-orthogonal-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "MEDIUM",
+    "content": "If the dot product of two vectors is 0, the vectors are:",
+    "correctAnswer": "Orthogonal (perpendicular)",
+    "distractors": [
+      "Parallel",
+      "Equal",
+      "Unit vectors"
+    ],
+    "hintText": "Recall the geometric definition of the dot product.",
+    "explanation": "$\\mathbf{u} \\cdot \\mathbf{v} = |\\mathbf{u}| |\\mathbf{v}| \\cos\\theta$. If dot product is 0, $\\cos\\theta = 0$, so $\\theta = 90^\\circ$."
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "slug": "3d-geometry",
+  "title": "3D Geometry",
+  "description": "Explore lines, planes, and surfaces in three-dimensional space using vector methods.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.1,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.04,
+  "prerequisites": [
+    "geometry-and-trigonometry/vector-algebra"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Lines in 3D"
+    },
+    {
+      "type": "paragraph",
+      "text": "A line in 3D space can be defined by a point $\\mathbf{a}$ and a direction vector $\\mathbf{d}$: \n\n$$\\mathbf{r} = \\mathbf{a} + t\\mathbf{d}$$"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "Planes in 3D"
+    },
+    {
+      "type": "paragraph",
+      "text": "The scalar equation of a plane is $ax + by + cz = d$, where $\\mathbf{n} = \\langle a, b, c \\rangle$ is the normal vector."
+    },
+    {
+      "id": "3d-congrats-snippet",
+      "type": "snippet",
+      "slug": "mastery-congratulations"
+    }
+  ]
+}

@@ -4,6 +4,8 @@
   "order": 4,
   "concepts": [
     "concepts/coordinate-geometry/concept.json",
-    "concepts/trigonometric-functions/concept.json"
+    "concepts/trigonometric-functions/concept.json",
+    "concepts/vector-algebra/concept.json",
+    "concepts/3d-geometry/concept.json"
   ]
 }

@@ -6,6 +6,7 @@
     "units/functions-and-graphs/unit.json",
     "units/foundations-of-calculus/unit.json",
     "units/statistics-and-probability/unit.json",
-    "units/geometry-and-trigonometry/unit.json"
+    "units/geometry-and-trigonometry/unit.json",
+    "units/advanced-algebra/unit.json"
   ]
 }

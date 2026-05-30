@@ -11,7 +11,7 @@
   "pS": 0.1,
   "decayLambda": 0.04,
   "prerequisites": [
-    "statistics-and-probability/descriptive-statistics"
+    "statistics-and-probability/probability-theory"
   ],
   "contentBlocks": [
     {

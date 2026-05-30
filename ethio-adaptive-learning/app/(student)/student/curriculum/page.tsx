@@ -198,19 +198,12 @@ function ConceptExploreCard({
         </div>
 
         <div className="mt-auto pt-4">
-          {locked ? (
-            <Button className="w-full justify-between" disabled variant="outline">
-              Locked
-              <LockKeyhole className="size-4" />
-            </Button>
-          ) : (
-            <Button asChild className="w-full justify-between">
-              <Link href={`/student/concept/${concept.conceptId}`}>
-                Explore concept
-                <ArrowRight className="size-4" />
-              </Link>
-            </Button>
-          )}
+          <Button asChild className="w-full justify-between" variant={locked ? "outline" : "default"}>
+            <Link href={`/student/concept/${concept.conceptId}`}>
+              {locked ? "View prerequisites" : "Explore concept"}
+              {locked ? <LockKeyhole className="size-4" /> : <ArrowRight className="size-4" />}
+            </Link>
+          </Button>
         </div>
       </div>
     </article>

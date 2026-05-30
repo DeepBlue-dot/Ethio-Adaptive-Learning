@@ -32,5 +32,14 @@
       "type": "paragraph",
       "text": "The power rule for integration: \n\n$$\\int x^n dx = \\frac{x^{n+1}}{n+1} + C, \\quad (n \\neq -1)$$"
     }
+  ],
+  "chunks": [],
+  "workedExamples": [
+    {
+      "slug": "integration-by-substitution",
+      "title": "Integration by Substitution",
+      "order": 1,
+      "file": "worked-examples/substitution.md"
+    }
   ]
 }

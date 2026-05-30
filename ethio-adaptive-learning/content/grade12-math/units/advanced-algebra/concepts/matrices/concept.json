@@ -1,0 +1,36 @@
+{
+  "slug": "matrices",
+  "title": "Matrices",
+  "description": "Learn matrix operations, determinants, inverses, and how to solve systems of linear equations using matrices.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.15,
+  "pT": 0.1,
+  "pG": 0.25,
+  "pS": 0.1,
+  "decayLambda": 0.03,
+  "prerequisites": [
+    "functions-and-graphs/linear-functions"
+  ],
+  "contentBlocks": [
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "What is a Matrix?"
+    },
+    {
+      "type": "paragraph",
+      "text": "A matrix is a rectangular array of numbers arranged in rows and columns. For example, a $2 \\times 2$ matrix $A$ is: \n\n$$A = \\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$$"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "The Determinant"
+    },
+    {
+      "type": "paragraph",
+      "text": "The determinant of a $2 \\times 2$ matrix $A$ is $|A| = ad - bc$."
+    }
+  ]
+}

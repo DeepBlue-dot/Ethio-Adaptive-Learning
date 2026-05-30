@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "matrix-det-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Find the determinant of $A = \\begin{pmatrix} 2 & 3 \\\\ 1 & 4 \\end{pmatrix}$.",
+    "correctAnswer": "5",
+    "distractors": [
+      "11",
+      "1",
+      "8"
+    ],
+    "hintText": "Use $ad - bc$.",
+    "explanation": "$(2 \times 4) - (3 \times 1) = 8 - 3 = 5$."
+  },
+  {
+    "slug": "matrix-add-practice-2",
+    "usage": "PRACTICE",
+    "difficulty": "EASY",
+    "content": "Add $\\begin{pmatrix} 1 & 0 \\\\ 0 & 1 \\end{pmatrix} + \\begin{pmatrix} 2 & 3 \\\\ 4 & 5 \\end{pmatrix}$.",
+    "correctAnswer": "$\\begin{pmatrix} 3 & 3 \\\\ 4 & 6 \\end{pmatrix}$",
+    "distractors": [
+      "$\\begin{pmatrix} 2 & 0 \\\\ 0 & 5 \\end{pmatrix}$",
+      "$\\begin{pmatrix} 1 & 3 \\\\ 4 & 4 \\end{pmatrix}$",
+      "$\\begin{pmatrix} 0 & 0 \\\\ 0 & 0 \\end{pmatrix}$"
+    ],
+    "hintText": "Add each corresponding element.",
+    "explanation": "$1+2=3, 0+3=3, 0+4=4, 1+5=6$."
+  },
+  {
+    "slug": "matrix-inverse-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "HARD",
+    "content": "A matrix $A$ has determinant $|A| = 0$. Does it have an inverse?",
+    "correctAnswer": "No (it is singular)",
+    "distractors": [
+      "Yes",
+      "Only if it is $2 \times 2$",
+      "Only if all elements are positive"
+    ],
+    "hintText": "Recall the condition for invertibility.",
+    "explanation": "A matrix is invertible if and only if its determinant is non-zero."
+  }
+]

@@ -1,0 +1,47 @@
+{
+  "slug": "vector-algebra",
+  "title": "Vector Algebra",
+  "description": "Understand vectors in 2D and 3D space, including magnitude, direction, dot product, and scalar multiplication.",
+  "overview": "overview.md",
+  "questions": "questions.json",
+  "unlockThreshold": 0.8,
+  "pLo": 0.1,
+  "pT": 0.1,
+  "pG": 0.2,
+  "pS": 0.1,
+  "decayLambda": 0.03,
+  "prerequisites": [
+    "geometry-and-trigonometry/coordinate-geometry"
+  ],
+  "contentBlocks": [
+    {
+      "id": "vector-snippet-prereq",
+      "type": "snippet",
+      "slug": "prerequisite-alert"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "What is a Vector?"
+    },
+    {
+      "type": "paragraph",
+      "text": "A vector is a quantity that has both magnitude (size) and direction. In a coordinate system, a vector $\\vec{v}$ can be represented as $\\mathbf{v} = a\\mathbf{i} + b\\mathbf{j}$."
+    },
+    {
+      "id": "vector-sim",
+      "type": "phet",
+      "assetId": "math-sim-vector",
+      "title": "Vector Addition Explorer"
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "The Dot Product"
+    },
+    {
+      "type": "paragraph",
+      "text": "The dot product of two vectors $\\mathbf{u}$ and $\\mathbf{v}$ is: \n\n$$\\mathbf{u} \\cdot \\mathbf{v} = |\\mathbf{u}| |\\mathbf{v}| \\cos\\theta$$"
+    }
+  ]
+}

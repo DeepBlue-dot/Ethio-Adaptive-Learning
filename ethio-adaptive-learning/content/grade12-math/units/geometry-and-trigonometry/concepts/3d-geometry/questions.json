@@ -1,0 +1,30 @@
+[
+  {
+    "slug": "3d-distance-practice-1",
+    "usage": "PRACTICE",
+    "difficulty": "MEDIUM",
+    "content": "Find the distance between $(1, 2, 3)$ and $(4, 6, 3)$.",
+    "correctAnswer": "5",
+    "distractors": [
+      "7",
+      "25",
+      "13"
+    ],
+    "hintText": "Use $\\sqrt{(x_2-x_1)^2 + (y_2-y_1)^2 + (z_2-z_1)^2}$.",
+    "explanation": "$\\sqrt{(4-1)^2 + (6-2)^2 + (3-3)^2} = \\sqrt{3^2 + 4^2 + 0^2} = 5$."
+  },
+  {
+    "slug": "3d-plane-checkpoint",
+    "usage": "CHECKPOINT",
+    "difficulty": "HARD",
+    "content": "A plane has normal vector $\\mathbf{n} = \\langle 2, -1, 3 \\rangle$ and passes through $(0, 0, 0)$. Its equation is:",
+    "correctAnswer": "$2x - y + 3z = 0$",
+    "distractors": [
+      "$x + y + z = 0$",
+      "$2x + y - 3z = 0$",
+      "$2x - y + 3z = 5$"
+    ],
+    "hintText": "Use $ax + by + cz = 0$ for a plane through the origin.",
+    "explanation": "Substitute components of $\\mathbf{n}$ as coefficients $a, b, c$."
+  }
+]

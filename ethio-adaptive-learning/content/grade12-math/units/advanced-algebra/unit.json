@@ -1,0 +1,8 @@
+{
+  "slug": "advanced-algebra",
+  "title": "Advanced Algebra",
+  "order": 5,
+  "concepts": [
+    "concepts/matrices/concept.json"
+  ]
+}

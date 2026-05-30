@@ -114,6 +114,13 @@ export async function seedAssets(prisma, writerId) {
       videoId: "ANi709MYnWg",
       thumbnailUrl: "https://img.youtube.com/vi/ANi709MYnWg/hqdefault.jpg",
     },
+    {
+      publicId: "math-sim-vector",
+      kind: "PHET_SIMULATION",
+      title: "Vector Addition Simulation",
+      caption: "Drag vectors to see how they add up and how the resultant changes.",
+      url: "https://phet.colorado.edu/sims/html/vector-addition/latest/vector-addition_en.html",
+    },
   ]
   const assets = await Promise.all(
     assetSeeds.map((asset) =>
@@ -133,6 +140,64 @@ export async function seedAssets(prisma, writerId) {
     )
   )
   
+  await prisma.contentSnippet.upsert({
+    where: { slug: "prerequisite-alert" },
+    update: {
+      title: "Why you need this foundation",
+      contentBlocks: [
+        {
+          id: "prereq-alert-para",
+          type: "paragraph",
+          text: "Mathematical concepts build on each other. Mastery of the previous concept ensures you have the mental tools to solve these more complex problems without frustration."
+        }
+      ],
+      status: "PUBLISHED",
+      authorId: writerId
+    },
+    create: {
+      slug: "prerequisite-alert",
+      title: "Why you need this foundation",
+      contentBlocks: [
+        {
+          id: "prereq-alert-para",
+          type: "paragraph",
+          text: "Mathematical concepts build on each other. Mastery of the previous concept ensures you have the mental tools to solve these more complex problems without frustration."
+        }
+      ],
+      status: "PUBLISHED",
+      authorId: writerId
+    }
+  })
+
+  await prisma.contentSnippet.upsert({
+    where: { slug: "mastery-congratulations" },
+    update: {
+      title: "Mastery Achieved!",
+      contentBlocks: [
+        {
+          id: "mastery-cong-para",
+          type: "paragraph",
+          text: "Excellent work! You have demonstrated high confidence in this concept. You are now ready to tackle advanced applications or move to the next topic in the sequence."
+        }
+      ],
+      status: "PUBLISHED",
+      authorId: writerId
+    },
+    create: {
+      slug: "mastery-congratulations",
+      title: "Mastery Achieved!",
+      contentBlocks: [
+        {
+          id: "mastery-cong-para",
+          type: "paragraph",
+          text: "Excellent work! You have demonstrated high confidence in this concept. You are now ready to tackle advanced applications or move to the next topic in the sequence."
+        }
+      ],
+      status: "PUBLISHED",
+      authorId: writerId
+    }
+  })
+
   const snippet = await prisma.contentSnippet.upsert({
     where: { slug: "mastery-formula" },
     update: {
