@@ -107,15 +107,15 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
 
             <div className="flex flex-wrap gap-4">
               <Button asChild className="h-14 rounded-2xl bg-primary px-8 text-[11px] font-black uppercase tracking-widest text-on-primary shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
-                <Link href="/admin/studio/explorer">
-                   <Layers3 className="mr-2 size-4" />
-                   Curriculum Explorer
+                <Link href="/admin/studio/course/new">
+                   <FilePlus2 className="mr-2 size-4" />
+                   New Course
                 </Link>
               </Button>
               <Button asChild variant="outline" className="h-14 rounded-2xl border-outline-variant/50 px-8 text-[11px] font-black uppercase tracking-widest text-on-surface hover:bg-surface-container transition-all">
-                <Link href="/concepts" target="_blank">
-                   <Eye className="mr-2 size-4" />
-                   Preview Live
+                <Link href="/admin/studio/explorer">
+                   <Layers3 className="mr-2 size-4" />
+                   Explorer
                 </Link>
               </Button>
             </div>
@@ -181,11 +181,19 @@ export function SiteProjectDashboard({ projects }: { projects: SiteProjectSummar
                  {projects.length} Active
               </span>
            </div>
-           <Button asChild variant="ghost" className="rounded-xl text-[10px] font-black uppercase tracking-widest text-primary">
-              <Link href="/admin/studio/sites">
-                 View All <ArrowUpRight className="ml-1 size-3" />
-              </Link>
-           </Button>
+           <div className="flex items-center gap-2">
+              <Button asChild variant="ghost" className="rounded-xl text-[10px] font-black uppercase tracking-widest text-primary">
+                <Link href="/admin/studio/course/new">
+                    <FilePlus2 className="mr-2 size-3" />
+                    New Course
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" className="rounded-xl text-[10px] font-black uppercase tracking-widest text-on-surface-variant">
+                <Link href="/admin/studio/sites">
+                    View All <ArrowUpRight className="ml-1 size-3" />
+                </Link>
+              </Button>
+           </div>
         </motion.div>
 
         <div className="grid grid-cols-1 gap-8 xl:grid-cols-2">

@@ -17,7 +17,6 @@ async function main() {
   await prisma.examAttempt.deleteMany({})
   await prisma.userMastery.deleteMany({})
   await prisma.activityLog.deleteMany({})
-  await prisma.cmsDraft.deleteMany({})
   await prisma.userProfile.deleteMany({})
   await prisma.passwordResetToken.deleteMany({})
   await prisma.session.deleteMany({})

@@ -128,17 +128,12 @@ export async function deleteConcept(conceptId: string) {
 
   return prisma.$transaction(async (tx) => {
     await deleteConceptDependencies([id], tx)
-    const deletedConcept = await tx.concept.delete({
-      where: {
-        id,
-      },
-    })
 
     if (concept) {
       await rebuildConceptClosureForCourse(concept.unit.courseId, tx)
     }
 
-    return deletedConcept
+    return { id }
   })
 }
 

@@ -166,10 +166,26 @@ export async function createBuilderConcept(unitId: string, title?: string) {
   await requireRole(["ADMIN", "COURSE_WRITER"])
 
   try {
-    const conceptCount = await prisma.concept.count({ where: { unitId } })
+    let finalTitle = title?.trim()
+    
+    if (!finalTitle) {
+      // Generate a unique title by finding the next available number
+      let counter = 1
+      let candidateTitle = `New Concept ${counter}`
+      
+      while (await prisma.concept.findFirst({
+        where: { unitId, title: candidateTitle }
+      })) {
+        counter++
+        candidateTitle = `New Concept ${counter}`
+      }
+      
+      finalTitle = candidateTitle
+    }
+    
     const concept = await createConceptDraft({
       unitId,
-      title: title?.trim() || `New Concept ${conceptCount + 1}`,
+      title: finalTitle,
     })
     const unit = await prisma.unit.findUnique({
       where: { id: unitId },

@@ -359,6 +359,13 @@ export async function deleteConceptDependencies(conceptIds: string[], db: DbClie
       },
     },
   })
+  await db.concept.deleteMany({
+    where: {
+      id: {
+        in: conceptIds,
+      },
+    },
+  })
 }
 
 export function normalizeDistractors(distractors?: string[] | null) {

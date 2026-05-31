@@ -106,6 +106,7 @@ export async function updateItem(
   }
 
   const entity = decorateEntity(definition, await repository.updateItem(definition.key, id, data, lastUpdatedAt))
+  await rebuildClosureForGraphLifecycleChange(definition.key as CmsContentTypeKey, entity.id)
   
   // Sync resource usage if applicable
   if (RESOURCE_CONSUMERS.includes(definition.key)) {
@@ -305,7 +306,17 @@ export async function deleteItem(
   repository: CmsRepository = prismaCmsRepository
 ): Promise<CmsMutationResult> {
   const definition = getCmsContentType(type)
+  
+  // Fetch affected courseId BEFORE deletion because the item will be gone after
+  const courseId = await getAffectedCourseId(definition.key as CmsContentTypeKey, id)
+  
   const entity = decorateEntity(definition, await repository.deleteItem(definition.key, id))
+  
+  // Rebuild graph closure if a curriculum item was deleted
+  if (courseId) {
+    await rebuildConceptClosureForCourse(courseId)
+  }
+
   const revalidationPaths = getCmsRevalidationPaths(definition, {
     contentType: definition.key,
     action: "delete",

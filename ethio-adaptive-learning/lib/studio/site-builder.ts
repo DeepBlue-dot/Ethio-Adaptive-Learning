@@ -283,6 +283,65 @@ export async function getStudioContentPreview(type: string, id: string) {
   const item = await getItem(type, id)
   if (!item) return null
 
+  if (type === "course") {
+    const hierarchy = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        units: {
+          orderBy: { order: "asc" },
+          include: {
+            concepts: {
+              orderBy: { title: "asc" },
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                status: true,
+              },
+            },
+          },
+        },
+      },
+    })
+
+    return {
+      item,
+      hierarchy,
+      blocks: [],
+      assets: {},
+      questions: {},
+      snippets: {},
+      livePath: `/student/curriculum#course-${id}`,
+    }
+  }
+
+  if (type === "unit") {
+    const unitHierarchy = await prisma.unit.findUnique({
+      where: { id },
+      include: {
+        concepts: {
+          orderBy: { title: "asc" },
+          select: {
+            id: true,
+            title: true,
+            slug: true,
+            status: true,
+          },
+        },
+      },
+    })
+
+    return {
+      item,
+      hierarchy: unitHierarchy,
+      blocks: [],
+      assets: {},
+      questions: {},
+      snippets: {},
+      livePath: `/student/curriculum#unit-${id}`,
+    }
+  }
+
   if (type !== "concept" && type !== "content-snippet") {
     return {
       item,
@@ -291,6 +350,87 @@ export async function getStudioContentPreview(type: string, id: string) {
       questions: {},
       snippets: {},
       livePath: type === "concept" ? `/student/concept/${id}/learn` : null,
+    }
+  }
+
+  if (type === "concept") {
+    const concept = await prisma.concept.findUnique({
+      where: { id },
+      include: {
+        prerequisiteEdges: {
+          include: {
+            prerequisiteConcept: {
+              select: { id: true, title: true, status: true }
+            }
+          }
+        },
+        dependentEdges: {
+          include: {
+            dependentConcept: {
+              select: { id: true, title: true, status: true }
+            }
+          }
+        }
+      }
+    });
+
+    const blocks = normalizeContentBlocks(item.data.contentBlocks)
+    const references = getContentBlockReferences(blocks)
+    const [assets, questions, snippets] = await Promise.all([
+      references.assetIds.length
+        ? prisma.mediaAsset.findMany({
+            where: { id: { in: references.assetIds } },
+          })
+        : [],
+      references.questionIds.length
+        ? prisma.question.findMany({
+            where: { id: { in: references.questionIds } },
+            select: { id: true, content: true },
+          })
+        : [],
+      references.snippetIds.length
+        ? prisma.contentSnippet.findMany({
+            where: { id: { in: references.snippetIds } },
+            select: { id: true, title: true, contentBlocks: true },
+          })
+        : [],
+    ])
+
+    return {
+      item,
+      blocks,
+      assets: Object.fromEntries(
+        assets.map((asset) => [
+          asset.id,
+          {
+            id: asset.id,
+            kind: asset.kind,
+            title: asset.title,
+            alt: asset.alt,
+            caption: asset.caption,
+            url: asset.url,
+            width: asset.width,
+            height: asset.height,
+            videoId: asset.videoId,
+          },
+        ])
+      ),
+      questions: Object.fromEntries(questions.map((question) => [question.id, question])),
+      snippets: Object.fromEntries(
+        snippets.map((snippet) => [
+          snippet.id,
+          {
+            id: snippet.id,
+            title: snippet.title,
+            contentBlocks: normalizeContentBlocks(snippet.contentBlocks),
+          },
+        ])
+      ),
+      graphContext: {
+        prerequisites: concept?.prerequisiteEdges.map(e => e.prerequisiteConcept) ?? [],
+        dependents: concept?.dependentEdges.map(e => e.dependentConcept) ?? [],
+      },
+      livePath: `/student/concept/${id}/learn`,
     }
   }
 

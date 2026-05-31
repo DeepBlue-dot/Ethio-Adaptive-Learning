@@ -8,6 +8,7 @@ export const optionalTrimmedStringSchema = z
   .union([z.string(), z.null(), z.undefined()])
   .transform((value) => (typeof value === "string" ? value.trim() : null))
   .transform((value) => (value && value.length ? value : null))
+  .optional()
 
 export const requiredIdSchema = (fieldLabel: string) =>
   trimmedStringSchema.min(1, `${fieldLabel} is required.`)
